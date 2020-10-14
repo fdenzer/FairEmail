@@ -2,6 +2,7 @@
 <eu.faircode.email.ScrollViewEx xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/scroll"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:paddingStart="6dp"
@@ -58,7 +59,7 @@
             android:tint="?android:attr/textColorPrimary"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/vSeparatorWelcome"
-            app:srcCompat="@drawable/baseline_fast_forward_24" />
+            app:srcCompat="@drawable/twotone_fast_forward_24" />
 
         <eu.faircode.email.FixedTextView
             android:layout_width="0dp"
@@ -120,6 +121,17 @@
             app:layout_constraintTop_toBottomOf="@id/btnQuick" />
 
         <eu.faircode.email.FixedTextView
+            android:id="@+id/tvQuickNew"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="@string/title_setup_wizard_new"
+            android:textAppearance="@style/TextAppearance.AppCompat.Small"
+            android:textColor="?android:attr/textColorLink"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/tvQuickRemarkMultiple" />
+
+        <eu.faircode.email.FixedTextView
             android:id="@+id/tvQuickRemark"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -128,7 +140,7 @@
             android:textAppearance="@style/TextAppearance.AppCompat.Medium"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/tvQuickRemarkMultiple" />
+            app:layout_constraintTop_toBottomOf="@id/tvQuickNew" />
 
         <!-- account -->
 
@@ -150,7 +162,7 @@
             android:contentDescription="1"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/vSeparatorAccount"
-            app:srcCompat="@drawable/baseline_looks_one_24" />
+            app:srcCompat="@drawable/twotone_looks_one_24" />
 
         <eu.faircode.email.FixedTextView
             android:layout_width="0dp"
@@ -177,6 +189,17 @@
             app:layout_constraintEnd_toEndOf="parent" />
 
         <eu.faircode.email.FixedTextView
+            android:id="@+id/tvPop3"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:layout_marginEnd="6dp"
+            android:text="@string/title_pop3"
+            android:textAppearance="@style/TextAppearance.AppCompat.Small"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/one" />
+
+        <eu.faircode.email.FixedTextView
             android:id="@+id/tvAccount"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -201,7 +224,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
-            android:drawableStart="@drawable/baseline_check_24"
+            android:drawableStart="@drawable/twotone_check_24"
             android:drawablePadding="6dp"
             android:text="@string/title_setup_done"
             android:textAppearance="@style/TextAppearance.AppCompat.Medium"
@@ -217,17 +240,6 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="@id/tvAccountDone" />
 
-        <eu.faircode.email.FixedTextView
-            android:id="@+id/tvNoPrimaryDrafts"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:text="@string/title_no_primary_drafts"
-            android:textAppearance="@style/TextAppearance.AppCompat.Small"
-            android:textColor="?attr/colorWarning"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/btnAccount" />
-
         <!-- identity -->
 
         <View
@@ -238,7 +250,7 @@
             android:background="?attr/colorSeparator"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/tvNoPrimaryDrafts" />
+            app:layout_constraintTop_toBottomOf="@id/btnAccount" />
 
         <ImageView
             android:id="@+id/two"
@@ -248,7 +260,7 @@
             android:contentDescription="2"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/vSeparatorIdentity"
-            app:srcCompat="@drawable/baseline_looks_two_24" />
+            app:srcCompat="@drawable/twotone_looks_two_24" />
 
         <eu.faircode.email.FixedTextView
             android:layout_width="0dp"
@@ -310,7 +322,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
-            android:drawableStart="@drawable/baseline_check_24"
+            android:drawableStart="@drawable/twotone_check_24"
             android:drawablePadding="6dp"
             android:text="@string/title_setup_done"
             android:textAppearance="@style/TextAppearance.AppCompat.Medium"
@@ -327,15 +339,26 @@
             app:layout_constraintTop_toTopOf="@id/tvIdentityDone" />
 
         <eu.faircode.email.FixedTextView
-            android:id="@+id/tvNoIdentities"
+            android:id="@+id/tvIdentityWhat"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
-            android:text="@string/title_no_identities"
+            android:text="@string/title_setup_identity_what"
+            android:textAppearance="@style/TextAppearance.AppCompat.Small"
+            android:textColor="?android:attr/textColorLink"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/btnIdentity" />
+
+        <eu.faircode.email.FixedTextView
+            android:id="@+id/tvNoComposable"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="@string/title_no_composable"
             android:textAppearance="@style/TextAppearance.AppCompat.Small"
             android:textColor="?attr/colorWarning"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/btnIdentity" />
+            app:layout_constraintTop_toBottomOf="@id/tvIdentityWhat" />
 
         <!-- permissions -->
 
@@ -347,7 +370,7 @@
             android:background="?attr/colorSeparator"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/tvNoIdentities" />
+            app:layout_constraintTop_toBottomOf="@id/tvNoComposable" />
 
         <ImageView
             android:id="@+id/three"
@@ -357,7 +380,7 @@
             android:contentDescription="3"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/vSeparatorPermissions"
-            app:srcCompat="@drawable/baseline_looks_3_24" />
+            app:srcCompat="@drawable/twotone_looks_3_24" />
 
         <eu.faircode.email.FixedTextView
             android:layout_width="0dp"
@@ -387,7 +410,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
-            android:drawableStart="@drawable/baseline_check_24"
+            android:drawableStart="@drawable/twotone_check_24"
             android:drawablePadding="6dp"
             android:text="@string/title_setup_done"
             android:textAppearance="@style/TextAppearance.AppCompat.Medium"
@@ -423,7 +446,7 @@
             android:contentDescription="4"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/vSeparatorDoze"
-            app:srcCompat="@drawable/baseline_looks_4_24" />
+            app:srcCompat="@drawable/twotone_looks_4_24" />
 
         <eu.faircode.email.FixedTextView
             android:layout_width="0dp"
@@ -454,7 +477,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
-            android:drawableStart="@drawable/baseline_check_24"
+            android:drawableStart="@drawable/twotone_check_24"
             android:drawablePadding="6dp"
             android:text="@string/title_setup_done"
             android:textAppearance="@style/TextAppearance.AppCompat.Medium"
@@ -532,7 +555,7 @@
             android:contentDescription="5"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/vSeparatorInbox"
-            app:srcCompat="@drawable/baseline_looks_5_24" />
+            app:srcCompat="@drawable/twotone_looks_5_24" />
 
         <eu.faircode.email.FixedTextView
             android:layout_width="0dp"

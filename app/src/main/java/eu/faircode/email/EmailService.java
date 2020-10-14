@@ -29,15 +29,18 @@ import org.bouncycastle.asn1.DEROctetString;
 import org.bouncycastle.asn1.x509.Extension;
 import org.bouncycastle.asn1.x509.GeneralName;
 import org.bouncycastle.asn1.x509.SubjectKeyIdentifier;
-import org.jetbrains.annotations.NotNull;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PrintStream;
 import java.net.Inet4Address;
 import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.InterfaceAddress;
 import java.net.NetworkInterface;
 import java.net.Socket;
+import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
@@ -70,22 +73,29 @@ import javax.mail.Service;
 import javax.mail.Session;
 import javax.mail.Store;
 import javax.mail.event.StoreListener;
+import javax.net.SocketFactory;
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLException;
+import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
 
+// IMAP standards: https://imapwiki.org/Specs
+
 public class EmailService implements AutoCloseable {
     private Context context;
     private String protocol;
     private boolean insecure;
+    private int purpose;
     private boolean harden;
     private boolean useip;
     private String ehlo;
+    private boolean log;
     private boolean debug;
     private Properties properties;
     private Session isession;
@@ -102,18 +112,24 @@ public class EmailService implements AutoCloseable {
     static final int PURPOSE_USE = 2;
     static final int PURPOSE_SEARCH = 3;
 
+    static final int ENCRYPTION_SSL = 0;
+    static final int ENCRYPTION_STARTTLS = 1;
+    static final int ENCRYPTION_NONE = 2;
+
     final static int DEFAULT_CONNECT_TIMEOUT = 20; // seconds
 
-    private final static int SEARCH_TIMEOUT = 2 * 60 * 1000; // milliseconds
+    private final static int SEARCH_TIMEOUT = 90 * 1000; // milliseconds
     private final static int FETCH_SIZE = 1024 * 1024; // bytes, default 16K
     private final static int POOL_TIMEOUT = 45 * 1000; // milliseconds, default 45 sec
 
     private static final int APPEND_BUFFER_SIZE = 4 * 1024 * 1024; // bytes
 
+    // https://developer.android.com/reference/javax/net/ssl/SSLSocket.html#protocols
     private static final List<String> SSL_PROTOCOL_BLACKLIST = Collections.unmodifiableList(Arrays.asList(
             "SSLv2", "SSLv3", "TLSv1", "TLSv1.1"
     ));
 
+    // https://developer.android.com/reference/javax/net/ssl/SSLSocket.html#cipher-suites
     private static final Pattern SSL_CIPHER_BLACKLIST =
             Pattern.compile(".*(_DES|DH_|DSS|EXPORT|MD5|NULL|RC4|TLS_FALLBACK_SCSV).*");
 
@@ -124,44 +140,41 @@ public class EmailService implements AutoCloseable {
         // Prevent instantiation
     }
 
-    EmailService(Context context, String protocol, String realm, boolean insecure, boolean debug) throws NoSuchProviderException {
-        this(context, protocol, realm, insecure, PURPOSE_USE, debug);
+    EmailService(Context context, String protocol, String realm, int encryption, boolean insecure, boolean debug) throws NoSuchProviderException {
+        this(context, protocol, realm, encryption, insecure, PURPOSE_USE, debug);
     }
 
-    EmailService(Context context, String protocol, String realm, boolean insecure, int purpose, boolean debug) throws NoSuchProviderException {
+    EmailService(Context context, String protocol, String realm, int encryption, boolean insecure, int purpose, boolean debug) throws NoSuchProviderException {
         this.context = context.getApplicationContext();
         this.protocol = protocol;
         this.insecure = insecure;
+        this.purpose = purpose;
         this.debug = debug;
 
         properties = MessageHelper.getSessionProperties();
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        this.log = prefs.getBoolean("protocol", false);
         this.harden = prefs.getBoolean("ssl_harden", false);
 
-        boolean socks_enabled = prefs.getBoolean("socks_enabled", false);
-        String socks_proxy = prefs.getString("socks_proxy", "localhost:9050");
-
-        // SOCKS proxy
-        if (socks_enabled) {
-            String[] address = socks_proxy.split(":");
-            String host = (address.length > 0 ? address[0] : null);
-            String port = (address.length > 1 ? address[1] : null);
-            if (TextUtils.isEmpty(host))
-                host = "localhost";
-            if (TextUtils.isEmpty(port))
-                port = "9050";
-            properties.put("mail." + protocol + ".socks.host", host);
-            properties.put("mail." + protocol + ".socks.port", port);
-            Log.i("Using SOCKS proxy=" + host + ":" + port);
-        }
+        boolean auth_plain = prefs.getBoolean("auth_plain", true);
+        boolean auth_login = prefs.getBoolean("auth_login", true);
+        boolean auth_sasl = prefs.getBoolean("auth_sasl", true);
+        Log.i("Authenticate plain=" + auth_plain + " login=" + auth_login + " sasl=" + auth_sasl);
 
         properties.put("mail.event.scope", "folder");
         properties.put("mail.event.executor", executor);
 
+        if (!auth_plain)
+            properties.put("mail." + protocol + ".auth.plain.disable", "true");
+        if (!auth_login)
+            properties.put("mail." + protocol + ".auth.login.disable", "true");
+
         properties.put("mail." + protocol + ".sasl.enable", "true");
-        properties.put("mail." + protocol + ".sasl.mechanisms", "CRAM-MD5");
-        properties.put("mail." + protocol + ".sasl.realm", realm == null ? "" : realm);
+        if (auth_sasl) {
+            properties.put("mail." + protocol + ".sasl.mechanisms", "CRAM-MD5");
+            properties.put("mail." + protocol + ".sasl.realm", realm == null ? "" : realm);
+        }
         properties.put("mail." + protocol + ".auth.ntlm.domain", realm == null ? "" : realm);
 
         // writetimeout: one thread overhead
@@ -180,23 +193,30 @@ public class EmailService implements AutoCloseable {
         if (debug && BuildConfig.DEBUG)
             properties.put("mail.debug.auth", "true");
 
+        boolean starttls = (encryption == ENCRYPTION_STARTTLS);
+
+        if (encryption == ENCRYPTION_NONE) {
+            properties.put("mail." + protocol + ".ssl.enable", "false");
+            properties.put("mail." + protocol + ".socketFactory", new SocketFactoryService());
+        }
+
         if ("pop3".equals(protocol) || "pop3s".equals(protocol)) {
             // https://javaee.github.io/javamail/docs/api/com/sun/mail/pop3/package-summary.html#properties
             properties.put("mail.pop3s.starttls.enable", "false");
 
-            properties.put("mail.pop3.starttls.enable", "true");
-            properties.put("mail.pop3.starttls.required", Boolean.toString(!insecure));
+            properties.put("mail.pop3.starttls.enable", Boolean.toString(starttls));
+            properties.put("mail.pop3.starttls.required", Boolean.toString(starttls && !insecure));
 
         } else if ("imap".equals(protocol) || "imaps".equals(protocol) || "gimaps".equals(protocol)) {
             // https://javaee.github.io/javamail/docs/api/com/sun/mail/imap/package-summary.html#properties
             properties.put("mail.imaps.starttls.enable", "false");
 
-            properties.put("mail.imap.starttls.enable", "true");
-            properties.put("mail.imap.starttls.required", Boolean.toString(!insecure));
+            properties.put("mail.imap.starttls.enable", Boolean.toString(starttls));
+            properties.put("mail.imap.starttls.required", Boolean.toString(starttls && !insecure));
 
             properties.put("mail." + protocol + ".separatestoreconnection", "true");
             properties.put("mail." + protocol + ".connectionpool.debug", "true");
-            properties.put("mail." + protocol + ".connectionpoolsize", "1");
+            properties.put("mail." + protocol + ".connectionpoolsize", Integer.toString(2));
             properties.put("mail." + protocol + ".connectionpooltimeout", Integer.toString(POOL_TIMEOUT));
 
             properties.put("mail." + protocol + ".finalizecleanclose", "false");
@@ -217,8 +237,8 @@ public class EmailService implements AutoCloseable {
             // https://javaee.github.io/javamail/docs/api/com/sun/mail/smtp/package-summary.html#properties
             properties.put("mail.smtps.starttls.enable", "false");
 
-            properties.put("mail.smtp.starttls.enable", "true");
-            properties.put("mail.smtp.starttls.required", Boolean.toString(!insecure));
+            properties.put("mail.smtp.starttls.enable", Boolean.toString(starttls));
+            properties.put("mail.smtp.starttls.required", Boolean.toString(starttls && !insecure));
 
             properties.put("mail." + protocol + ".auth", "true");
 
@@ -247,6 +267,11 @@ public class EmailService implements AutoCloseable {
         properties.put("mail.mime.allowutf8", Boolean.toString(value));
     }
 
+    // https://tools.ietf.org/html/rfc3461
+    void setDsnNotify(String what) {
+        properties.put("mail." + protocol + ".dsn.notify", what);
+    }
+
     void setListener(StoreListener listener) {
         this.listener = listener;
     }
@@ -259,7 +284,7 @@ public class EmailService implements AutoCloseable {
                 account.certificate_alias, account.fingerprint);
         if (password != null) {
             DB db = DB.getInstance(context);
-            int count = db.account().setAccountPassword(account.id, account.password);
+            int count = db.account().setAccountPassword(account.id, password);
             Log.i(account.name + " token refreshed=" + count);
         }
     }
@@ -272,7 +297,7 @@ public class EmailService implements AutoCloseable {
                 identity.certificate_alias, identity.fingerprint);
         if (password != null) {
             DB db = DB.getInstance(context);
-            int count = db.identity().setIdentityPassword(identity.id, identity.password);
+            int count = db.identity().setIdentityPassword(identity.id, password);
             Log.i(identity.email + " token refreshed=" + count);
         }
     }
@@ -311,11 +336,13 @@ public class EmailService implements AutoCloseable {
                 properties.put("mail." + protocol + ".auth.mechanisms", "XOAUTH2");
 
             if (auth == AUTH_TYPE_OAUTH) {
+                if ("imap.mail.yahoo.com".equals(host))
+                    properties.put("mail." + protocol + ".yahoo.guid", "FAIRMAIL_V1");
                 AuthState authState = OAuthRefresh(context, provider, password);
-                connect(host, port, user, authState.getAccessToken(), factory);
+                connect(host, port, auth, user, authState.getAccessToken(), factory);
                 return authState.jsonSerializeString();
             } else {
-                connect(host, port, user, password, factory);
+                connect(host, port, auth, user, password, factory);
                 return null;
             }
         } catch (AuthenticationFailedException ex) {
@@ -333,7 +360,7 @@ public class EmailService implements AutoCloseable {
                             if (token == null)
                                 throw new AuthenticatorException("No token on refresh for " + user);
 
-                            connect(host, port, user, token, factory);
+                            connect(host, port, auth, user, token, factory);
                             return token;
                         }
 
@@ -344,34 +371,61 @@ public class EmailService implements AutoCloseable {
                 }
             else if (auth == AUTH_TYPE_OAUTH) {
                 AuthState authState = OAuthRefresh(context, provider, password);
-                connect(host, port, user, authState.getAccessToken(), factory);
+                connect(host, port, auth, user, authState.getAccessToken(), factory);
                 return authState.jsonSerializeString();
+            } else if (purpose == PURPOSE_CHECK) {
+                String msg = ex.getMessage();
+                if (msg != null)
+                    msg = msg.trim();
+                if (TextUtils.isEmpty(msg))
+                    throw ex;
+                throw new AuthenticationFailedException(
+                        context.getString(R.string.title_service_auth, msg),
+                        ex.getNextException());
             } else
                 throw ex;
         } catch (MailConnectException ex) {
             if (ConnectionHelper.vpnActive(context)) {
-                MailConnectException mex = new MailConnectException(new SocketConnectException(
-                        context.getString(R.string.title_service_vpn),
-                        new Exception(),
-                        ex.getHost(),
-                        ex.getPort(),
-                        ex.getConnectionTimeout()));
+                MailConnectException mex = new MailConnectException(
+                        new SocketConnectException(
+                                context.getString(R.string.title_service_vpn),
+                                new Exception(),
+                                ex.getHost(),
+                                ex.getPort(),
+                                ex.getConnectionTimeout()));
                 mex.setNextException(ex.getNextException());
                 throw mex;
             } else
                 throw ex;
         } catch (MessagingException ex) {
-            if (port == 995 && !("pop3".equals(protocol) || "pop3s".equals(protocol)))
-                throw new MessagingException(context.getString(R.string.title_service_port), ex);
-            else
+            if (purpose == PURPOSE_CHECK) {
+                if (port == 995 && !("pop3".equals(protocol) || "pop3s".equals(protocol)))
+                    throw new MessagingException(context.getString(R.string.title_service_port), ex);
+                else if (ex.getMessage() != null &&
+                        ex.getMessage().contains("Got bad greeting"))
+                    throw new MessagingException(context.getString(R.string.title_service_protocol), ex);
+                else if (ex.getCause() instanceof SSLException &&
+                        ex.getCause().getMessage() != null &&
+                        ex.getCause().getMessage().contains("Unable to parse TLS packet header"))
+                    throw new MessagingException(context.getString(R.string.title_service_protocol), ex);
+                else if (ex.getCause() instanceof SSLHandshakeException)
+                    throw new MessagingException(context.getString(R.string.title_service_protocol), ex);
+                else
+                    throw ex;
+            } else
                 throw ex;
         }
     }
 
     private void connect(
-            String host, int port, String user, String password,
+            String host, int port, int auth,
+            String user, String password,
             SSLSocketFactoryService factory) throws MessagingException {
         InetAddress main = null;
+        boolean require_id = (purpose == PURPOSE_CHECK &&
+                auth == AUTH_TYPE_OAUTH &&
+                "outlook.office365.com".equals(host));
+        Log.i("Require ID=" + require_id);
         try {
             //if (BuildConfig.DEBUG)
             //    throw new MailConnectException(
@@ -379,7 +433,7 @@ public class EmailService implements AutoCloseable {
 
             main = InetAddress.getByName(host);
             EntityLog.log(context, "Connecting to " + main);
-            _connect(main, port, user, password, factory);
+            _connect(main, port, require_id, user, password, factory);
         } catch (UnknownHostException ex) {
             throw new MessagingException(ex.getMessage(), ex);
         } catch (MessagingException ex) {
@@ -444,7 +498,7 @@ public class EmailService implements AutoCloseable {
 
                         try {
                             EntityLog.log(context, "Falling back to " + iaddr);
-                            _connect(iaddr, port, user, password, factory);
+                            _connect(iaddr, port, require_id, user, password, factory);
                             return;
                         } catch (MessagingException ex1) {
                             ex = ex1;
@@ -462,10 +516,35 @@ public class EmailService implements AutoCloseable {
     }
 
     private void _connect(
-            InetAddress address, int port, String user, String password,
+            InetAddress address, int port, boolean require_id,
+            String user, String password,
             SSLSocketFactoryService factory) throws MessagingException {
         isession = Session.getInstance(properties, null);
-        isession.setDebug(debug);
+
+        isession.setDebug(debug || log);
+        if (debug || log)
+            isession.setDebugOut(new PrintStream(new OutputStream() {
+                private ByteArrayOutputStream bos = new ByteArrayOutputStream();
+
+                @Override
+                public void write(int b) {
+                    try {
+                        if (((char) b) == '\n') {
+                            String line = bos.toString();
+                            if (!line.endsWith("ignoring socket timeout"))
+                                if (log)
+                                    EntityLog.log(context, user + " " + line);
+                                else
+                                    android.util.Log.i("javamail", user + " " + line);
+                            bos.reset();
+                        } else
+                            bos.write(b);
+                    } catch (Throwable ex) {
+                        Log.e(ex);
+                    }
+                }
+            }, true));
+
         //System.setProperty("mail.socket.debug", Boolean.toString(debug));
         isession.addProvider(new GmailSSLProvider());
 
@@ -497,14 +576,14 @@ public class EmailService implements AutoCloseable {
                     }
                 } catch (MessagingException ex) {
                     Log.w(ex);
+                    // Check for 'User is authenticated but not connected'
+                    if (require_id)
+                        throw ex;
                 }
 
         } else if ("smtp".equals(protocol) || "smtps".equals(protocol)) {
-            String[] c = BuildConfig.APPLICATION_ID.split("\\.");
-            Collections.reverse(Arrays.asList(c));
-            String hdomain = TextUtils.join(".", c);
-
             // https://tools.ietf.org/html/rfc5321#section-4.1.3
+            String hdomain = getDefaultEhlo();
             String haddr = (address instanceof Inet4Address ? "[127.0.0.1]" : "[IPv6:::1]");
 
             properties.put("mail." + protocol + ".localhost",
@@ -530,6 +609,12 @@ public class EmailService implements AutoCloseable {
             }
         } else
             throw new NoSuchProviderException(protocol);
+    }
+
+    static String getDefaultEhlo() {
+        String[] c = BuildConfig.APPLICATION_ID.split("\\.");
+        Collections.reverse(Arrays.asList(c));
+        return TextUtils.join(".", c);
     }
 
     private static class ErrorHolder {
@@ -599,15 +684,14 @@ public class EmailService implements AutoCloseable {
         EntityFolder.guessTypes(folders, getStore().getDefaultFolder().getSeparator());
 
         boolean inbox = false;
-        boolean drafts = false;
         for (EntityFolder folder : folders)
-            if (EntityFolder.INBOX.equals(folder.type))
+            if (EntityFolder.INBOX.equals(folder.type)) {
                 inbox = true;
-            else if (EntityFolder.DRAFTS.equals(folder.type))
-                drafts = true;
+                break;
+            }
 
-        if (!inbox || !drafts)
-            return null;
+        if (!inbox)
+            throw new IllegalArgumentException(context.getString(R.string.title_setup_no_inbox));
 
         return folders;
     }
@@ -620,6 +704,28 @@ public class EmailService implements AutoCloseable {
         return (SMTPTransport) iservice;
     }
 
+    Long getMaxSize() throws MessagingException {
+        // https://support.google.com/mail/answer/6584#limit
+
+        String size;
+        if (iservice instanceof SMTPTransport) {
+            // https://tools.ietf.org/html/rfc1870
+            size = getTransport().getExtensionParameter("SIZE");
+        } else if (iservice instanceof IMAPStore) {
+            // https://tools.ietf.org/html/rfc7889
+            size = ((IMAPStore) iservice).getCapability("APPENDLIMIT");
+        } else
+            return null;
+
+        if (!TextUtils.isEmpty(size) && TextUtils.isDigitsOnly(size)) {
+            long s = Long.parseLong(size);
+            if (s != 0) // Not infinite
+                return s;
+        }
+
+        return null;
+    }
+
     boolean hasCapability(String capability) throws MessagingException {
         Store store = getStore();
         if (store instanceof IMAPStore)
@@ -628,12 +734,50 @@ public class EmailService implements AutoCloseable {
             return false;
     }
 
+    public boolean isOpen() {
+        return (iservice != null && iservice.isConnected());
+    }
+
     public void close() throws MessagingException {
         try {
             if (iservice != null && iservice.isConnected())
                 iservice.close();
         } finally {
             context = null;
+        }
+    }
+
+    private static class SocketFactoryService extends SocketFactory {
+        private SocketFactory factory = SocketFactory.getDefault();
+
+        @Override
+        public Socket createSocket() throws IOException {
+            return configure(factory.createSocket());
+        }
+
+        @Override
+        public Socket createSocket(String host, int port) throws IOException, UnknownHostException {
+            return configure(factory.createSocket(host, port));
+        }
+
+        @Override
+        public Socket createSocket(InetAddress host, int port) throws IOException {
+            return configure(factory.createSocket(host, port));
+        }
+
+        @Override
+        public Socket createSocket(String host, int port, InetAddress localHost, int localPort) throws IOException, UnknownHostException {
+            return configure(factory.createSocket(host, port, localHost, localPort));
+        }
+
+        @Override
+        public Socket createSocket(InetAddress address, int port, InetAddress localAddress, int localPort) throws IOException {
+            return configure(factory.createSocket(address, port, localAddress, localPort));
+        }
+
+        private Socket configure(Socket socket) throws SocketException {
+            configureSocketOptions(socket);
+            return socket;
         }
     }
 
@@ -771,7 +915,9 @@ public class EmailService implements AutoCloseable {
             throw new IOException("createSocket");
         }
 
-        private Socket configure(Socket socket) {
+        private Socket configure(Socket socket) throws SocketException {
+            configureSocketOptions(socket);
+
             if (socket instanceof SSLSocket) {
                 SSLSocket sslSocket = (SSLSocket) socket;
 
@@ -902,6 +1048,8 @@ public class EmailService implements AutoCloseable {
 
         String getFingerPrintSelect() {
             try {
+                if (certificate == null)
+                    return null;
                 String keyId = getKeyId(certificate);
                 String fingerPrint = getFingerPrint(certificate);
                 return fingerPrint + (keyId == null ? "" : "/" + keyId);
@@ -909,6 +1057,27 @@ public class EmailService implements AutoCloseable {
                 Log.e(ex);
                 return null;
             }
+        }
+    }
+
+    private static void configureSocketOptions(Socket socket) throws SocketException {
+        int timeout = socket.getSoTimeout();
+        boolean keepAlive = socket.getKeepAlive();
+        int linger = socket.getSoLinger();
+
+        Log.i("Socket type=" + socket.getClass() +
+                " timeout=" + timeout +
+                " keep-alive=" + keepAlive +
+                " linger=" + linger);
+
+        if (keepAlive) {
+            Log.e("Socket keep-alive=" + keepAlive);
+            socket.setKeepAlive(false);
+        }
+
+        if (linger >= 0) {
+            Log.e("Socket linger=" + linger);
+            socket.setSoLinger(false, -1);
         }
     }
 
@@ -924,7 +1093,7 @@ public class EmailService implements AutoCloseable {
             return fingerprint;
         }
 
-        @NotNull
+        @NonNull
         @Override
         public synchronized String toString() {
             return getCause().toString();

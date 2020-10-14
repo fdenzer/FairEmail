@@ -24,13 +24,15 @@ import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.accounts.AccountManagerCallback;
 import android.accounts.AccountManagerFuture;
+import android.accounts.AuthenticatorException;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Handler;
 import android.provider.ContactsContract;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
@@ -125,7 +127,7 @@ public class FragmentGmail extends FragmentBase {
                             null,
                             null);
                     PackageManager pm = getContext().getPackageManager();
-                    if (intent.resolveActivity(pm) == null)
+                    if (intent.resolveActivity(pm) == null) // system whitelisted
                         throw new IllegalArgumentException(getString(R.string.title_no_viewer, intent));
                     startActivityForResult(intent, ActivitySetup.REQUEST_CHOOSE_ACCOUNT);
                 } catch (Throwable ex) {
@@ -232,7 +234,7 @@ public class FragmentGmail extends FragmentBase {
         etName.setEnabled(granted);
         btnSelect.setEnabled(granted);
 
-        new Handler().post(new Runnable() {
+        getMainHandler().post(new Runnable() {
             @Override
             public void run() {
                 etName.requestFocus();
@@ -250,6 +252,8 @@ public class FragmentGmail extends FragmentBase {
     private void onAccountSelected(Intent data) {
         String name = data.getStringExtra(AccountManager.KEY_ACCOUNT_NAME);
         String type = data.getStringExtra(AccountManager.KEY_ACCOUNT_TYPE);
+
+        final String disabled = getString(R.string.title_setup_advanced_protection);
 
         boolean found = false;
         AccountManager am = AccountManager.get(getContext());
@@ -275,11 +279,16 @@ public class FragmentGmail extends FragmentBase {
 
                                     onAuthorized(name, token);
                                 } catch (Throwable ex) {
+                                    if (ex instanceof AuthenticatorException &&
+                                            "ServiceDisabled".equals(ex.getMessage()))
+                                        ex = new IllegalArgumentException(disabled, ex);
+
                                     Log.e(ex);
+
                                     tvError.setText(Log.formatThrowable(ex));
                                     grpError.setVisibility(View.VISIBLE);
 
-                                    new Handler().post(new Runnable() {
+                                    getMainHandler().post(new Runnable() {
                                         @Override
                                         public void run() {
                                             scroll.smoothScrollTo(0, tvError.getBottom());
@@ -341,13 +350,23 @@ public class FragmentGmail extends FragmentBase {
                 if (TextUtils.isEmpty(password))
                     throw new IllegalArgumentException(context.getString(R.string.title_no_password));
 
+                ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+                NetworkInfo ani = (cm == null ? null : cm.getActiveNetworkInfo());
+                if (ani == null || !ani.isConnected())
+                    throw new IllegalArgumentException(context.getString(R.string.title_no_internet));
+
+                int at = user.indexOf('@');
+                String username = user.substring(0, at);
+
                 EmailProvider provider = EmailProvider.fromDomain(context, "gmail.com", EmailProvider.Discover.ALL);
 
                 List<EntityFolder> folders;
 
-                String aprotocol = provider.imap.starttls ? "imap" : "imaps";
+                String aprotocol = (provider.imap.starttls ? "imap" : "imaps");
+                int aencryption = (provider.imap.starttls ? EmailService.ENCRYPTION_STARTTLS : EmailService.ENCRYPTION_SSL);
                 try (EmailService iservice = new EmailService(
-                        context, aprotocol, null, false, EmailService.PURPOSE_CHECK, true)) {
+                        context, aprotocol, null, aencryption, false,
+                        EmailService.PURPOSE_CHECK, true)) {
                     iservice.connect(
                             provider.imap.host, provider.imap.port,
                             EmailService.AUTH_TYPE_GMAIL, null,
@@ -355,19 +374,20 @@ public class FragmentGmail extends FragmentBase {
                             null, null);
 
                     folders = iservice.getFolders();
-
-                    if (folders == null)
-                        throw new IllegalArgumentException(context.getString(R.string.title_setup_no_system_folders));
                 }
 
-                String iprotocol = provider.smtp.starttls ? "smtp" : "smtps";
+                Long max_size;
+                String iprotocol = (provider.smtp.starttls ? "smtp" : "smtps");
+                int iencryption = (provider.smtp.starttls ? EmailService.ENCRYPTION_STARTTLS : EmailService.ENCRYPTION_SSL);
                 try (EmailService iservice = new EmailService(
-                        context, iprotocol, null, false, EmailService.PURPOSE_CHECK, true)) {
+                        context, iprotocol, null, iencryption, false,
+                        EmailService.PURPOSE_CHECK, true)) {
                     iservice.connect(
                             provider.smtp.host, provider.smtp.port,
                             EmailService.AUTH_TYPE_GMAIL, null,
                             user, password,
                             null, null);
+                    max_size = iservice.getMaxSize();
                 }
 
                 DB db = DB.getInstance(context);
@@ -380,13 +400,13 @@ public class FragmentGmail extends FragmentBase {
                     EntityAccount account = new EntityAccount();
 
                     account.host = provider.imap.host;
-                    account.starttls = provider.imap.starttls;
+                    account.encryption = aencryption;
                     account.port = provider.imap.port;
                     account.auth_type = EmailService.AUTH_TYPE_GMAIL;
                     account.user = user;
                     account.password = password;
 
-                    account.name = provider.name;
+                    account.name = provider.name + "/" + username;
 
                     account.synchronize = true;
                     account.primary = (primary == null);
@@ -429,13 +449,14 @@ public class FragmentGmail extends FragmentBase {
                     identity.account = account.id;
 
                     identity.host = provider.smtp.host;
-                    identity.starttls = provider.smtp.starttls;
+                    identity.encryption = iencryption;
                     identity.port = provider.smtp.port;
                     identity.auth_type = EmailService.AUTH_TYPE_GMAIL;
                     identity.user = user;
                     identity.password = password;
                     identity.synchronize = true;
                     identity.primary = true;
+                    identity.max_size = max_size;
 
                     identity.id = db.identity().insertIdentity(identity);
                     EntityLog.log(context, "Gmail identity=" + identity.name + " email=" + identity.email);
@@ -468,7 +489,7 @@ public class FragmentGmail extends FragmentBase {
                     tvError.setText(Log.formatThrowable(ex));
                 grpError.setVisibility(View.VISIBLE);
 
-                new Handler().post(new Runnable() {
+                getMainHandler().post(new Runnable() {
                     @Override
                     public void run() {
                         scroll.smoothScrollTo(0, tvError.getBottom());

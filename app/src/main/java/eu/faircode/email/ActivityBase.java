@@ -28,9 +28,12 @@ import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.PowerManager;
+import android.text.TextUtils;
 import android.view.KeyEvent;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
@@ -69,12 +72,12 @@ abstract class ActivityBase extends AppCompatActivity implements SharedPreferenc
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        Log.i("Create " + this.getClass().getName() + " version=" + BuildConfig.VERSION_NAME);
+        EntityLog.log(this, "Activity create " + this.getClass().getName() +
+                " version=" + BuildConfig.VERSION_NAME);
         Intent intent = getIntent();
-        if (intent != null) {
-            Log.i(intent.toString());
-            Log.logBundle(intent.getExtras());
-        }
+        if (intent != null)
+            EntityLog.log(this, intent +
+                    " extras=" + TextUtils.join(", ", Log.getExtras(intent.getExtras())));
 
         this.contacts = hasPermission(Manifest.permission.READ_CONTACTS);
 
@@ -90,7 +93,7 @@ abstract class ActivityBase extends AppCompatActivity implements SharedPreferenc
             // https://developer.android.com/guide/topics/ui/look-and-feel/darktheme#configuration_changes
             int uiMode = getResources().getConfiguration().uiMode;
             boolean night = ((uiMode & Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES);
-            Log.i("theme=" + theme + " UI mode=" + uiMode + " night=" + night);
+            EntityLog.log(this, "Activity theme=" + theme + " UI mode=" + uiMode + " night=" + night);
 
             switch (theme) {
                 // Light
@@ -172,31 +175,59 @@ abstract class ActivityBase extends AppCompatActivity implements SharedPreferenc
                     setTheme(R.style.AppThemeBlack);
                     break;
 
+                case "black_and_white":
+                    setTheme(R.style.AppThemeBlackAndWhite);
+                    break;
+
                 // System
                 case "system":
                 case "blue_orange_system":
                     setTheme(night
                             ? R.style.AppThemeBlueOrangeDark : R.style.AppThemeBlueOrangeLight);
                     break;
+                case "blue_orange_system_black":
+                    setTheme(night
+                            ? R.style.AppThemeBlueOrangeBlack : R.style.AppThemeBlueOrangeLight);
+                    break;
                 case "orange_blue_system":
                     setTheme(night
                             ? R.style.AppThemeOrangeBlueDark : R.style.AppThemeOrangeBlueLight);
+                    break;
+                case "orange_blue_system_black":
+                    setTheme(night
+                            ? R.style.AppThemeOrangeBlueBlack : R.style.AppThemeOrangeBlueLight);
                     break;
                 case "yellow_purple_system":
                     setTheme(night
                             ? R.style.AppThemeYellowPurpleDark : R.style.AppThemeYellowPurpleLight);
                     break;
+                case "yellow_purple_system_black":
+                    setTheme(night
+                            ? R.style.AppThemeYellowPurpleBlack : R.style.AppThemeYellowPurpleLight);
+                    break;
                 case "purple_yellow_system":
                     setTheme(night
                             ? R.style.AppThemePurpleYellowDark : R.style.AppThemePurpleYellowLight);
+                    break;
+                case "purple_yellow_system_black":
+                    setTheme(night
+                            ? R.style.AppThemePurpleYellowBlack : R.style.AppThemePurpleYellowLight);
                     break;
                 case "red_green_system":
                     setTheme(night
                             ? R.style.AppThemeRedGreenDark : R.style.AppThemeRedGreenLight);
                     break;
+                case "red_green_system_black":
+                    setTheme(night
+                            ? R.style.AppThemeRedGreenBlack : R.style.AppThemeRedGreenLight);
+                    break;
                 case "green_red_system":
                     setTheme(night
                             ? R.style.AppThemeGreenRedDark : R.style.AppThemeGreenRedLight);
+                    break;
+                case "green_red_system_black":
+                    setTheme(night
+                            ? R.style.AppThemeGreenRedBlack : R.style.AppThemeGreenRedLight);
                     break;
                 case "grey_system":
                     setTheme(night
@@ -249,6 +280,7 @@ abstract class ActivityBase extends AppCompatActivity implements SharedPreferenc
     @Override
     protected void onResume() {
         Log.d("Resume " + this.getClass().getName());
+        super.onResume();
 
         visible = true;
 
@@ -259,47 +291,6 @@ abstract class ActivityBase extends AppCompatActivity implements SharedPreferenc
             startActivity(getIntent());
         } else
             checkAuthentication();
-
-        try {
-            super.onResume();
-        } catch (Throwable ex) {
-            Log.w(ex);
-            /*
-                java.lang.RuntimeException: Unable to resume activity {eu.faircode.email/eu.faircode.email.ActivityView}: java.lang.IllegalArgumentException
-                  at android.app.ActivityThread.performResumeActivity(ActivityThread.java:4025)
-                  at android.app.ActivityThread.handleResumeActivity(ActivityThread.java:4057)
-                  at android.app.servertransaction.ResumeActivityItem.execute(ResumeActivityItem.java:51)
-                  at android.app.servertransaction.TransactionExecutor.executeLifecycleState(TransactionExecutor.java:145)
-                  at android.app.servertransaction.TransactionExecutor.execute(TransactionExecutor.java:70)
-                  at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1959)
-                  at android.os.Handler.dispatchMessage(Handler.java:106)
-                  at android.os.Looper.loop(Looper.java:214)
-                  at android.app.ActivityThread.main(ActivityThread.java:7100)
-                  at java.lang.reflect.Method.invoke(Native Method)
-                  at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:494)
-                  at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:964)
-                Caused by: java.lang.IllegalArgumentException
-                  at android.os.Parcel.createException(Parcel.java:1970)
-                  at android.os.Parcel.readException(Parcel.java:1934)
-                  at android.os.Parcel.readException(Parcel.java:1884)
-                  at android.app.IActivityManager$Stub$Proxy.isTopOfTask(IActivityManager.java:7835)
-                  at android.app.Activity.isTopOfTask(Activity.java:6544)
-                  at android.app.Activity.onResume(Activity.java:1404)
-                  at androidx.fragment.app.FragmentActivity.onResume(SourceFile:458)
-                  at eu.faircode.email.ActivityBase.onResume(SourceFile:263)
-                  at eu.faircode.email.ActivityBilling.onResume(SourceFile:125)
-                  at eu.faircode.email.ActivityView.onResume(SourceFile:588)
-                  at android.app.Instrumentation.callActivityOnResume(Instrumentation.java:1416)
-                  at android.app.Activity.performResume(Activity.java:7612)
-                  at android.app.ActivityThread.performResumeActivity(ActivityThread.java:4017)
-                  ... 11 more
-                Caused by: android.os.RemoteException: Remote stack trace:
-                  at com.android.server.am.ActivityManagerService.isTopOfTask(ActivityManagerService.java:18313)
-                  at android.app.IActivityManager$Stub.onTransact(IActivityManager.java:2028)
-                  at com.android.server.am.ActivityManagerService.onTransact(ActivityManagerService.java:4166)
-                  at android.os.Binder.execTransact(Binder.java:739)
-             */
-        }
     }
 
     @Override
@@ -345,7 +336,8 @@ abstract class ActivityBase extends AppCompatActivity implements SharedPreferenc
             Log.i("Stop with screen off");
             SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
             boolean biometrics = prefs.getBoolean("biometrics", false);
-            if (biometrics) {
+            String pin = prefs.getString("pin", null);
+            if (biometrics || !TextUtils.isEmpty(pin)) {
                 Helper.clearAuthentication(this);
                 finish();
             }
@@ -384,20 +376,30 @@ abstract class ActivityBase extends AppCompatActivity implements SharedPreferenc
     @Override
     public void startActivity(Intent intent) {
         try {
+            Log.i("Start intent=" + intent);
+            Log.logExtras(intent);
             super.startActivity(intent);
         } catch (ActivityNotFoundException ex) {
+            Log.w(ex);
+            ToastEx.makeText(this, getString(R.string.title_no_viewer, intent), Toast.LENGTH_LONG).show();
+        } catch (Throwable ex) {
             Log.e(ex);
-            ToastEx.makeText(this, getString(R.string.title_no_viewer, intent.getAction()), Toast.LENGTH_LONG).show();
+            ToastEx.makeText(this, Log.formatThrowable(ex), Toast.LENGTH_LONG).show();
         }
     }
 
     @Override
     public void startActivityForResult(Intent intent, int requestCode) {
         try {
+            Log.i("Start intent=" + intent + " request=" + requestCode);
+            Log.logExtras(intent);
             super.startActivityForResult(intent, requestCode);
         } catch (ActivityNotFoundException ex) {
+            Log.w(ex);
+            ToastEx.makeText(this, getString(R.string.title_no_viewer, intent), Toast.LENGTH_LONG).show();
+        } catch (Throwable ex) {
             Log.e(ex);
-            ToastEx.makeText(this, getString(R.string.title_no_viewer, intent.getAction()), Toast.LENGTH_LONG).show();
+            ToastEx.makeText(this, Log.formatThrowable(ex), Toast.LENGTH_LONG).show();
         }
     }
 
@@ -513,6 +515,33 @@ abstract class ActivityBase extends AppCompatActivity implements SharedPreferenc
     }
 
     @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        try {
+            return super.onTouchEvent(event);
+        } catch (Throwable ex) {
+            Log.w(ex);
+            /*
+                java.lang.IllegalArgumentException: pointerIndex out of range
+                        at android.view.MotionEvent.nativeGetAxisValue(MotionEvent.java:-2)
+                        at android.view.MotionEvent.getX(MotionEvent.java:2379)
+                        at androidx.viewpager.widget.ViewPager.onTouchEvent(SourceFile:2259)
+                        at android.view.View.dispatchTouchEvent(View.java:14002)
+                        at android.view.ViewGroup.dispatchTransformedTouchEvent(ViewGroup.java:3136)
+                        at android.view.ViewGroup.dispatchTouchEvent(ViewGroup.java:2820)
+                        at android.view.ViewGroup.dispatchTransformedTouchEvent(ViewGroup.java:3142)
+                        at android.view.ViewGroup.dispatchTouchEvent(ViewGroup.java:2834)
+                        at com.android.internal.policy.DecorView.superDispatchTouchEvent(DecorView.java:495)
+                        at com.android.internal.policy.PhoneWindow.superDispatchTouchEvent(PhoneWindow.java:1868)
+                        at android.app.Activity.dispatchTouchEvent(Activity.java:4022)
+                        at androidx.appcompat.view.WindowCallbackWrapper.dispatchTouchEvent(SourceFile:69)
+                        at com.android.internal.policy.DecorView.dispatchTouchEvent(DecorView.java:453)
+                        at android.view.View.dispatchPointerEvent(View.java:14261)
+             */
+            return false;
+        }
+    }
+
+    @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         switch (item.getItemId()) {
             case android.R.id.home:
@@ -529,6 +558,20 @@ abstract class ActivityBase extends AppCompatActivity implements SharedPreferenc
             if (listener.onBackPressed())
                 return true;
         return false;
+    }
+
+    @Override
+    public boolean shouldUpRecreateTask(Intent targetIntent) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            ComponentName cn = targetIntent.getComponent();
+            if (cn != null && BuildConfig.APPLICATION_ID.equals(cn.getPackageName()))
+                return false;
+        }
+        return super.shouldUpRecreateTask(targetIntent);
+    }
+
+    Handler getMainHandler() {
+        return ApplicationEx.getMainHandler();
     }
 
     public interface IKeyPressedListener {

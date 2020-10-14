@@ -3,6 +3,8 @@ package eu.faircode.email;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.database.Cursor;
+import android.net.Uri;
+import android.os.Build;
 import android.text.TextUtils;
 
 import androidx.annotation.NonNull;
@@ -60,7 +62,7 @@ import io.requery.android.database.sqlite.SQLiteDatabase;
 // https://developer.android.com/topic/libraries/architecture/room.html
 
 @Database(
-        version = 161,
+        version = 176,
         entities = {
                 EntityIdentity.class,
                 EntityAccount.class,
@@ -106,8 +108,6 @@ public abstract class DB extends RoomDatabase {
     public abstract DaoLog log();
 
     private static DB sInstance;
-    private static final ExecutorService executor =
-            Helper.getBackgroundExecutor(4, "query"); // AndroidX default thread count
 
     private static final String DB_NAME = "fairemail";
     private static final int DB_CHECKPOINT = 1000; // requery/sqlite-android default
@@ -261,6 +261,11 @@ public abstract class DB extends RoomDatabase {
             Log.e(ex);
         }
 
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        int threads = prefs.getInt("query_threads", 4); // AndroidX default thread count: 4
+        Log.i("Query threads=" + threads);
+        ExecutorService executor = Helper.getBackgroundExecutor(threads, "query");
+
         return Room
                 .databaseBuilder(context, DB.class, DB_NAME)
                 .openHelperFactory(new RequerySQLiteOpenHelperFactory())
@@ -271,27 +276,39 @@ public abstract class DB extends RoomDatabase {
                     public void onOpen(@NonNull SupportSQLiteDatabase db) {
                         Log.i("Database version=" + db.getVersion());
 
+                        if (BuildConfig.DEBUG) {
+                            db.execSQL("DROP TRIGGER IF EXISTS `attachment_insert`");
+                            db.execSQL("DROP TRIGGER IF EXISTS `attachment_delete`");
+                        }
                         createTriggers(db);
                     }
                 });
     }
 
     private static void createTriggers(@NonNull SupportSQLiteDatabase db) {
+        List<String> image = new ArrayList<>();
+        for (String img : Helper.IMAGE_TYPES)
+            image.add("'" + img + "'");
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+            for (String img : Helper.IMAGE_TYPES8)
+                image.add("'" + img + "'");
+        String images = TextUtils.join(",", image);
+
         db.execSQL("CREATE TRIGGER IF NOT EXISTS attachment_insert" +
                 " AFTER INSERT ON attachment" +
                 " BEGIN" +
                 "  UPDATE message SET attachments = attachments + 1" +
                 "  WHERE message.id = NEW.message" +
-                "  AND NEW.disposition = 'attachment'" +
-                "  AND (NEW.encryption IS NULL OR NEW.encryption = 0);" +
+                "  AND (NEW.encryption IS NULL" +
+                "  AND NOT ((NEW.disposition = 'inline' OR NEW.cid IS NOT NULL) AND NEW.type IN (" + images + ")));" +
                 " END");
         db.execSQL("CREATE TRIGGER IF NOT EXISTS attachment_delete" +
                 " AFTER DELETE ON attachment" +
                 " BEGIN" +
                 "  UPDATE message SET attachments = attachments - 1" +
                 "  WHERE message.id = OLD.message" +
-                "  AND OLD.disposition = 'attachment'" +
-                "  AND (OLD.encryption IS NULL OR OLD.encryption = 0);" +
+                "  AND (OLD.encryption IS NULL" +
+                "  AND NOT ((OLD.disposition = 'inline' OR OLD.cid IS NOT NULL) AND OLD.type IN (" + images + ")));" +
                 " END");
     }
 
@@ -1600,6 +1617,118 @@ public abstract class DB extends RoomDatabase {
                         db.execSQL("UPDATE identity SET encrypt = " + ("pgp".equals(encrypt_method) ? 0 : 1));
                         prefs.edit().remove("default_encrypt_method").apply();
                     }
+                })
+                .addMigrations(new Migration(161, 162) {
+                    @Override
+                    public void migrate(@NonNull SupportSQLiteDatabase db) {
+                        Log.i("DB migration from version " + startVersion + " to " + endVersion);
+                        db.execSQL("ALTER TABLE `message` ADD COLUMN `verified` INTEGER NOT NULL DEFAULT 0");
+                    }
+                })
+                .addMigrations(new Migration(162, 163) {
+                    @Override
+                    public void migrate(@NonNull SupportSQLiteDatabase db) {
+                        Log.i("DB migration from version " + startVersion + " to " + endVersion);
+                        db.execSQL("DROP TRIGGER attachment_insert");
+                        db.execSQL("DROP TRIGGER attachment_delete");
+                        createTriggers(db);
+                    }
+                })
+                .addMigrations(new Migration(163, 164) {
+                    @Override
+                    public void migrate(@NonNull SupportSQLiteDatabase db) {
+                        Log.i("DB migration from version " + startVersion + " to " + endVersion);
+                        db.execSQL("DROP TRIGGER attachment_insert");
+                        db.execSQL("DROP TRIGGER attachment_delete");
+                        createTriggers(db);
+                    }
+                })
+                .addMigrations(new Migration(164, 165) {
+                    @Override
+                    public void migrate(@NonNull SupportSQLiteDatabase db) {
+                        Log.i("DB migration from version " + startVersion + " to " + endVersion);
+                        db.execSQL("CREATE INDEX IF NOT EXISTS `index_attachment_message_type` ON `attachment` (`message`, `type`)");
+                    }
+                })
+                .addMigrations(new Migration(165, 166) {
+                    @Override
+                    public void migrate(@NonNull SupportSQLiteDatabase db) {
+                        db.execSQL("DROP INDEX `index_attachment_message_type`");
+                    }
+                })
+                .addMigrations(new Migration(166, 167) {
+                    @Override
+                    public void migrate(@NonNull SupportSQLiteDatabase db) {
+                        Log.i("DB migration from version " + startVersion + " to " + endVersion);
+                        db.execSQL("ALTER TABLE `message` ADD COLUMN `labels` TEXT");
+                    }
+                })
+                .addMigrations(new Migration(167, 168) {
+                    @Override
+                    public void migrate(@NonNull SupportSQLiteDatabase db) {
+                        Log.i("DB migration from version " + startVersion + " to " + endVersion);
+                        db.execSQL("ALTER TABLE `identity` ADD COLUMN `self` INTEGER NOT NULL DEFAULT 1");
+                    }
+                })
+                .addMigrations(new Migration(168, 169) {
+                    @Override
+                    public void migrate(@NonNull SupportSQLiteDatabase db) {
+                        Log.i("DB migration from version " + startVersion + " to " + endVersion);
+                        db.execSQL("ALTER TABLE `identity` ADD COLUMN `max_size` INTEGER");
+                    }
+                })
+                .addMigrations(new Migration(169, 170) {
+                    @Override
+                    public void migrate(@NonNull SupportSQLiteDatabase db) {
+                        Log.i("DB migration from version " + startVersion + " to " + endVersion);
+                        db.execSQL("ALTER TABLE `account` ADD COLUMN `max_size` INTEGER");
+                    }
+                })
+                .addMigrations(new Migration(170, 171) {
+                    @Override
+                    public void migrate(@NonNull SupportSQLiteDatabase db) {
+                        Log.i("DB migration from version " + startVersion + " to " + endVersion);
+                        db.execSQL("DROP TRIGGER IF EXISTS `attachment_insert`");
+                        db.execSQL("DROP TRIGGER IF EXISTS `attachment_delete`");
+                        createTriggers(db);
+                    }
+                })
+                .addMigrations(new Migration(171, 172) {
+                    @Override
+                    public void migrate(@NonNull SupportSQLiteDatabase db) {
+                        Log.i("DB migration from version " + startVersion + " to " + endVersion);
+                        db.execSQL("ALTER TABLE `account` ADD COLUMN `use_received` INTEGER NOT NULL DEFAULT 0");
+                    }
+                })
+                .addMigrations(new Migration(172, 173) {
+                    @Override
+                    public void migrate(@NonNull SupportSQLiteDatabase db) {
+                        Log.i("DB migration from version " + startVersion + " to " + endVersion);
+                        db.execSQL("ALTER TABLE `attachment` ADD COLUMN `subsequence` INTEGER");
+                        db.execSQL("DROP INDEX `index_attachment_message_sequence`");
+                        db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_attachment_message_sequence_subsequence` ON `attachment` (`message`, `sequence`, `subsequence`)");
+                    }
+                })
+                .addMigrations(new Migration(173, 174) {
+                    @Override
+                    public void migrate(@NonNull SupportSQLiteDatabase db) {
+                        Log.i("DB migration from version " + startVersion + " to " + endVersion);
+                        db.execSQL("ALTER TABLE `answer` ADD COLUMN `group` TEXT");
+                    }
+                })
+                .addMigrations(new Migration(174, 175) {
+                    @Override
+                    public void migrate(@NonNull SupportSQLiteDatabase db) {
+                        Log.i("DB migration from version " + startVersion + " to " + endVersion);
+                        db.execSQL("ALTER TABLE `answer` ADD COLUMN `standard` INTEGER NOT NULL DEFAULT 0");
+                    }
+                })
+                .addMigrations(new Migration(175, 176) {
+                    @Override
+                    public void migrate(@NonNull SupportSQLiteDatabase db) {
+                        Log.i("DB migration from version " + startVersion + " to " + endVersion);
+                        db.execSQL("ALTER TABLE `message` ADD COLUMN `auto_submitted` INTEGER");
+                    }
                 });
     }
 
@@ -1626,16 +1755,25 @@ public abstract class DB extends RoomDatabase {
         public static String[] toStringArray(String value) {
             if (value == null)
                 return new String[0];
-            else
-                return TextUtils.split(value, " ");
+            else {
+                String[] result = TextUtils.split(value, " ");
+                for (int i = 0; i < result.length; i++)
+                    result[i] = Uri.decode(result[i]);
+                return result;
+            }
         }
 
         @TypeConverter
         public static String fromStringArray(String[] value) {
             if (value == null || value.length == 0)
                 return null;
-            else
-                return TextUtils.join(" ", value);
+            else {
+                String[] copy = new String[value.length];
+                System.arraycopy(value, 0, copy, 0, value.length);
+                for (int i = 0; i < copy.length; i++)
+                    copy[i] = Uri.encode(copy[i]);
+                return TextUtils.join(" ", copy);
+            }
         }
 
         @TypeConverter

@@ -20,10 +20,6 @@ package eu.faircode.email;
 */
 
 import android.app.Application;
-import android.app.Notification;
-import android.app.NotificationChannel;
-import android.app.NotificationChannelGroup;
-import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -31,18 +27,30 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.os.Build;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Printer;
 import android.webkit.CookieManager;
 
 import androidx.preference.PreferenceManager;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-public class ApplicationEx extends Application {
+public class ApplicationEx extends Application implements SharedPreferences.OnSharedPreferenceChangeListener {
     private Thread.UncaughtExceptionHandler prev = null;
+
+    private static final List<String> OPTIONS_RESTART = Collections.unmodifiableList(Arrays.asList(
+            "secure", // privacy
+            "shortcuts", // misc
+            "language", // misc
+            "query_threads" // misc
+    ));
 
     @Override
     protected void attachBaseContext(Context base) {
@@ -51,14 +59,26 @@ public class ApplicationEx extends Application {
 
     static Context getLocalizedContext(Context context) {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-        boolean english = prefs.getBoolean("english", false);
 
-        if (english) {
+        if (prefs.contains("english")) {
+            boolean english = prefs.getBoolean("english", false);
+            if (english)
+                prefs.edit()
+                        .remove("english")
+                        .putString("language", Locale.US.toLanguageTag())
+                        .commit();
+        }
+
+        String language = prefs.getString("language", null);
+        if (language != null) {
+            Locale locale = Locale.forLanguageTag(language);
+            Locale.setDefault(locale);
             Configuration config = new Configuration(context.getResources().getConfiguration());
-            config.setLocale(Locale.US);
+            config.setLocale(locale);
             return context.createConfigurationContext(config);
-        } else
-            return context;
+        }
+
+        return context;
     }
 
     @Override
@@ -71,12 +91,14 @@ public class ApplicationEx extends Application {
         getMainLooper().setMessageLogging(new Printer() {
             @Override
             public void println(String msg) {
-                Log.d("Loop: " + msg);
+                if (BuildConfig.DEBUG)
+                    Log.d("Loop: " + msg);
             }
         });
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         final boolean crash_reports = prefs.getBoolean("crash_reports", false);
+        prefs.registerOnSharedPreferenceChangeListener(this);
 
         prev = Thread.getDefaultUncaughtExceptionHandler();
 
@@ -103,7 +125,8 @@ public class ApplicationEx extends Application {
 
         upgrade(this);
 
-        createNotificationChannels();
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O)
+            NotificationHelper.createNotificationChannels(this);
 
         DB.setupViewInvalidation(this);
 
@@ -112,6 +135,8 @@ public class ApplicationEx extends Application {
 
         MessageHelper.setSystemProperties(this);
         ContactInfo.init(this);
+
+        DisconnectBlacklist.init(this);
 
         WorkerWatchdog.init(this);
         WorkerCleanup.queue(this);
@@ -131,6 +156,19 @@ public class ApplicationEx extends Application {
     }
 
     @Override
+    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+        if (OPTIONS_RESTART.contains(key))
+            restart();
+    }
+
+    void restart() {
+        Intent intent = new Intent(this, ActivityMain.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
+        Runtime.getRuntime().exit(0);
+    }
+
+    @Override
     public void onTrimMemory(int level) {
         Log.logMemory(this, "Trim memory level=" + level);
         Map<String, String> crumb = new HashMap<>();
@@ -146,15 +184,22 @@ public class ApplicationEx extends Application {
         Map<String, String> crumb = new HashMap<>();
         crumb.put("free", Integer.toString(Log.getFreeMemMb()));
         Log.breadcrumb("low", crumb);
+
+        ContactInfo.clearCache(this, false);
+
         super.onLowMemory();
     }
 
     static void upgrade(Context context) {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
         int version = prefs.getInt("version", BuildConfig.VERSION_CODE);
-        Log.i("Upgrading from " + version + " to " + BuildConfig.VERSION_CODE);
+        if (version != BuildConfig.VERSION_CODE)
+            EntityLog.log(context, "Upgrading from " + version + " to " + BuildConfig.VERSION_CODE);
 
         SharedPreferences.Editor editor = prefs.edit();
+
+        if (version < BuildConfig.VERSION_CODE)
+            editor.remove("crash_report_count");
 
         if (version < 468) {
             editor.remove("notify_trash");
@@ -278,84 +323,42 @@ public class ApplicationEx extends Application {
         } else if (version < 1181) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && !BuildConfig.DEBUG)
                 editor.remove("background_service");
+        } else if (version < 1195)
+            editor.remove("auto_optimize");
+        else if (version < 1229) {
+            boolean monospaced = prefs.getBoolean("monospaced", false);
+            if (monospaced && !BuildConfig.DEBUG)
+                editor.putBoolean("text_font", false);
+        } else if (version < 1238) {
+            if (!prefs.contains("subject_ellipsize"))
+                editor.putString("subject_ellipsize", "middle");
+            if (!prefs.contains("auto_optimize"))
+                editor.putBoolean("auto_optimize", false);
+        } else if (version < 1253) {
+            int threads = prefs.getInt("query_threads", 4);
+            if (threads == 4)
+                editor.remove("query_threads");
+        } else if (version < 1264) {
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N ||
+                    "Blackview".equalsIgnoreCase(Build.MANUFACTURER) ||
+                    "OnePlus".equalsIgnoreCase(Build.MANUFACTURER) ||
+                    "HUAWEI".equalsIgnoreCase(Build.MANUFACTURER))
+                editor.putInt("query_threads", 2);
+        } else if (version < 1274)
+            ContactInfo.clearCache(context); // Favicon background
+        else if (version < 1336) {
+            if (!prefs.contains("beige"))
+                editor.putBoolean("beige", false);
         }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+            editor.remove("background_service");
 
         if (version < BuildConfig.VERSION_CODE)
             editor.putInt("previous_version", version);
         editor.putInt("version", BuildConfig.VERSION_CODE);
 
         editor.apply();
-    }
-
-    private void createNotificationChannels() {
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-            NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-
-            // Sync
-            NotificationChannel service = new NotificationChannel(
-                    "service", getString(R.string.channel_service),
-                    NotificationManager.IMPORTANCE_MIN);
-            service.setSound(null, Notification.AUDIO_ATTRIBUTES_DEFAULT);
-            service.setShowBadge(false);
-            service.setLockscreenVisibility(Notification.VISIBILITY_SECRET);
-            nm.createNotificationChannel(service);
-
-            // Send
-            NotificationChannel send = new NotificationChannel(
-                    "send", getString(R.string.channel_send),
-                    NotificationManager.IMPORTANCE_DEFAULT);
-            send.setSound(null, Notification.AUDIO_ATTRIBUTES_DEFAULT);
-            send.setShowBadge(false);
-            send.setLockscreenVisibility(Notification.VISIBILITY_PRIVATE);
-            nm.createNotificationChannel(send);
-
-            // Notify
-            NotificationChannel notification = new NotificationChannel(
-                    "notification", getString(R.string.channel_notification),
-                    NotificationManager.IMPORTANCE_HIGH);
-            notification.setLockscreenVisibility(Notification.VISIBILITY_PRIVATE);
-            notification.enableLights(true);
-            nm.createNotificationChannel(notification);
-
-            // Update
-            if (!Helper.isPlayStoreInstall()) {
-                NotificationChannel update = new NotificationChannel(
-                        "update", getString(R.string.channel_update),
-                        NotificationManager.IMPORTANCE_HIGH);
-                update.setSound(null, Notification.AUDIO_ATTRIBUTES_DEFAULT);
-                update.setLockscreenVisibility(Notification.VISIBILITY_PRIVATE);
-                nm.createNotificationChannel(update);
-            }
-
-            // Warnings
-            NotificationChannel warning = new NotificationChannel(
-                    "warning", getString(R.string.channel_warning),
-                    NotificationManager.IMPORTANCE_HIGH);
-            warning.setLockscreenVisibility(Notification.VISIBILITY_PRIVATE);
-            nm.createNotificationChannel(warning);
-
-            // Errors
-            NotificationChannel error = new NotificationChannel(
-                    "error",
-                    getString(R.string.channel_error),
-                    NotificationManager.IMPORTANCE_HIGH);
-            error.setLockscreenVisibility(Notification.VISIBILITY_PRIVATE);
-            nm.createNotificationChannel(error);
-
-            // Server alerts
-            NotificationChannel alerts = new NotificationChannel(
-                    "alerts",
-                    getString(R.string.channel_alert),
-                    NotificationManager.IMPORTANCE_HIGH);
-            alerts.setLockscreenVisibility(Notification.VISIBILITY_PRIVATE);
-            nm.createNotificationChannel(alerts);
-
-            // Contacts grouping
-            NotificationChannelGroup group = new NotificationChannelGroup(
-                    "contacts",
-                    getString(R.string.channel_group_contacts));
-            nm.createNotificationChannelGroup(group);
-        }
     }
 
     private BroadcastReceiver onScreenOff = new BroadcastReceiver() {
@@ -366,4 +369,12 @@ public class ApplicationEx extends Application {
             Helper.clearAuthentication(ApplicationEx.this);
         }
     };
+
+    private static Handler handler = null;
+
+    synchronized static Handler getMainHandler() {
+        if (handler == null)
+            handler = new Handler(Looper.getMainLooper());
+        return handler;
+    }
 }

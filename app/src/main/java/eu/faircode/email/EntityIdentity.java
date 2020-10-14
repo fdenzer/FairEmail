@@ -22,6 +22,7 @@ package eu.faircode.email;
 import android.text.TextUtils;
 
 import androidx.annotation.NonNull;
+import androidx.room.ColumnInfo;
 import androidx.room.Entity;
 import androidx.room.ForeignKey;
 import androidx.room.Index;
@@ -65,7 +66,8 @@ public class EntityIdentity {
     @NonNull
     public String host; // SMTP
     @NonNull
-    public Boolean starttls;
+    @ColumnInfo(name = "starttls")
+    public Integer encryption;
     @NonNull
     public Boolean insecure = false;
     @NonNull
@@ -89,6 +91,8 @@ public class EntityIdentity {
     public Boolean synchronize;
     @NonNull
     public Boolean primary;
+    @NonNull
+    public Boolean self = true;
     @NonNull
     public Boolean sender_extra = false;
     public String sender_extra_regex;
@@ -114,9 +118,10 @@ public class EntityIdentity {
     public String state;
     public String error;
     public Long last_connected;
+    public Long max_size;
 
     String getProtocol() {
-        return (starttls ? "smtp" : "smtps");
+        return (encryption == EmailService.ENCRYPTION_SSL ? "smtps" : "smtp");
     }
 
     boolean sameAddress(Address address) {
@@ -150,11 +155,13 @@ public class EntityIdentity {
 
         // User
         if (TextUtils.isEmpty(sender_extra_regex)) {
-            String user = (cother[0].contains("+") ? cother[0].split("\\+")[0] : cother[0]);
+            int plus = cother[0].indexOf('+');
+            String user = (plus < 0 ? cother[0] : cother[0].substring(0, plus));
             if (user.equalsIgnoreCase(cemail[0]))
                 return true;
         } else {
-            if (Pattern.matches(sender_extra_regex, cother[0]))
+            String input = (sender_extra_regex.contains("@") ? other : cother[0]);
+            if (Pattern.matches(sender_extra_regex, input))
                 return true;
         }
 
@@ -173,7 +180,7 @@ public class EntityIdentity {
         // not account
 
         json.put("host", host);
-        json.put("starttls", starttls);
+        json.put("encryption", encryption);
         json.put("insecure", insecure);
         json.put("port", port);
         json.put("auth_type", auth_type);
@@ -188,6 +195,7 @@ public class EntityIdentity {
 
         json.put("synchronize", synchronize);
         json.put("primary", primary);
+        json.put("self", self);
         json.put("sender_extra", sender_extra);
         json.put("sender_extra_regex", sender_extra_regex);
 
@@ -220,7 +228,11 @@ public class EntityIdentity {
             identity.signature = json.getString("signature");
 
         identity.host = json.getString("host");
-        identity.starttls = json.getBoolean("starttls");
+        if (json.has("starttls"))
+            identity.encryption = (json.getBoolean("starttls")
+                    ? EmailService.ENCRYPTION_STARTTLS : EmailService.ENCRYPTION_SSL);
+        else
+            identity.encryption = json.getInt("encryption");
         identity.insecure = (json.has("insecure") && json.getBoolean("insecure"));
         identity.port = json.getInt("port");
         identity.auth_type = json.getInt("auth_type");
@@ -241,6 +253,8 @@ public class EntityIdentity {
 
         identity.synchronize = json.getBoolean("synchronize");
         identity.primary = json.getBoolean("primary");
+        identity.self = json.optBoolean("self", true);
+
         if (json.has("sender_extra"))
             identity.sender_extra = json.getBoolean("sender_extra");
         if (json.has("sender_extra_regex"))
@@ -267,7 +281,7 @@ public class EntityIdentity {
                     Objects.equals(this.color, other.color) &&
                     Objects.equals(this.signature, other.signature) &&
                     this.host.equals(other.host) &&
-                    this.starttls.equals(other.starttls) &&
+                    this.encryption.equals(other.encryption) &&
                     this.insecure.equals(other.insecure) &&
                     this.port.equals(other.port) &&
                     this.auth_type.equals(other.auth_type) &&
@@ -278,7 +292,8 @@ public class EntityIdentity {
                     Objects.equals(this.ehlo, other.ehlo) &&
                     this.synchronize.equals(other.synchronize) &&
                     this.primary.equals(other.primary) &&
-                    this.sender_extra.equals(sender_extra) &&
+                    this.self.equals(other.self) &&
+                    this.sender_extra.equals(other.sender_extra) &&
                     Objects.equals(this.sender_extra_regex, other.sender_extra_regex) &&
                     Objects.equals(this.replyto, other.replyto) &&
                     Objects.equals(this.cc, other.cc) &&
@@ -287,7 +302,8 @@ public class EntityIdentity {
                     Objects.equals(this.sign_key_alias, other.sign_key_alias) &&
                     Objects.equals(this.state, other.state) &&
                     Objects.equals(this.error, other.error) &&
-                    Objects.equals(this.last_connected, other.last_connected));
+                    Objects.equals(this.last_connected, other.last_connected) &&
+                    Objects.equals(this.max_size, other.max_size));
         } else
             return false;
     }

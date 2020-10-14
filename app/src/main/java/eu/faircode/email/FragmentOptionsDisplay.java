@@ -28,6 +28,8 @@ import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -38,6 +40,7 @@ import android.view.Window;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.CompoundButton;
+import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.RadioGroup;
@@ -54,26 +57,35 @@ import androidx.fragment.app.FragmentActivity;
 import androidx.lifecycle.Lifecycle;
 import androidx.preference.PreferenceManager;
 
+import com.flask.colorpicker.ColorPickerView;
+import com.flask.colorpicker.builder.ColorPickerClickListener;
+import com.flask.colorpicker.builder.ColorPickerDialogBuilder;
+
 public class FragmentOptionsDisplay extends FragmentBase implements SharedPreferences.OnSharedPreferenceChangeListener {
     private Button btnTheme;
     private Spinner spStartup;
     private SwitchCompat swCards;
+    private SwitchCompat swBeige;
     private SwitchCompat swDate;
     private SwitchCompat swNavBarColorize;
+    private SwitchCompat swPortrait2;
     private SwitchCompat swLandscape;
     private SwitchCompat swLandscape3;
 
     private SwitchCompat swThreading;
+    private SwitchCompat swThreadingUnread;
     private SwitchCompat swIndentation;
     private SwitchCompat swSeekbar;
     private SwitchCompat swActionbar;
     private SwitchCompat swActionbarColor;
 
     private SwitchCompat swHighlightUnread;
+    private ViewButtonColor btnHighlightColor;
     private SwitchCompat swColorStripe;
     private SwitchCompat swAvatars;
     private TextView tvGravatarsHint;
     private SwitchCompat swGravatars;
+    private SwitchCompat swFavicons;
     private SwitchCompat swGeneratedIcons;
     private SwitchCompat swIdenticons;
     private SwitchCompat swCircular;
@@ -94,6 +106,7 @@ public class FragmentOptionsDisplay extends FragmentBase implements SharedPrefer
     private SwitchCompat swHighlightSubject;
     private Spinner spSubjectEllipsize;
     private SwitchCompat swKeywords;
+    private SwitchCompat swLabels;
     private SwitchCompat swFlags;
     private SwitchCompat swFlagsBackground;
     private SwitchCompat swPreview;
@@ -101,33 +114,37 @@ public class FragmentOptionsDisplay extends FragmentBase implements SharedPrefer
     private Spinner spPreviewLines;
 
     private SwitchCompat swAddresses;
-    private SwitchCompat swArchiveTrash;
-    private SwitchCompat swMove;
+    private EditText etMessageZoom;
+    private SwitchCompat swOverviewMode;
 
     private SwitchCompat swContrast;
     private SwitchCompat swMonospaced;
     private SwitchCompat swTextColor;
     private SwitchCompat swTextSize;
+    private SwitchCompat swTextFont;
     private SwitchCompat swTextAlign;
+    private SwitchCompat swTextSeparators;
     private SwitchCompat swCollapseQuotes;
     private SwitchCompat swImagesInline;
     private SwitchCompat swAttachmentsAlt;
+    private SwitchCompat swThumbnails;
 
     private SwitchCompat swParseClasses;
     private SwitchCompat swAuthentication;
 
     private final static String[] RESET_OPTIONS = new String[]{
-            "theme", "startup", "cards", "date", "navbar_colorize", "landscape", "landscape3",
-            "threading", "indentation", "seekbar", "actionbar", "actionbar_color",
-            "highlight_unread", "color_stripe",
-            "avatars", "gravatars", "generated_icons", "identicons", "circular", "saturation", "brightness", "threshold",
+            "theme", "startup", "cards", "beige", "date", "navbar_colorize", "portrait2", "landscape", "landscape3",
+            "threading", "threading_unread", "indentation", "seekbar", "actionbar", "actionbar_color",
+            "highlight_unread", "highlight_color", "color_stripe",
+            "avatars", "gravatars", "favicons", "generated_icons", "identicons", "circular", "saturation", "brightness", "threshold",
             "name_email", "prefer_contact", "distinguish_contacts", "show_recipients",
             "subject_top", "font_size_sender", "font_size_subject", "subject_italic", "highlight_subject", "subject_ellipsize",
-            "keywords_header", "flags", "flags_background",
+            "keywords_header", "labels_header", "flags", "flags_background",
             "preview", "preview_italic", "preview_lines",
-            "addresses", "button_archive_trash", "button_move",
-            "contrast", "monospaced", "text_color", "text_size", "text_align",
-            "inline_images", "collapse_quotes", "attachments_alt",
+            "addresses",
+            "message_zoom", "overview_mode", "contrast", "monospaced",
+            "text_color", "text_size", "text_font", "text_align", "text_separators",
+            "inline_images", "collapse_quotes", "attachments_alt", "thumbnails",
             "parse_classes", "authentication"
     };
 
@@ -144,22 +161,27 @@ public class FragmentOptionsDisplay extends FragmentBase implements SharedPrefer
         btnTheme = view.findViewById(R.id.btnTheme);
         spStartup = view.findViewById(R.id.spStartup);
         swCards = view.findViewById(R.id.swCards);
+        swBeige = view.findViewById(R.id.swBeige);
         swDate = view.findViewById(R.id.swDate);
         swNavBarColorize = view.findViewById(R.id.swNavBarColorize);
+        swPortrait2 = view.findViewById(R.id.swPortrait2);
         swLandscape = view.findViewById(R.id.swLandscape);
         swLandscape3 = view.findViewById(R.id.swLandscape3);
 
         swThreading = view.findViewById(R.id.swThreading);
+        swThreadingUnread = view.findViewById(R.id.swThreadingUnread);
         swIndentation = view.findViewById(R.id.swIndentation);
         swSeekbar = view.findViewById(R.id.swSeekbar);
         swActionbar = view.findViewById(R.id.swActionbar);
         swActionbarColor = view.findViewById(R.id.swActionbarColor);
 
         swHighlightUnread = view.findViewById(R.id.swHighlightUnread);
+        btnHighlightColor = view.findViewById(R.id.btnHighlightColor);
         swColorStripe = view.findViewById(R.id.swColorStripe);
         swAvatars = view.findViewById(R.id.swAvatars);
         swGravatars = view.findViewById(R.id.swGravatars);
         tvGravatarsHint = view.findViewById(R.id.tvGravatarsHint);
+        swFavicons = view.findViewById(R.id.swFavicons);
         swGeneratedIcons = view.findViewById(R.id.swGeneratedIcons);
         swIdenticons = view.findViewById(R.id.swIdenticons);
         swCircular = view.findViewById(R.id.swCircular);
@@ -180,22 +202,26 @@ public class FragmentOptionsDisplay extends FragmentBase implements SharedPrefer
         swHighlightSubject = view.findViewById(R.id.swHighlightSubject);
         spSubjectEllipsize = view.findViewById(R.id.spSubjectEllipsize);
         swKeywords = view.findViewById(R.id.swKeywords);
+        swLabels = view.findViewById(R.id.swLabels);
         swFlags = view.findViewById(R.id.swFlags);
         swFlagsBackground = view.findViewById(R.id.swFlagsBackground);
         swPreview = view.findViewById(R.id.swPreview);
         swPreviewItalic = view.findViewById(R.id.swPreviewItalic);
         spPreviewLines = view.findViewById(R.id.spPreviewLines);
         swAddresses = view.findViewById(R.id.swAddresses);
-        swArchiveTrash = view.findViewById(R.id.swArchiveTrash);
-        swMove = view.findViewById(R.id.swMove);
+        etMessageZoom = view.findViewById(R.id.etMessageZoom);
+        swOverviewMode = view.findViewById(R.id.swOverviewMode);
         swContrast = view.findViewById(R.id.swContrast);
         swMonospaced = view.findViewById(R.id.swMonospaced);
         swTextColor = view.findViewById(R.id.swTextColor);
         swTextSize = view.findViewById(R.id.swTextSize);
+        swTextFont = view.findViewById(R.id.swTextFont);
         swTextAlign = view.findViewById(R.id.swTextAlign);
+        swTextSeparators = view.findViewById(R.id.swTextSeparators);
         swCollapseQuotes = view.findViewById(R.id.swCollapseQuotes);
         swImagesInline = view.findViewById(R.id.swImagesInline);
         swAttachmentsAlt = view.findViewById(R.id.swAttachmentsAlt);
+        swThumbnails = view.findViewById(R.id.swThumbnails);
         swParseClasses = view.findViewById(R.id.swParseClasses);
         swAuthentication = view.findViewById(R.id.swAuthentication);
 
@@ -229,7 +255,15 @@ public class FragmentOptionsDisplay extends FragmentBase implements SharedPrefer
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean checked) {
                 prefs.edit().putBoolean("cards", checked).apply();
+                swBeige.setEnabled(checked);
                 swIndentation.setEnabled(checked);
+            }
+        });
+
+        swBeige.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean checked) {
+                prefs.edit().putBoolean("beige", checked).apply();
             }
         });
 
@@ -249,11 +283,17 @@ public class FragmentOptionsDisplay extends FragmentBase implements SharedPrefer
             }
         });
 
+        swPortrait2.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean checked) {
+                prefs.edit().putBoolean("portrait2", checked).apply();
+            }
+        });
+
         swLandscape.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean checked) {
                 prefs.edit().putBoolean("landscape", checked).apply();
-                swLandscape3.setEnabled(checked);
             }
         });
 
@@ -268,7 +308,15 @@ public class FragmentOptionsDisplay extends FragmentBase implements SharedPrefer
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean checked) {
                 prefs.edit().putBoolean("threading", checked).apply();
+                swThreadingUnread.setEnabled(checked);
                 WidgetUnified.updateData(getContext());
+            }
+        });
+
+        swThreadingUnread.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean checked) {
+                prefs.edit().putBoolean("threading_unread", checked).apply();
             }
         });
 
@@ -308,6 +356,41 @@ public class FragmentOptionsDisplay extends FragmentBase implements SharedPrefer
             }
         });
 
+        btnHighlightColor.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Context context = getContext();
+                int editTextColor = Helper.resolveColor(context, android.R.attr.editTextColor);
+                int highlightColor = prefs.getInt("highlight_color", Helper.resolveColor(context, R.attr.colorAccent));
+
+                ColorPickerDialogBuilder builder = ColorPickerDialogBuilder
+                        .with(context)
+                        .setTitle(R.string.title_advanced_highlight_color)
+                        .initialColor(highlightColor)
+                        .showColorEdit(true)
+                        .setColorEditTextColor(editTextColor)
+                        .wheelType(ColorPickerView.WHEEL_TYPE.FLOWER)
+                        .density(6)
+                        .lightnessSliderOnly()
+                        .setPositiveButton(android.R.string.ok, new ColorPickerClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int selectedColor, Integer[] allColors) {
+                                prefs.edit().putInt("highlight_color", selectedColor).apply();
+                                btnHighlightColor.setColor(selectedColor);
+                            }
+                        })
+                        .setNegativeButton(R.string.title_reset, new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                prefs.edit().remove("highlight_color").apply();
+                                btnHighlightColor.setColor(Helper.resolveColor(context, R.attr.colorAccent));
+                            }
+                        });
+
+                builder.build().show();
+            }
+        });
+
         swColorStripe.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean checked) {
@@ -320,7 +403,7 @@ public class FragmentOptionsDisplay extends FragmentBase implements SharedPrefer
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean checked) {
                 prefs.edit().putBoolean("avatars", checked).apply();
-                ContactInfo.clearCache();
+                ContactInfo.clearCache(getContext());
             }
         });
 
@@ -328,7 +411,15 @@ public class FragmentOptionsDisplay extends FragmentBase implements SharedPrefer
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean checked) {
                 prefs.edit().putBoolean("gravatars", checked).apply();
-                ContactInfo.clearCache();
+                ContactInfo.clearCache(getContext());
+            }
+        });
+
+        swFavicons.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean checked) {
+                prefs.edit().putBoolean("favicons", checked).apply();
+                ContactInfo.clearCache(getContext());
             }
         });
 
@@ -348,7 +439,7 @@ public class FragmentOptionsDisplay extends FragmentBase implements SharedPrefer
                 sbSaturation.setEnabled(checked);
                 sbBrightness.setEnabled(checked);
                 sbThreshold.setEnabled(checked);
-                ContactInfo.clearCache();
+                ContactInfo.clearCache(getContext());
             }
         });
 
@@ -356,7 +447,7 @@ public class FragmentOptionsDisplay extends FragmentBase implements SharedPrefer
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean checked) {
                 prefs.edit().putBoolean("identicons", checked).apply();
-                ContactInfo.clearCache();
+                ContactInfo.clearCache(getContext());
             }
         });
 
@@ -365,7 +456,7 @@ public class FragmentOptionsDisplay extends FragmentBase implements SharedPrefer
             public void onCheckedChanged(CompoundButton compoundButton, boolean checked) {
                 prefs.edit().putBoolean("circular", checked).apply();
                 updateColor();
-                ContactInfo.clearCache();
+                ContactInfo.clearCache(getContext());
             }
         });
 
@@ -374,7 +465,7 @@ public class FragmentOptionsDisplay extends FragmentBase implements SharedPrefer
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 prefs.edit().putInt("saturation", progress).apply();
                 updateColor();
-                ContactInfo.clearCache();
+                ContactInfo.clearCache(getContext());
             }
 
             @Override
@@ -393,7 +484,7 @@ public class FragmentOptionsDisplay extends FragmentBase implements SharedPrefer
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 prefs.edit().putInt("brightness", progress).apply();
                 updateColor();
-                ContactInfo.clearCache();
+                ContactInfo.clearCache(getContext());
             }
 
             @Override
@@ -412,7 +503,7 @@ public class FragmentOptionsDisplay extends FragmentBase implements SharedPrefer
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 prefs.edit().putInt("threshold", progress).apply();
                 updateColor();
-                ContactInfo.clearCache();
+                ContactInfo.clearCache(getContext());
             }
 
             @Override
@@ -523,6 +614,13 @@ public class FragmentOptionsDisplay extends FragmentBase implements SharedPrefer
             }
         });
 
+        swLabels.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean checked) {
+                prefs.edit().putBoolean("labels_header", checked).apply();
+            }
+        });
+
         swFlags.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean checked) {
@@ -572,17 +670,35 @@ public class FragmentOptionsDisplay extends FragmentBase implements SharedPrefer
             }
         });
 
-        swArchiveTrash.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+        etMessageZoom.addTextChangedListener(new TextWatcher() {
             @Override
-            public void onCheckedChanged(CompoundButton compoundButton, boolean checked) {
-                prefs.edit().putBoolean("button_archive_trash", checked).apply();
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+                // Do nothing
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                try {
+                    int zoom = (s.length() > 0 ? Integer.parseInt(s.toString()) : 0);
+                    if (zoom == 0)
+                        prefs.edit().remove("message_zoom").apply();
+                    else
+                        prefs.edit().putInt("message_zoom", zoom).apply();
+                } catch (NumberFormatException ex) {
+                    Log.e(ex);
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                // Do nothing
             }
         });
 
-        swMove.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+        swOverviewMode.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean checked) {
-                prefs.edit().putBoolean("button_move", checked).apply();
+                prefs.edit().putBoolean("overview_mode", checked).apply();
             }
         });
 
@@ -607,6 +723,9 @@ public class FragmentOptionsDisplay extends FragmentBase implements SharedPrefer
             }
         });
 
+        String theme = prefs.getString("theme", "light");
+        swTextColor.setEnabled(!"black_and_white".equals(theme));
+
         swTextSize.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean checked) {
@@ -614,10 +733,24 @@ public class FragmentOptionsDisplay extends FragmentBase implements SharedPrefer
             }
         });
 
+        swTextFont.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean checked) {
+                prefs.edit().putBoolean("text_font", checked).apply();
+            }
+        });
+
         swTextAlign.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean checked) {
                 prefs.edit().putBoolean("text_align", checked).apply();
+            }
+        });
+
+        swTextSeparators.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean checked) {
+                prefs.edit().putBoolean("text_separators", checked).apply();
             }
         });
 
@@ -639,6 +772,13 @@ public class FragmentOptionsDisplay extends FragmentBase implements SharedPrefer
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean checked) {
                 prefs.edit().putBoolean("attachments_alt", checked).apply();
+            }
+        });
+
+        swThumbnails.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean checked) {
+                prefs.edit().putBoolean("thumbnails", checked).apply();
             }
         });
 
@@ -669,6 +809,9 @@ public class FragmentOptionsDisplay extends FragmentBase implements SharedPrefer
 
     @Override
     public void onSharedPreferenceChanged(SharedPreferences prefs, String key) {
+        if ("message_zoom".equals(key))
+            return;
+
         if (getLifecycle().getCurrentState().isAtLeast(Lifecycle.State.STARTED))
             setOptions();
     }
@@ -717,14 +860,19 @@ public class FragmentOptionsDisplay extends FragmentBase implements SharedPrefer
             }
 
         swCards.setChecked(prefs.getBoolean("cards", true));
+        swBeige.setChecked(prefs.getBoolean("beige", true));
+        swBeige.setEnabled(swCards.isChecked());
         swDate.setChecked(prefs.getBoolean("date", true));
         swNavBarColorize.setChecked(prefs.getBoolean("navbar_colorize", false));
+        swPortrait2.setChecked(prefs.getBoolean("portrait2", false));
         swLandscape.setChecked(prefs.getBoolean("landscape", true));
         swLandscape.setEnabled(normal);
         swLandscape3.setChecked(prefs.getBoolean("landscape3", false));
-        swLandscape3.setEnabled(normal && swLandscape.isChecked());
+        swLandscape3.setEnabled(normal);
 
         swThreading.setChecked(prefs.getBoolean("threading", true));
+        swThreadingUnread.setChecked(prefs.getBoolean("threading_unread", false));
+        swThreadingUnread.setEnabled(swThreading.isChecked());
         swIndentation.setChecked(prefs.getBoolean("indentation", false));
         swIndentation.setEnabled(swCards.isChecked());
         swSeekbar.setChecked(prefs.getBoolean("seekbar", false));
@@ -733,9 +881,14 @@ public class FragmentOptionsDisplay extends FragmentBase implements SharedPrefer
         swActionbarColor.setEnabled(swActionbar.isChecked());
 
         swHighlightUnread.setChecked(prefs.getBoolean("highlight_unread", true));
+
+        btnHighlightColor.setColor(prefs.getInt("highlight_color",
+                Helper.resolveColor(getContext(), R.attr.colorUnreadHighlight)));
+
         swColorStripe.setChecked(prefs.getBoolean("color_stripe", true));
         swAvatars.setChecked(prefs.getBoolean("avatars", true));
         swGravatars.setChecked(prefs.getBoolean("gravatars", false));
+        swFavicons.setChecked(prefs.getBoolean("favicons", false));
         swGeneratedIcons.setChecked(prefs.getBoolean("generated_icons", true));
         swIdenticons.setChecked(prefs.getBoolean("identicons", false));
         swIdenticons.setEnabled(swGeneratedIcons.isChecked());
@@ -773,7 +926,7 @@ public class FragmentOptionsDisplay extends FragmentBase implements SharedPrefer
         swSubjectItalic.setChecked(prefs.getBoolean("subject_italic", true));
         swHighlightSubject.setChecked(prefs.getBoolean("highlight_subject", false));
 
-        String subject_ellipsize = prefs.getString("subject_ellipsize", "middle");
+        String subject_ellipsize = prefs.getString("subject_ellipsize", "full");
         String[] ellipsizeValues = getResources().getStringArray(R.array.ellipsizeValues);
         for (int pos = 0; pos < startupValues.length; pos++)
             if (ellipsizeValues[pos].equals(subject_ellipsize)) {
@@ -782,6 +935,7 @@ public class FragmentOptionsDisplay extends FragmentBase implements SharedPrefer
             }
 
         swKeywords.setChecked(prefs.getBoolean("keywords_header", false));
+        swLabels.setChecked(prefs.getBoolean("labels_header", true));
         swFlags.setChecked(prefs.getBoolean("flags", true));
         swFlagsBackground.setChecked(prefs.getBoolean("flags_background", false));
         swPreview.setChecked(prefs.getBoolean("preview", false));
@@ -789,17 +943,24 @@ public class FragmentOptionsDisplay extends FragmentBase implements SharedPrefer
         swPreviewItalic.setEnabled(swPreview.isChecked());
         spPreviewLines.setSelection(prefs.getInt("preview_lines", 2) - 1);
         spPreviewLines.setEnabled(swPreview.isChecked());
+
         swAddresses.setChecked(prefs.getBoolean("addresses", false));
-        swArchiveTrash.setChecked(prefs.getBoolean("button_archive_trash", true));
-        swMove.setChecked(prefs.getBoolean("button_move", true));
+
+        int message_zoom = prefs.getInt("message_zoom", 0);
+        etMessageZoom.setText(message_zoom == 0 ? null : Integer.toString(message_zoom));
+        swOverviewMode.setChecked(prefs.getBoolean("overview_mode", false));
+
         swContrast.setChecked(prefs.getBoolean("contrast", false));
         swMonospaced.setChecked(prefs.getBoolean("monospaced", false));
         swTextColor.setChecked(prefs.getBoolean("text_color", true));
         swTextSize.setChecked(prefs.getBoolean("text_size", true));
+        swTextFont.setChecked(prefs.getBoolean("text_font", true));
         swTextAlign.setChecked(prefs.getBoolean("text_align", true));
+        swTextSeparators.setChecked(prefs.getBoolean("text_separators", false));
         swCollapseQuotes.setChecked(prefs.getBoolean("collapse_quotes", false));
         swImagesInline.setChecked(prefs.getBoolean("inline_images", false));
         swAttachmentsAlt.setChecked(prefs.getBoolean("attachments_alt", false));
+        swThumbnails.setChecked(prefs.getBoolean("thumbnails", true));
 
         swParseClasses.setChecked(prefs.getBoolean("parse_classes", false));
         swAuthentication.setChecked(prefs.getBoolean("authentication", true));
@@ -850,22 +1011,28 @@ public class FragmentOptionsDisplay extends FragmentBase implements SharedPrefer
         private ImageButton itten;
         private RadioGroup rgTheme;
         private SwitchCompat swReverse;
-        private SwitchCompat swDark;
+        private RadioGroup rgThemeOptions;
         private SwitchCompat swBlack;
-        private SwitchCompat swSystem;
+        private TextView tvSystem;
 
         private void eval() {
             int checkedId = rgTheme.getCheckedRadioButtonId();
-
-            boolean colored = (checkedId == R.id.rbThemeBlueOrange ||
+            boolean grey = (checkedId == R.id.rbThemeGrey);
+            boolean colored = (grey ||
+                    checkedId == R.id.rbThemeBlueOrange ||
                     checkedId == R.id.rbThemeYellowPurple ||
                     checkedId == R.id.rbThemeRedGreen);
-            boolean dark = (colored || checkedId == R.id.rbThemeGrey);
+            int optionId = rgThemeOptions.getCheckedRadioButtonId();
 
-            swReverse.setEnabled(colored);
-            swDark.setEnabled(dark);
-            swBlack.setEnabled(colored && swDark.isChecked());
-            swSystem.setEnabled(dark && !swDark.isChecked());
+            swReverse.setEnabled(colored && !grey);
+
+            rgThemeOptions.setEnabled(colored);
+            for (int i = 0; i < rgThemeOptions.getChildCount(); i++)
+                rgThemeOptions.getChildAt(i).setEnabled(colored);
+
+            swBlack.setEnabled(colored && !grey && optionId != R.id.rbThemeLight);
+
+            tvSystem.setEnabled(colored && optionId == R.id.rbThemeSystem);
         }
 
         @NonNull
@@ -875,9 +1042,9 @@ public class FragmentOptionsDisplay extends FragmentBase implements SharedPrefer
             itten = dview.findViewById(R.id.itten);
             rgTheme = dview.findViewById(R.id.rgTheme);
             swReverse = dview.findViewById(R.id.swReverse);
-            swDark = dview.findViewById(R.id.swDark);
+            rgThemeOptions = dview.findViewById(R.id.rgThemeOptions);
             swBlack = dview.findViewById(R.id.swBlack);
-            swSystem = dview.findViewById(R.id.swSystem);
+            tvSystem = dview.findViewById(R.id.tvSystem);
 
             final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
             String theme = prefs.getString("theme", "light");
@@ -890,6 +1057,13 @@ public class FragmentOptionsDisplay extends FragmentBase implements SharedPrefer
                 }
             });
 
+            rgTheme.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
+                @Override
+                public void onCheckedChanged(RadioGroup group, int checkedId) {
+                    eval();
+                }
+            });
+
             swReverse.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
                 @Override
                 public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
@@ -897,9 +1071,9 @@ public class FragmentOptionsDisplay extends FragmentBase implements SharedPrefer
                 }
             });
 
-            swDark.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            rgThemeOptions.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
                 @Override
-                public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                public void onCheckedChanged(RadioGroup group, int checkedId) {
                     eval();
                 }
             });
@@ -911,62 +1085,60 @@ public class FragmentOptionsDisplay extends FragmentBase implements SharedPrefer
                 }
             });
 
-            swSystem.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-                @Override
-                public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                    eval();
-                }
-            });
-
-            rgTheme.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
-                @Override
-                public void onCheckedChanged(RadioGroup group, int checkedId) {
-                    eval();
-                }
-            });
-
-            boolean colored =
+            boolean reversed =
                     (theme.startsWith("orange_blue") ||
                             theme.startsWith("purple_yellow") ||
                             theme.startsWith("green_red"));
             boolean dark = theme.endsWith("dark");
+            boolean system = (theme.endsWith("system") || theme.endsWith("system_black"));
             boolean black = (!"black".equals(theme) && theme.endsWith("black"));
-            boolean system = theme.endsWith("system");
 
-            swReverse.setChecked(colored);
-            swDark.setChecked(dark || black);
+            swReverse.setChecked(reversed);
+
+            if (system)
+                rgThemeOptions.check(R.id.rbThemeSystem);
+            else if (dark || black)
+                rgThemeOptions.check(R.id.rbThemeDark);
+            else
+                rgThemeOptions.check(R.id.rbThemeLight);
+
             swBlack.setChecked(black);
-            swSystem.setChecked(system);
 
             switch (theme) {
                 case "light":
                 case "dark":
                 case "system":
                 case "blue_orange_system":
+                case "blue_orange_system_black":
                 case "blue_orange_light":
                 case "blue_orange_dark":
                 case "blue_orange_black":
                 case "orange_blue_system":
+                case "orange_blue_system_black":
                 case "orange_blue_light":
                 case "orange_blue_dark":
                 case "orange_blue_black":
                     rgTheme.check(R.id.rbThemeBlueOrange);
                     break;
                 case "yellow_purple_system":
+                case "yellow_purple_system_black":
                 case "yellow_purple_light":
                 case "yellow_purple_dark":
                 case "yellow_purple_black":
                 case "purple_yellow_system":
+                case "purple_yellow_system_black":
                 case "purple_yellow_light":
                 case "purple_yellow_dark":
                 case "purple_yellow_black":
                     rgTheme.check(R.id.rbThemeYellowPurple);
                     break;
                 case "red_green_system":
+                case "red_green_system_black":
                 case "red_green_light":
                 case "red_green_dark":
                 case "red_green_black":
                 case "green_red_system":
+                case "green_red_system_black":
                 case "green_red_light":
                 case "green_red_dark":
                 case "green_red_black":
@@ -981,6 +1153,9 @@ public class FragmentOptionsDisplay extends FragmentBase implements SharedPrefer
                 case "black":
                     rgTheme.check(R.id.rbThemeBlack);
                     break;
+                case "black_and_white":
+                    rgTheme.check(R.id.rbThemeBlackAndWhite);
+                    break;
             }
 
             return new AlertDialog.Builder(getContext())
@@ -990,52 +1165,65 @@ public class FragmentOptionsDisplay extends FragmentBase implements SharedPrefer
                         public void onClick(DialogInterface dialog, int which) {
                             getActivity().getIntent().putExtra("tab", "display");
 
-                            ContactInfo.clearCache();
+                            ContactInfo.clearCache(getContext());
 
+                            int optionId = rgThemeOptions.getCheckedRadioButtonId();
                             boolean reverse = (swReverse.isEnabled() && swReverse.isChecked());
-                            boolean dark = (swDark.isEnabled() && swDark.isChecked());
+                            boolean dark = (rgThemeOptions.isEnabled() && optionId == R.id.rbThemeDark);
+                            boolean system = (rgThemeOptions.isEnabled() && optionId == R.id.rbThemeSystem);
                             boolean black = (swBlack.isEnabled() && swBlack.isChecked());
-                            boolean system = (swSystem.isEnabled() && swSystem.isChecked());
+
+                            SharedPreferences.Editor editor = prefs.edit();
+
+                            editor.remove("highlight_color");
 
                             switch (rgTheme.getCheckedRadioButtonId()) {
                                 case R.id.rbThemeBlueOrange:
                                     if (system)
-                                        prefs.edit().putString("theme",
-                                                reverse ? "orange_blue_system" : "blue_orange_system").apply();
+                                        editor.putString("theme",
+                                                (reverse ? "orange_blue_system" : "blue_orange_system") +
+                                                        (black ? "_black" : "")).apply();
                                     else
-                                        prefs.edit().putString("theme",
+                                        editor.putString("theme",
                                                 (reverse ? "orange_blue" : "blue_orange") +
                                                         (black ? "_black" : dark ? "_dark" : "_light")).apply();
                                     break;
                                 case R.id.rbThemeYellowPurple:
                                     if (system)
-                                        prefs.edit().putString("theme",
-                                                reverse ? "purple_yellow_system" : "yellow_purple_system").apply();
+                                        editor.putString("theme",
+                                                (reverse ? "purple_yellow_system" : "yellow_purple_system") +
+                                                        (black ? "_black" : "")).apply();
                                     else
-                                        prefs.edit().putString("theme",
+                                        editor.putString("theme",
                                                 (reverse ? "purple_yellow" : "yellow_purple") +
                                                         (black ? "_black" : dark ? "_dark" : "_light")).apply();
                                     break;
                                 case R.id.rbThemeRedGreen:
                                     if (system)
-                                        prefs.edit().putString("theme",
-                                                reverse ? "green_red_system" : "red_green_system").apply();
+                                        editor.putString("theme",
+                                                (reverse ? "green_red_system" : "red_green_system") +
+                                                        (black ? "_black" : "")).apply();
                                     else
-                                        prefs.edit().putString("theme",
+                                        editor.putString("theme",
                                                 (reverse ? "green_red" : "red_green") +
                                                         (black ? "_black" : dark ? "_dark" : "_light")).apply();
                                     break;
                                 case R.id.rbThemeGrey:
                                     if (system)
-                                        prefs.edit().putString("theme", "grey_system").apply();
+                                        editor.putString("theme", "grey_system").apply();
                                     else
-                                        prefs.edit().putString("theme",
+                                        editor.putString("theme",
                                                 "grey" + (dark ? "_dark" : "_light")).apply();
                                     break;
                                 case R.id.rbThemeBlack:
-                                    prefs.edit().putString("theme", "black").apply();
+                                    editor.putString("theme", "black").apply();
+                                    break;
+                                case R.id.rbThemeBlackAndWhite:
+                                    editor.putString("theme", "black_and_white").apply();
                                     break;
                             }
+
+                            editor.apply();
                         }
                     })
                     .setNegativeButton(android.R.string.cancel, null)

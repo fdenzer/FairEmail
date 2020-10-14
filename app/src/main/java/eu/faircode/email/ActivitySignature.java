@@ -37,6 +37,7 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.TextView;
 
@@ -45,13 +46,16 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.android.material.snackbar.Snackbar;
+
+import org.jsoup.nodes.Document;
 
 public class ActivitySignature extends ActivityBase {
+    private ViewGroup view;
     private EditTextCompose etText;
     private BottomNavigationView style_bar;
     private BottomNavigationView bottom_navigation;
 
-    private boolean raw = false;
     private boolean dirty = false;
 
     private static final int REQUEST_IMAGE = 1;
@@ -60,11 +64,11 @@ public class ActivitySignature extends ActivityBase {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        if (savedInstanceState != null)
-            raw = savedInstanceState.getBoolean("fair:raw");
-
         getSupportActionBar().setSubtitle(getString(R.string.title_edit_signature));
-        setContentView(R.layout.activity_signature);
+
+        LayoutInflater inflater = LayoutInflater.from(this);
+        view = (ViewGroup) inflater.inflate(R.layout.activity_signature, null, false);
+        setContentView(view);
 
         etText = findViewById(R.id.etText);
         style_bar = findViewById(R.id.style_bar);
@@ -73,7 +77,7 @@ public class ActivitySignature extends ActivityBase {
         etText.setSelectionListener(new EditTextCompose.ISelection() {
             @Override
             public void onSelected(boolean selection) {
-                style_bar.setVisibility(selection && !raw ? View.VISIBLE : View.GONE);
+                style_bar.setVisibility(selection && !etText.getRaw() ? View.VISIBLE : View.GONE);
             }
         });
 
@@ -120,6 +124,9 @@ public class ActivitySignature extends ActivityBase {
             }
         });
 
+        if (savedInstanceState != null)
+            etText.setRaw(savedInstanceState.getBoolean("fair:raw"));
+
         style_bar.setVisibility(View.GONE);
 
         setResult(RESULT_CANCELED, new Intent());
@@ -136,7 +143,7 @@ public class ActivitySignature extends ActivityBase {
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
-        outState.putBoolean("fair:raw", raw);
+        outState.putBoolean("fair:raw", etText.getRaw());
         super.onSaveInstanceState(outState);
     }
 
@@ -180,15 +187,15 @@ public class ActivitySignature extends ActivityBase {
         String html = getIntent().getStringExtra("html");
         if (html == null)
             etText.setText(null);
-        else if (raw)
+        else if (etText.getRaw())
             etText.setText(html);
         else
-            etText.setText(HtmlHelper.fromHtml(html, new Html.ImageGetter() {
+            etText.setText(HtmlHelper.fromHtml(html, false, new Html.ImageGetter() {
                 @Override
                 public Drawable getDrawable(String source) {
-                    return ImageHelper.decodeImage(ActivitySignature.this, -1, source, true, 0, etText);
+                    return ImageHelper.decodeImage(ActivitySignature.this, -1, source, true, 0, 1.0f, etText);
                 }
-            }, null));
+            }, null, this));
         dirty = false;
     }
 
@@ -200,26 +207,35 @@ public class ActivitySignature extends ActivityBase {
     }
 
     private void save() {
-        etText.clearComposingText();
-        String html = (raw ? etText.getText().toString() : HtmlHelper.toHtml(etText.getText()));
         Intent result = new Intent();
-        result.putExtra("html", html);
+        result.putExtra("html", getHtml());
         setResult(RESULT_OK, result);
         finish();
     }
 
     private void html(boolean raw) {
-        this.raw = raw;
+        String html = getHtml();
+        etText.setRaw(raw);
 
-        if (!raw || dirty) {
-            String html = (raw ? HtmlHelper.toHtml(etText.getText()) : etText.getText().toString());
+        if (!raw || dirty)
             getIntent().putExtra("html", html);
-        }
 
         if (raw)
             style_bar.setVisibility(View.GONE);
 
         load();
+    }
+
+    private String getHtml() {
+        etText.clearComposingText();
+
+        if (etText.getRaw())
+            return etText.getText().toString();
+        else {
+            String html = HtmlHelper.toHtml(etText.getText(), this);
+            Document d = JsoupEx.parse(html);
+            return d.body().html();
+        }
     }
 
     private void insertImage() {
@@ -262,7 +278,7 @@ public class ActivitySignature extends ActivityBase {
                         public void onClick(DialogInterface dialog, int which) {
                             String link = etLink.getText().toString();
                             etText.setSelection(start, end);
-                            StyleHelper.apply(R.id.menu_link, etText, link);
+                            StyleHelper.apply(R.id.menu_link, null, etText, link);
                         }
                     })
                     .setNegativeButton(android.R.string.cancel, null)
@@ -270,7 +286,7 @@ public class ActivitySignature extends ActivityBase {
 
             return true;
         } else
-            return StyleHelper.apply(action, etText);
+            return StyleHelper.apply(action, findViewById(action), etText);
     }
 
     private void onImageSelected(Uri uri) {
@@ -278,18 +294,28 @@ public class ActivitySignature extends ActivityBase {
             getContentResolver().takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
 
             int start = etText.getSelectionStart();
-            if (raw)
+            if (etText.getRaw())
                 etText.getText().insert(start, "<img src=\"" + Html.escapeHtml(uri.toString()) + "\" />");
             else {
                 SpannableStringBuilder ssb = new SpannableStringBuilder(etText.getText());
                 ssb.insert(start, " \uFFFC"); // Object replacement character
                 String source = uri.toString();
-                Drawable d = ImageHelper.decodeImage(this, -1, source, true, 0, etText);
+                Drawable d = ImageHelper.decodeImage(this, -1, source, true, 0, 1.0f, etText);
                 ImageSpan is = new ImageSpan(d, source);
                 ssb.setSpan(is, start + 1, start + 2, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
                 etText.setText(ssb);
                 etText.setSelection(start + 2);
             }
+        } catch (SecurityException ex) {
+            Snackbar sb = Snackbar.make(view, R.string.title_no_stream, Snackbar.LENGTH_INDEFINITE)
+                    .setGestureInsetBottomIgnored(true);
+            sb.setAction(R.string.title_info, new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Helper.viewFAQ(ActivitySignature.this, 49);
+                }
+            });
+            sb.show();
         } catch (Throwable ex) {
             Log.unexpectedError(getSupportFragmentManager(), ex);
         }

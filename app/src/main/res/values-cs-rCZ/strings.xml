@@ -5,8 +5,9 @@
     <string name="app_welcome">FairEmail je e-mailový klient s otevřeným zdrojovým kódem zaměřený na soukromí a bezpečnost. Z tohoto důvodu se některé funkce mohou chovat odlišně než jste zvyklí.</string>
     <string name="app_limitations">Například, zprávy budou vždy přeformátovány pro odstranění prvků které nejsou bezpečné a zároveň pro zlepšení čitelnosti, a otevření odkazů je nutné z důvodu bezpečnosti potvrdit.</string>
     <string name="app_crash">FairEmail není na tomto zařízení podporován, protože chyby v Androidu způsobují jeho pády</string>
-    <string name="app_exit">Znovu \"zpět\" pro ukončení</string>
-    <string name="channel_service">Služba</string>
+    <string name="app_exit">Znovu „zpět“ pro ukončení</string>
+    <string name="app_cake">Nedostatek místa v úložišti</string>
+    <string name="channel_service">Příjem</string>
     <string name="channel_send">Odesílání</string>
     <string name="channel_notification">Oznámení</string>
     <string name="channel_update">Aktualizace</string>
@@ -14,6 +15,9 @@
     <string name="channel_error">Chyby</string>
     <string name="channel_alert">Upozornění serveru</string>
     <string name="channel_group_contacts">Kontakty</string>
+    <string name="channel_service_description">Synchronizace a monitorování účtů</string>
+    <string name="channel_send_description">Odesílání zpráv</string>
+    <string name="channel_notification_description">Oznámení nových zpráv</string>
     <plurals name="page_conversation">
         <item quantity="one">Konverzace</item>
         <item quantity="few">Konverzace</item>
@@ -70,16 +74,16 @@
         <item quantity="other">Vybráno %1$d konverzací</item>
     </plurals>
     <plurals name="title_moving_messages">
-        <item quantity="one">Přesunout %1$d zprávu do %2$s?</item>
-        <item quantity="few">Přesunout %1$d zprávy do %2$s?</item>
-        <item quantity="many">Přesunout %1$d zpráv do %2$s?</item>
-        <item quantity="other">Přesunout %1$d zpráv do %2$s?</item>
+        <item quantity="one">Přesunout %1$d zprávu?</item>
+        <item quantity="few">Přesunout %1$d zprávy?</item>
+        <item quantity="many">Přesunout %1$d zpráv?</item>
+        <item quantity="other">Přesunout %1$d zpráv?</item>
     </plurals>
     <plurals name="title_deleting_messages">
-        <item quantity="one">Trvale odstranit %1$d zprávu?</item>
-        <item quantity="few">Trvale odstranit %1$d zprávy?</item>
-        <item quantity="many">Trvale odstranit %1$d zpráv?</item>
-        <item quantity="other">Trvale odstranit %1$d zpráv?</item>
+        <item quantity="one">Trvale smazat %1$d zprávu?</item>
+        <item quantity="few">Trvale smazat %1$d zprávy?</item>
+        <item quantity="many">Trvale smazat %1$d zpráv?</item>
+        <item quantity="other">Trvale smazat %1$d zpráv?</item>
     </plurals>
     <plurals name="title_ask_spam">
         <item quantity="one">Považovat %1$d zprávu za nevyžádanou?</item>
@@ -88,6 +92,7 @@
         <item quantity="other">Považovat %1$d zpráv za nevyžádaných?</item>
     </plurals>
     <string name="title_ask_spam_who">Považovat zprávy od %1$s za nevyžádané?</string>
+    <string name="title_junk_hint">Za filtrování nevyžádané pošty je zodpovědný poskytovatel e-mailu. E-mailové aplikace nemají k dispozici všechna data, aby to mohly provádět spolehlivě.</string>
     <string name="title_block">Blokovat %1$s</string>
     <string name="title_block_sender">Blokovat odesílatele</string>
     <string name="title_block_domain">Blokovat doménu odesílatele</string>
@@ -97,11 +102,15 @@
     <string name="title_notification_sending">Odesílání zpráv</string>
     <string name="title_notification_waiting">Čekám na vhodné připojení</string>
     <string name="title_notification_idle">Nečinný</string>
-    <string name="title_notification_failed">\"%1$s\" selhalo</string>
-    <string name="title_notification_alert">\'%1$s\' upozornění serveru</string>
+    <string name="title_notification_failed">„%1$s“ selhalo</string>
+    <string name="title_notification_alert">„%1$s“ upozornění serveru</string>
+    <string name="title_notification_sending_left">Zbývající pokusy: %1$d</string>
+    <string name="title_notification_sending_failed">Odesílání na %1$s se nezdařilo</string>
+    <string name="title_notification_redacted">Revidováno: zapnuto biometrické či PIN ověření</string>
+    <string name="title_of">%1$s/%2$s</string>
     <string name="title_name_count">%1$s (%2$s)</string>
     <string name="title_name_plus">%1$s +%2$d</string>
-    <string name="title_from_to">%1$s ➤ %2$s</string>
+    <string name="title_title_description">%1$s: %2$s</string>
     <string name="title_factor_minutes">%1$d minut</string>
     <string name="menu_exit">Ukončit</string>
     <string name="menu_answers">Šablony</string>
@@ -117,11 +126,10 @@
     <string name="menu_privacy">Soukromí</string>
     <string name="menu_about">O aplikaci</string>
     <string name="menu_pro">Pro funkce</string>
-    <string name="menu_invite">Pozvat</string>
     <string name="menu_rate">Ohodnotit aplikaci</string>
-    <string name="menu_other">Další aplikace</string>
     <string name="title_welcome">Vítejte</string>
     <string name="title_eula">Licenční ujednání s koncovým uživatelem</string>
+    <string name="title_contributors">Přispěvatelé</string>
     <string name="title_agree">Souhlasím</string>
     <string name="title_disagree">Nesouhlasím</string>
     <string name="title_version">Verze %1$s</string>
@@ -135,30 +143,35 @@
     <string name="title_setup_welcome">        Příjem a odesílání zpráv vyžaduje nastavení účtu a identity, stejně jako jakákoli jiná e-mailová aplikace.
         Rychlé nastavení vytvoří současně účet i identitu, pouhým dotazem na Vaše jméno, e-mailovou adresu a heslo.
         Účty a identity (aliasy) lze v případě potřeby nastavit i ručně.
-        Nestandardní protokoly, jako jsou webové služby systému Microsoft Exchange a Microsoft ActiveSync, nejsou podporovány, viz. i popis této aplikace.
+        Nestandardní protokoly, jako jsou webové služby systému Microsoft Exchange a Microsoft ActiveSync, nejsou podporovány, viz i popis této aplikace.
     </string>
     <string name="title_setup_quick">Rychlé nastavení</string>
     <string name="title_setup_quick_remark">Pro rychlé nastavení účtu a identity pro většinu poskytovatelů</string>
+    <string name="title_setup_quick_support">Někteří poskytovatelé činí přidání účtu zbytečně obtížným. Nekřivděte prosím kvůli tomu FairEmailu, namísto toho požádejte o podporu.</string>
     <string name="title_setup_quick_hint">Rychlé nastavení načte konfigurační údaje z autoconfig.thunderbird.net</string>
     <string name="title_setup_quick_imap">IMAP server pro příjem zpráv</string>
     <string name="title_setup_quick_smtp">SMTP server pro odesílání zpráv</string>
     <string name="title_setup_wizard">Průvodce</string>
     <string name="title_setup_wizard_multiple">Průvodce instalací lze použít vícekrát pro nastavení libovolného počtu účtů</string>
-    <string name="title_setup_wizard_remark">Přejděte \"zpět\" pro vstup do doručených</string>
+    <string name="title_setup_wizard_new">Potřebuji novou e-mailovou adresu</string>
+    <string name="title_setup_wizard_remark">Přejděte „zpět“ pro vstup do doručených</string>
     <string name="title_setup_other">Jiný poskytovatel</string>
     <string name="title_setup_gmail_support">Autorizace Google účtů funguje pouze v oficiálních verzích aplikace, neboť Android kontroluje podpis aplikace</string>
     <string name="title_setup_gmail_rationale">Pro zvolení účtu a přečtení vašeho jména prosím udělte oprávnění</string>
     <string name="title_setup_gmail_permissions">Google bude požadovat udělení oprávnění ke čtení, psaní, odesílání a trvalému odstranění všech vašich e-mailů. FairEmail nikdy neodstraní vaše zprávy bez vašeho výslovného souhlasu.</string>
     <string name="title_setup_gmail_drafts">Není-li složka s koncepty přístupná skrze IMAP, lze to v Gmailu napravit v nastavení štítků</string>
+    <string name="title_setup_office_remark">Microsoft tento typ autorizace neposkytuje pro účty Outlook, Live, Hotmail, atd.</string>
+    <string name="title_setup_office_auth">Chyba „AUTHENTICATE failed“ může být způsobena zakázaným IMAP/SMTP správcem systému</string>
     <string name="title_setup_oauth_rationale">Autorizovat přístup k vašemu účtu %1$s</string>
     <string name="title_setup_oauth_authorize">Autorizovat</string>
     <string name="title_setup_select_account">Vybrat účet</string>
     <string name="title_setup_instructions">Pokyny pro nastavení</string>
-    <string name="title_setup_no_settings">Pro doménu \'%1$s\' nebylo nalezeno žádné nastavení</string>
+    <string name="title_setup_no_settings">Pro doménu „%1$s“ nebylo nalezeno žádné nastavení</string>
     <string name="title_setup_no_settings_hint">Zkuste prosím nastavit účet a identitu v krocích 1 a 2 nastavení, s použitím nastavení poskytnutých vaším poskytovatelem e-mailu</string>
-    <string name="title_setup_no_auth_hint">Zkontrolujte prosím zadanou e-mailovou adresu a heslo a ujistěte se, že u daného účtu máte povolen externí přístup (IMAP/SMTP)</string>
+    <string name="title_setup_no_auth_hint">Překontrolujte prosím zadanou e-mailovou adresu a heslo a ujistěte se, že u daného účtu máte povolen externí přístup (IMAP/SMTP)</string>
     <string name="title_setup_app_password_hint">Tento poskytovatel vyžaduje heslo pro aplikaci, namísto hesla k účtu, podívejte se prosím na pokyny svého poskytovatele</string>
-    <string name="title_setup_no_system_folders">Složka doručené či koncepty nebyla nalezena</string>
+    <string name="title_setup_no_inbox">Složka \"Doručené\" nenalezena</string>
+    <string name="title_setup_advanced_protection">Jste-li zaregistrováni do programu pokročilé ochrany, není možné použít e-mailovou aplikaci třetí strany. Toto je omezení vynucené Googlem.</string>
     <string name="title_setup_quick_success">Účet a identita byly úspěšně přidány</string>
     <string name="title_setup_quick_failed">Účet a identitu můžete také zkusit nastavit níže</string>
     <string name="title_setup_manage">Spravovat</string>
@@ -166,27 +179,29 @@
     <string name="title_setup_grant_again">Udělit požadovaná oprávnění</string>
     <string name="title_setup_account">Nastavit účty</string>
     <string name="title_setup_account_remark">Pro příjem e-mailů</string>
-    <string name="title_setup_account_hint">Pro změnu barvy, cílové složky pro tažení doleva/doprava, apod.</string>
+    <string name="title_setup_account_hint">Pro změnu barvy, cílové složky při tažení doleva/doprava, apod.</string>
     <string name="title_setup_identity">Nastavit identity</string>
     <string name="title_setup_identity_remark">Pro odesílání e-mailů</string>
     <string name="title_setup_identity_hint">Pro změnu jména, barvy, podpisu, apod.</string>
+    <string name="title_setup_identity_what">Co je to identita?</string>
     <string name="title_setup_permissions">Udělit oprávnění</string>
     <string name="title_setup_permissions_remark">Pro přístup k údajům kontaktů (nepovinné)</string>
     <string name="title_setup_doze">Nastavit optimalizace výdrže baterie</string>
-    <string name="title_setup_doze_remark">Pro průběžný příjem e-mailů (nepovinné)</string>
-    <string name="title_setup_doze_instructions">V následujícím dialogu nahoře vyberte \"Všechny aplikace\", v seznamu vyberte tuto aplikaci a označte a potvrďte volbu \"Neoptimalizovat\"</string>
+    <string name="title_setup_doze_remark">Pro spolehlivý příjem e-mailu</string>
+    <string name="title_setup_doze_instructions">V následujícím dialogu nahoře vyberte „Všechny aplikace“, v seznamu vyberte tuto aplikaci a označte a potvrďte volbu „Neoptimalizovat“</string>
     <string name="title_setup_doze_battery">Rychlé vybíjení baterie?</string>
     <string name="title_setup_doze_stopped">Synchronizace se zastavila?</string>
     <string name="title_setup_data">Spořič dat je zapnutý</string>
+    <string name="title_setup_advanced_options">Zobrazit rozšířené možnosti</string>
     <string name="title_setup_inbox">Přejít ke zprávám</string>
     <string name="title_setup_go">Přejít</string>
     <string name="title_setup_to_do">Dokončit</string>
     <string name="title_setup_done">Hotovo</string>
     <string name="title_setup_still">Zbývá dokončit</string>
     <string name="title_setup_error">Chyba</string>
+    <string name="title_setup_configuring">Probíhá konfigurace účtu &#8230;</string>
     <string name="title_setup_export">Export nastavení</string>
     <string name="title_setup_import">Import nastavení</string>
-    <string name="title_setup_export_do">Gmail účty propojené s Google účty v zařízení nelze exportovat</string>
     <string name="title_setup_import_do">Importované účty budou přidány bez přepsání stávajících účtů</string>
     <string name="title_setup_password">Heslo</string>
     <string name="title_setup_password_chars">Heslo obsahuje řídící znaky či mezery</string>
@@ -211,11 +226,13 @@
     <string name="title_setup_theme_red_green">Červený/zelený</string>
     <string name="title_setup_theme_grey">Šedý</string>
     <string name="title_setup_theme_black">Černý</string>
+    <string name="title_setup_theme_black_and_white">Černobílý</string>
     <string name="title_setup_theme_reverse">Prohodit barvy</string>
+    <string name="title_setup_theme_light">Světlý</string>
     <string name="title_setup_theme_dark">Tmavý</string>
-    <string name="title_setup_theme_black_background">Černé pozadí</string>
     <string name="title_setup_theme_system">Podle systému</string>
-    <string name="title_setup_theme_system_hint">Podporuje-li to Android, motiv \"podle systému\" se ve dne/noci automaticky přepne na světlé/tmavé zobrazení</string>
+    <string name="title_setup_theme_black_background">Černé pozadí</string>
+    <string name="title_setup_theme_system_hint">Podporuje-li to Android, motiv „podle systému“ se ve dne/noci automaticky přepne na světlé/tmavé zobrazení</string>
     <string name="title_setup_advanced">Pokročilé</string>
     <string name="title_setup_options">Možnosti</string>
     <string name="title_setup_defaults">Obnovit výchozí</string>
@@ -234,9 +251,9 @@
     <string name="title_advanced_section_encryption">Šifrování</string>
     <string name="title_advanced_section_notifications">Oznámení</string>
     <string name="title_advanced_section_misc">Ostatní</string>
-    <string name="title_advanced_receive">Přijímat zprávy</string>
+    <string name="title_advanced_receive">Přijímat zprávy pro všechny účty</string>
     <string name="title_advanced_when">Kdy</string>
-    <string name="title_advanced_always">Tyto účty synchronizovat vždy</string>
+    <string name="title_advanced_always">Neustále přijímat zprávy pro tyto účty</string>
     <string name="title_advanced_schedule">Plán</string>
     <string name="title_advanced_advanced">Pokročilé</string>
     <string name="title_advanced_no_date">Zprávy bez data</string>
@@ -246,18 +263,25 @@
     <string name="title_advanced_kept_removed">Kontrolovat, zda byly staré zprávy odstraněny ze serveru</string>
     <string name="title_advanced_gmail_thread">Gmail styl seskupování zpráv pro Gmail účty</string>
     <string name="title_advanced_sync_folders">Synchronizovat seznam složek</string>
+    <string name="title_advanced_sync_shared_folders">Synchronizovat seznamy sdílených složek</string>
     <string name="title_advanced_subscriptions">Spravovat odběry složek</string>
+    <string name="title_advanced_check_mx">Kontrolovat e-mailové adresy odesílatelů při synchronizaci zpráv</string>
+    <string name="title_advanced_check_reply">Kontrolovat e-mailové adresy pro odpověď při synchronizaci zpráv</string>
+    <string name="title_advanced_tune_keep_alive">Automaticky vyladit interval udržení naživu</string>
     <string name="title_advanced_keyboard">Automaticky zobrazit klávesnici</string>
     <string name="title_advanced_suggest_local">Navrhovat lokálně uložené kontakty</string>
     <string name="title_advanced_suggest_sent">Navrhovat adresy nalezené v odeslaných zprávách</string>
     <string name="title_advanced_suggest_received">Navrhovat adresy nalezené v přijatých zprávách</string>
     <string name="title_advanced_suggest_frequently">Řadit navrhované adresy dle četnosti použití</string>
+    <string name="title_advanced_compose_font">Výchozí písmo</string>
     <string name="title_advanced_prefix_once">Při odpovídání nebo přeposílání přidat do předmětu pouze jednu předponu</string>
+    <string name="title_advanced_separate_reply">Vložit vodorovnou čáru před hlavičku odpovědi/přeposlání</string>
     <string name="title_advanced_extended_reply">Použít rozšířenou hlavičku odpovědi/přeposlání</string>
     <string name="title_advanced_quote_reply">Citovat text odpovědi</string>
     <string name="title_advanced_resize_reply">Upravit velikost obrázků v textu odpovědi</string>
     <string name="title_advanced_signature_location">Umístění podpisu</string>
-    <string name="title_advanced_signature_end">Připojit podpis za citovanou/přeposílanou zprávu</string>
+    <string name="title_advanced_signature_reply">Použít podpis při odpovědi</string>
+    <string name="title_advanced_signature_forward">Použít podpis při přeposlání</string>
     <string name="title_advanced_plain_only">Automaticky odeslat pouze prostý text</string>
     <string name="title_advanced_flow">\'format flowed\' pro prostý text</string>
     <string name="title_advanced_receipt">Při požadování potvrzení</string>
@@ -272,7 +296,6 @@
     <string name="title_advanced_rlah">Roaming jako doma (RLAH)</string>
     <string name="title_advanced_timeout">Časový limit připojení (sekundy)</string>
     <string name="title_advanced_ssl_harden">Obrnit SSL připojení</string>
-    <string name="title_advanced_socks">Použít SOCKS proxy</string>
     <string name="title_advanced_manage_connectivity">Spravovat připojení</string>
     <string name="title_advanced_caption_general">Obecné</string>
     <string name="title_advanced_caption_list">Seznam</string>
@@ -280,48 +303,57 @@
     <string name="title_advanced_caption_message">Zpráva</string>
     <string name="title_advanced_caption_message_header">Hlavička zprávy</string>
     <string name="title_advanced_caption_message_body">Tělo zprávy</string>
+    <string name="title_advanced_portrait2">Dělené rozvržení v režimu na výšku</string>
     <string name="title_advanced_landscape">Dvou-sloupcové rozvržení v režimu na šířku</string>
     <string name="title_advanced_landscape3">Automaticky zobrazit navigační menu v režimu na šířku</string>
     <string name="title_advanced_startup">Na úvodní obrazovce zobrazit</string>
     <string name="title_advanced_cards">Použít styl karet namísto tabulkového zobrazení</string>
+    <string name="title_advanced_cards_beige">Použít béžové pozadí při zobrazení stylem karet</string>
     <string name="title_advanced_date_header">Seskupit podle data</string>
     <string name="title_advanced_threading">Vlákna konverzací</string>
+    <string name="title_advanced_threading_unread">Zobrazit počet nepřečtených zpráv v konverzacích</string>
     <string name="title_advanced_indentation">Levé/pravé odsazení přijatých/odeslaných zpráv v konverzacích</string>
     <string name="title_advanced_highlight_unread">Zvýraznit nepřečtené zprávy</string>
     <string name="title_advanced_highlight_subject">Zvýraznit předmět</string>
     <string name="title_advanced_color_stripe">Zobrazit barevný pruh</string>
     <string name="title_advanced_avatars">Zobrazit fotografie kontaktů</string>
     <string name="title_advanced_gravatars">Zobrazit Gravatary</string>
+    <string name="title_advanced_favicons">Zobrazit ikony stránek</string>
     <string name="title_advanced_generated_icons">Zobrazit generované ikony</string>
     <string name="title_advanced_identicons">Zobrazit identikony</string>
-    <string name="title_advanced_circular">Použít kulaté ikony</string>
+    <string name="title_advanced_circular">Zobrazit kulaté ikony</string>
     <string name="title_advanced_color_saturation">Saturace</string>
     <string name="title_advanced_color_value">Jas</string>
     <string name="title_advanced_color_threshold">Mezní hodnota barvy písmena</string>
     <string name="title_advanced_name_email">Zobrazit jména a e-mailové adresy</string>
     <string name="title_advanced_replace_name">Preferovat jméno z kontaktu namísto z hlavičky</string>
-    <string name="title_advanced_distinguish_contacts">Podtrhnout odesílatele, je-li známý jako lokální \"komu\" kontakt</string>
+    <string name="title_advanced_distinguish_contacts">Podtrhnout odesílatele, je-li známý jako lokální „komu“ kontakt</string>
     <string name="title_advanced_show_recipients">Zobrazit příjemce v hlavičce zprávy</string>
-    <string name="title_advanced_font_size_sender">Velikost písma odesílatele</string>
-    <string name="title_advanced_font_size_subject">Velikost písma předmětu</string>
+    <string name="title_advanced_font_size_sender">Velikost textu odesílatele</string>
+    <string name="title_advanced_font_size_subject">Velikost textu předmětu</string>
     <string name="title_advanced_subject_top">Zobrazit předmět nad odesílatelem</string>
     <string name="title_advanced_subject_italic">Zobrazit předmět kurzívou</string>
-    <string name="title_advanced_subject_elipsed">V případě potřeby zestručnit předmět</string>
+    <string name="title_advanced_subject_elipsed">Zestručnit předmět v případě potřeby</string>
+    <string name="title_advanced_highlight_color">Barva zvýraznění</string>
     <string name="title_advanced_keywords">Zobrazit klíčová slova v hlavičce zprávy</string>
+    <string name="title_advanced_labels">Zobrazit Gmail štítky v hlavičce zprávy</string>
     <string name="title_advanced_flags">Zobrazit hvězdičky</string>
     <string name="title_advanced_flags_background">Obarvit pozadí, namísto barevných hvězdiček</string>
     <string name="title_advanced_preview">Zobrazit náhled zprávy</string>
     <string name="title_advanced_preview_italic">Zobrazit náhled zprávy kurzívou</string>
     <string name="title_advanced_preview_lines">Počet řádků náhledu</string>
-    <string name="title_advanced_archive_trash">Zobrazit tlačítka pro archivaci nebo přesun zprávy do koše</string>
-    <string name="title_advanced_move">Zobrazit tlačítko pro přesun zprávy</string>
     <string name="title_advanced_addresses">Automaticky zobrazit detaily adresy</string>
-    <string name="title_advanced_attachments_alt">Přesunout zobrazení příloh pod text zprávy</string>
+    <string name="title_advanced_attachments_alt">Zobrazit přílohy pod textem zprávy</string>
+    <string name="title_advanced_thumbnails">Zobrazit náhledy obrázků pod textem zprávy</string>
+    <string name="title_advanced_message_text_zoom">Výchozí zvětšení textu zprávy</string>
+    <string name="title_advanced_overview_mode">Přizpůsobit zobrazení původních zpráv šířce obrazovky</string>
     <string name="title_advanced_contrast">Použít vysoký kontrast pro text zprávy</string>
-    <string name="title_advanced_monospaced">Použít neproporcionální písmo pro text zprávy</string>
-    <string name="title_advanced_text_color">Zobrazit barvy textu</string>
-    <string name="title_advanced_text_size">Zobrazit malé a velké texty</string>
-    <string name="title_advanced_text_align">Zobrazit vlevo/na střed/vpravo zarovnané texty</string>
+    <string name="title_advanced_monospaced">Automaticky použít neproporcionální písmo pro text zprávy</string>
+    <string name="title_advanced_text_color">Použít barvy textu</string>
+    <string name="title_advanced_text_size">Použít velikost textu</string>
+    <string name="title_advanced_text_font">Použít fonty písma</string>
+    <string name="title_advanced_text_align">Použít zarovnání textu</string>
+    <string name="title_advanced_text_separators">Použít oddělovací čáry</string>
     <string name="title_advanced_collapse_quotes">Sbalit citovaný text</string>
     <string name="title_advanced_images_inline">Automaticky zobrazit vložené obrázky</string>
     <string name="title_advanced_seekbar">Zobrazit relativní pozici v konverzaci puntíkem</string>
@@ -330,38 +362,44 @@
     <string name="title_advanced_navbar_colorize">Obarvit navigační panel Androidu</string>
     <string name="title_advanced_parse_classes">Parsovat šablony stylů</string>
     <string name="title_advanced_authentication">Zobrazit upozornění, nemůže-li přijímající server zprávu ověřit</string>
-    <string name="title_advanced_double_back">Dvakrát \"zpět\" pro ukončení</string>
+    <string name="title_advanced_double_back">Dvakrát „zpět“ pro ukončení</string>
     <string name="title_advanced_pull_refresh">Aktualizovat tažením dolů</string>
     <string name="title_advanced_autoscroll">Posun na začátek při příjmu nových zpráv</string>
     <string name="title_advanced_double_tap">Dvojstisk pro označení zprávy jako přečtené/nepřečtené</string>
-    <string name="title_advanced_swipenav">Tahem vlevo/vpravo přejít na další/předešlou konverzaci</string>
-    <string name="title_advanced_volumenav">Hlasitostí nahoru/dolů přejít na další/předešlou konverzaci</string>
+    <string name="title_advanced_swipenav">Přejít na další/předešlou konverzaci tažením vlevo/vpravo</string>
+    <string name="title_advanced_volumenav">Přejít na další/předešlou konverzaci zvýšením/snížením hlasitosti</string>
     <string name="title_advanced_reversed">Obrátit směr navigace</string>
-    <string name="title_advanced_autoexpand">Automaticky rozbalovat zprávy</string>
-    <string name="title_advanced_expand_all">Automaticky rozbalovat všechny přečtené zprávy</string>
+    <string name="title_advanced_swipe_close">Zavřít konverzaci tažením dolů</string>
+    <string name="title_advanced_swipe_move">Přesunout konverzaci tažením nahoru</string>
+    <string name="title_advanced_autoexpand">Rozbalovat zprávy automaticky</string>
+    <string name="title_advanced_expand_all">Rozbalovat všechny přečtené zprávy automaticky</string>
     <string name="title_advanced_expand_one">Rozbalit vždy pouze jednu zprávu</string>
     <string name="title_advanced_collapse_multiple">Při pohybu \"zpět\" sbalit zprávy v konverzaci s vícero zprávami</string>
-    <string name="title_advanced_autoclose">Automaticky zavírat konverzace</string>
+    <string name="title_advanced_autoclose">Zavírat konverzace automaticky</string>
     <string name="title_advanced_onclose">Při zavření konverzace</string>
+    <string name="title_advanced_undo">Vrátit zpět časový limit</string>
     <string name="title_advanced_quick_filter">Zobrazit neobtěžující ikony pro rychlé filtrování</string>
     <string name="title_advanced_quick_scroll">Zobrazit neobtěžující ikony pro rychlý posun nahoru/dolů</string>
-    <string name="title_advanced_autoread">Při přesunu automaticky označit zprávy jako přečtené</string>
-    <string name="title_advanced_star_snoozed">Automaticky přidat hvězdičku při odložení zpráv</string>
-    <string name="title_advanced_autounstar">Při přesunu automaticky odebrat zprávám hvězdičku</string>
+    <string name="title_advanced_autoread">Při přesunu označit zprávy jako přečtené automaticky</string>
+    <string name="title_advanced_star_snoozed">Při odložení zpráv přidat hvězdičku automaticky</string>
+    <string name="title_advanced_autounstar">Při přesunu odebrat zprávám hvězdičku automaticky</string>
     <string name="title_advanced_auto_important">Automaticky činit zprávy s hvězdičkou důležitými</string>
     <string name="title_advanced_reset_importance">Obnovit důležitost při přesunu zpráv</string>
     <string name="title_advanced_discard_delete">Při zahození konceptu jej permanentně smazat</string>
     <string name="title_advanced_default_snooze">Výchozí délka odložení</string>
     <string name="title_advanced_notifications">Spravovat oznámení</string>
     <string name="title_advanced_notifications_default">Výchozí kanál</string>
-    <string name="title_advanced_notifications_service">Servisní kanál</string>
+    <string name="title_advanced_notifications_service">Kanál „příjem“</string>
     <string name="title_advanced_notifications_background">Pro synchronizaci zpráv použít službu na pozadí</string>
     <string name="title_advanced_notifications_background_hint">Služba na pozadí může být systémem Android kdykoli zastavena, ale nevyžaduje oznámení ve stavové liště</string>
-    <string name="title_advanced_badge">Zobrazit počet nových zpráv na ikoně aplikace</string>
+    <string name="title_advanced_badge">Zobrazit počet nových zpráv u ikony aplikace</string>
     <string name="title_advanced_unseen_ignored">Počet oznámení bude odpovídat počtu nových zpráv</string>
+    <string name="title_advanced_notify_background">Zobrazovat oznámení pouze při běhu na pozadí</string>
+    <string name="title_advanced_notify_known">Zobrazit oznámení pouze pro kontakty</string>
     <string name="title_advanced_notify_summary">Zobrazit pouze souhrnné oznámení</string>
     <string name="title_advanced_notify_preview">Zobrazit náhled zprávy v oznámení</string>
     <string name="title_advanced_notify_preview_all">Náhled na celý text</string>
+    <string name="title_advanced_notify_preview_only">Zobrazit pouze oznámení s náhledem textu</string>
     <string name="title_advanced_notify_actions">Akce oznámení</string>
     <string name="title_advanced_notify_action_trash">Koš</string>
     <string name="title_advanced_notify_action_junk">Nevyžádané</string>
@@ -382,22 +420,28 @@
     <string name="title_advanced_browse_links">Otevírání odkazů přenechat Androidu</string>
     <string name="title_advanced_confirm_images">Potvrzovat zobrazení obrázků</string>
     <string name="title_advanced_confirm_html">Automaticky zobrazit zprávy přeformátované</string>
-    <string name="title_advanced_tracking">Automaticky rozpoznat a zakázat sledovací obrázky</string>
+    <string name="title_advanced_tracking">Pokusit se rozpoznat a zakázat sledovací obrázky</string>
     <string name="title_advanced_hide_timezone">Zprávy odesílat bez časového pásma</string>
     <string name="title_advanced_display_hidden">Zobrazit skryté texty zpráv</string>
     <string name="title_advanced_secure">Skrýt z obrazovky nedávných aplikací a zabránit pořizování snímků obrazovky</string>
     <string name="title_advanced_pin">PIN</string>
     <string name="title_advanced_biometrics_timeout">Vypršení biometrického ověření</string>
+    <string name="title_advanced_disconnect_links">Použít seznamy k upozornění na sledovací odkazy</string>
+    <string name="title_advanced_disconnect_images">Použít seznamy k rozpoznání sledovacích obrázků</string>
     <string name="title_advanced_sign_default">Automaticky podepisovat</string>
     <string name="title_advanced_encrypt_default">Automaticky šifrovat</string>
     <string name="title_advanced_auto_decrypt">Automaticky dešifrovat zprávy</string>
     <string name="title_advanced_openpgp">Poskytovatel OpenPGP</string>
     <string name="title_advanced_autocrypt">Použít Autocrypt</string>
     <string name="title_advanced_autocrypt_mutual">Vzájemný režim Autocrypt</string>
+    <string name="title_advanced_check_certificate">Zkontrolovat veřejný klíč při odesílání</string>
     <string name="title_advanced_manage_certificates">Spravovat veřejné klíče</string>
     <string name="title_advanced_import_key">Importovat privátní klíč</string>
     <string name="title_advanced_manage_keys">Spravovat privátní klíče</string>
     <string name="title_advanced_ca">Instalované certifikáty CA</string>
+    <string name="title_advanced_manage_keys_hint">        Otevře nastavení zabezpečení Androidu.
+        Klíče a certifikáty lze obecně najít pod Pokročilé - Šifrování a pověření.
+    </string>
     <string name="title_advanced_external_search">Povolit ostatním aplikacím vyhledávat ve zprávách</string>
     <string name="title_advanced_shortcuts">Zobrazit často používané kontakty v nabídce sdílení Androidu</string>
     <string name="title_advanced_conversation_actions">Navrhovat akce</string>
@@ -405,52 +449,55 @@
     <string name="title_advanced_language_detection">Rozpoznat jazyk textu zprávy</string>
     <string name="title_advanced_fts">Sestavit index vyhledávání</string>
     <string name="title_advanced_fts_indexed">Indexováno %1$d / %2$d zpráv (%3$s)</string>
-    <string name="title_advanced_english">Vynutit anglický jazyk</string>
+    <string name="title_advanced_language">Jazyk</string>
+    <string name="title_advanced_language_system">Systémový</string>
     <string name="title_advanced_watchdog">Pravidelně kontrolovat, zda je FairEmail stále aktivní</string>
-    <string name="title_advanced_optimize">Automaticky optimalizovat nastavení</string>
+    <string name="title_advanced_optimize">Automaticky optimalizovat</string>
     <string name="title_advanced_updates">Kontrolovat aktualizace</string>
     <string name="title_advanced_experiments">Vyzkoušet experimentální funkce</string>
+    <string name="title_advanced_query_threads">Omezit paralelní přístup k databázi</string>
     <string name="title_advanced_crash_reports">Odesílat zprávy o chybách</string>
+    <string name="title_advanced_protocol">Protokolovat protokoly</string>
     <string name="title_advanced_debug">Režim ladění</string>
     <string name="title_advanced_cleanup_attachments">Odstranit přílohy starých zpráv</string>
     <string name="title_advanced_cleanup">Úklid</string>
     <string name="title_advanced_last_cleanup">Poslední čištění: %1$s</string>
+    <string name="title_advanced_app">Nastavení aplikace</string>
     <string name="title_advanced_more">Více možností</string>
-    <string name="title_advanced_enabled_hint">Globálně zakáže nebo povolí příjem zpráv</string>
-    <string name="title_advanced_manual_hint">Je-li synchronizace vypnuta, stále je možné synchronizovat ručně tažením dolů v seznamu zpráv.</string>
-    <string name="title_advanced_poll_hint">Synchronizování periodicky bude pokaždé porovnávat lokální a vzdálené zprávy, což je náročná operace, potencionálně vedoucí ke zvýšené spotřebě baterie, zvláště při velkém množství zpráv k synchronizaci. Synchronizování nepřetržitě tomuto předchází průběžným nasloucháním pouze změnám.</string>
+    <string name="title_advanced_manual_hint">Je-li příjem zpráv zakázán, stále je možno zprávy přijímat ručně tažením dolů v seznamu zpráv</string>
+    <string name="title_advanced_poll_hint">Pravidelná kontrola nových zpráv pokaždé porovnává místní a vzdálené zprávy, což je zdlouhavá operace, potencionálně vedoucí ke zvýšené spotřebě baterie, zvláště při velkém množství zpráv. Neustálý příjem tomuto předchází průběžným sledováním změn.</string>
+    <string name="title_advanced_optimize_hint">Může změnit synchronizační interval pro úsporu spotřeby baterie, v závislosti na možnostech a chování e-mailových serverů</string>
     <string name="title_advanced_schedule_hint">Pro změnu času se jej dotkněte</string>
-    <string name="title_advanced_check_mx">Kontrolovat e-mailové adresy odesílatelů při synchronizaci zpráv</string>
-    <string name="title_advanced_check_reply">Kontrolovat e-mailové adresy pro odpověď při synchronizaci zpráv</string>
     <string name="title_advanced_no_date_hint">Někteří poskytovatelé ukládají zprávy s neznámým, neplatným nebo budoucím datem jako zprávy bez data</string>
     <string name="title_advanced_unseen_hint">Někteří poskytovatelé toto nepodporují korektně, což může způsobit synchronizaci všech nebo žádných zpráv</string>
     <string name="title_advanced_deleted_unseen">Je-li vypnuto, nepřečtené zprávy zůstanou ponechány v zařízení navždy</string>
     <string name="title_advanced_sync_kept_hint">Zvýší spotřebu dat a baterie, zvláště pokud v zařízení uchováváte velké množství zpráv</string>
     <string name="title_advanced_sync_folders_hint">Vypnutí o něco sníží množství přenesených dat a spotřebu baterie, zároveň však znemožní aktualizovat seznam složek</string>
+    <string name="title_advanced_lookup_mx_hint">Ověří existenci DNS MX záznamů</string>
     <string name="title_advanced_sync_delay_hint">Zpomalí synchronizaci zpráv</string>
+    <string name="title_advanced_check_reply_hint">Ověří, zda jsou název domény odesílatele a adresy pro odpověď totožné</string>
     <string name="title_advanced_suggest_local_hint">Jako dodatek ke kontaktům poskytnutých Androidem. Je-li povoleno, kontaktní údaje budou ukládány pro nově odeslané či přijaté zprávy.</string>
     <string name="title_advanced_usenet_hint">Vložit \'-- \' mezi text a podpis</string>
     <string name="title_advanced_send_reminders_hint">Zobrazit upozornění, je-li text zprávy či předmět prázdný nebo může-li chybět příloha</string>
-    <string name="title_advanced_lookup_mx_hint">Ověří existenci DNS MX záznamů</string>
-    <string name="title_advanced_check_reply_hint">Ověří, zda jsou název domény odesílatele a adresy pro odpověď totožné</string>
     <string name="title_advanced_metered_hint">Účtovaná připojení jsou obecně mobilní připojení nebo placené Wi-Fi hotspoty</string>
     <string name="title_advanced_metered_warning">Vypnutí této volby zakáže přijímání a odesílání zpráv při mobilních datových přenosech</string>
     <string name="title_advanced_rlah_hint">Nepředpokládat žádný roaming v rámci EU</string>
     <string name="title_advanced_timeout_hint">Časový limit čtení/zápisu bude nastaven na dvojnásobek časového limitu připojení. Vyšší hodnoty povedou k větší spotřebě baterie.</string>
     <string name="title_advanced_ssl_harden_hint">Povolení této volby zakáže slabé SSL protokoly a šifry, což může vést k problémům s připojením</string>
-    <string name="title_advanced_socks_hint">Použití vzdáleného proxy serveru není bezpečné, neboť proxy spojení nejsou šifrována</string>
     <string name="title_advanced_roaming_hint">Hlavičky zpráv budou během roamingu stahovány vždy. Použijte nastavení svého zařízení pro zakázání internetu při roamingu.</string>
     <string name="title_advanced_browse_hint">Načte další zprávy při posouvání dolů</string>
     <string name="title_advanced_layout_hint">Přepnutí na kompaktnější rozvržení a změnu velikosti textu lze provést v zobrazení zprávy skrze menu v horním panelu akcí</string>
     <string name="title_advanced_startup_hint">Podržením libovolné složky v seznamu složek ji přidáte nebo odeberete ze seznamu sjednocených složek</string>
+    <string name="title_advanced_beige_hint">Pouze světlé motivy</string>
     <string name="title_advanced_date_hint">Zprávy jsou seskupovány podle data, pouze pokud jsou řazeny dle času</string>
     <string name="title_advanced_navbar_colorize_hint">Zda volba funguje, závisí na verzi a variantě Androidu</string>
     <string name="title_advanced_threading_hint">Seskupit související zprávy</string>
-    <string name="title_advanced_highlight_hint">Sekundární barva motivu bude použita pro zvýrazňování</string>
+    <string name="title_advanced_highlight_hint">Pro zvýrazňování bude použita sekundární barva motivu</string>
     <string name="title_advanced_gravatars_hint">Může dojít k ohrožení soukromí</string>
     <string name="title_advanced_name_email_hint">Při vypnutí se zobrazí pouze jména, budou-li k dispozici</string>
     <string name="title_advanced_preview_hint">K dispozici pouze pokud byl stažen text zprávy</string>
     <string name="title_advanced_preview_issue">Je-li počet řádků větší než jeden, může být posouvání pomalé díky chybě v některých verzích Androidu</string>
+    <string name="title_advanced_overview_mode_hint">Může mít za následek velmi malé písmo</string>
     <string name="title_advanced_inline_hint">Vložené obrázky jsou obrázky v těle zprávy</string>
     <string name="title_advanced_parse_classes_hint">Zprávy budou zobrazovány přesněji, ale s potencionálním zpožděním</string>
     <string name="title_advanced_autoexpand_hint">Automaticky otevřít zprávu, je-li v konverzaci pouze jediná zpráva nebo jediná nepřečtená</string>
@@ -468,18 +515,21 @@
     <string name="title_advanced_notify_manage_default_hint">Pro nastavení výchozího zvuku, apod</string>
     <string name="title_advanced_notify_manage_service_hint">Pro vypnutí permanentního oznámení</string>
     <string name="title_advanced_notify_preview_all_hint">Pro nositelná zařízení umějící zobrazit celý text (až 5,000 znaků)</string>
+    <string name="title_advanced_notify_preview_only_hint">Pozdrží zobrazení oznámení, dokud není stažen text zprávy</string>
     <string name="title_advanced_wearable_hint">Oznámení jsou do nositelného zařízení odeslány teprve po stažení textu zprávy</string>
     <string name="title_advanced_move_hint">Cílovou složku lze změnit v nastavení účtu</string>
     <string name="title_advanced_notify_no_grouping">Tato verze Androidu nepodporuje seskupování oznámení</string>
     <string name="title_advanced_notify_no_channels">Tato verze Androidu nepodporuje kanály oznámení</string>
+    <string name="title_advanced_queries_hint">Povolením se sníží výkonnost, avšak na některých zařízeních je povolení nezbytné</string>
     <string name="title_advanced_fts_hint">Povolením se zlepší výkon vyhledávání, ale také se zvýší využití baterie a místa v úložišti</string>
     <string name="title_advanced_english_hint">Restartuje aplikaci</string>
-    <string name="title_advanced_optimize_hint">Povolení umožní automatickou změnu nastavení příjmu pro snížení spotřeby baterie</string>
     <string name="title_advanced_experiments_hint">Seznam aktuálních experimentálních funkcí</string>
-    <string name="title_advanced_debug_hint">Zapnout rozšířený záznam a zobrazit ladící informace na různých místech</string>
+    <string name="title_advanced_protocol_hint">Výrazně zvýší spotřebu baterie a potřebu úložného prostoru!</string>
+    <string name="title_advanced_debug_hint">Povolit rozšířené protokolování a zobrazit nevzhledné ladící informace na různých místech</string>
     <string name="title_advanced_cleanup_attachments_hint">Při ručním čištění odebere přílohy ze zpráv, které již nejsou synchronizovány</string>
     <string name="title_advanced_cleanup_hint">Smaže dočasné soubory</string>
     <string name="title_advanced_never_favorite">Nikdy oblíbený</string>
+    <string name="title_advanced_edit_name">Upravit pojmenování</string>
     <string name="title_advanced_swipe_actions">Nastavit akce tažení prstem</string>
     <string name="title_advanced_swipe_actions_hint">Nastaví akce tažení doleva a doprava pro všechny IMAP účty</string>
     <string name="title_select">Vybrat &#8230;</string>
@@ -489,9 +539,11 @@
     <string name="title_advanced_sender">Umožnit úpravu adresy odesílatele</string>
     <string name="title_advanced_sender_regex">Reg. výraz odpovídající uživ. jménu příchozích e-mailových adres</string>
     <string name="title_identity_reply_to">Odpověď na adresu</string>
-    <string name="title_identity_unicode">Povolit Unicode v e-mailových adresách</string>
+    <string name="title_identity_unicode">Použít Unicode přenos</string>
+    <string name="title_identity_unicode_remark">Většina serverů toto nepodporuje</string>
+    <string name="title_identity_max_size">Maximální velikost zprávy (MB)</string>
     <string name="title_identity_receipt">Automaticky požadovat potvrzení doručení/přečtení</string>
-    <string name="title_identity_use_ip_hint">V případech \"neplatný pozdrav\", \"nutná platná adresa\" či podobné chyby zkuste změnit toto nastavení</string>
+    <string name="title_identity_use_ip_hint">V případech jako „neplatný pozdrav“, „vyžadována platná adresa“ či podobné chyby, zkuste změnit toto nastavení</string>
     <string name="title_optional">Nepovinné</string>
     <string name="title_recommended">Doporučeno</string>
     <string name="title_account_linked">Připojený účet</string>
@@ -512,11 +564,14 @@
     <string name="title_provider">Poskytovatel</string>
     <string name="title_custom">Vlastní</string>
     <string name="title_host">Název hostitele</string>
+    <string name="title_encryption">Šifrování</string>
+    <string name="title_encryption_none">Žádné</string>
     <string name="title_allow_insecure">Povolit nezabezpečené připojení</string>
     <string name="title_insecure_remark">Nezabezpečená připojení by měla být povolena pouze v důvěryhodných, a nikdy na veřejných sítích</string>
     <string name="title_port">Číslo portu</string>
     <string name="title_user">Uživatelské jméno</string>
     <string name="title_password">Heslo</string>
+    <string name="title_case_sensitive">Uživatelská jména a hesla obvykle vyžadují rozlišit velká a malá písmena</string>
     <string name="title_client_certificate">Klientský certifikát</string>
     <string name="title_realm">Sféra</string>
     <string name="title_use_ip">Použít lokální IP adresu namísto názvu hostitele</string>
@@ -524,33 +579,40 @@
     <string name="title_primary">Hlavní</string>
     <string name="title_primary_account">Hlavní (výchozí účet)</string>
     <string name="title_primary_identity">Hlavní (výchozí identita)</string>
+    <string name="title_self_identity">Odebrat e-mailovou adresu při odpovědi</string>
     <string name="title_leave_on_server">Ponechat zprávy na serveru</string>
     <string name="title_leave_deleted">Ponechat smazané zprávy na serveru</string>
     <string name="title_leave_on_device">Ponechat zprávy v zařízení</string>
     <string name="title_max_messages">Maximální počet zpráv ke stažení (prázdné pro všechny)</string>
     <string name="title_keep_alive_interval">Interval udržování spojení/dotazování (minuty)</string>
-    <string name="title_use_date">Použít datum hlavičky čas odeslání namísto čas přijetí serverem</string>
+    <string name="title_server_time">Použít čas přijetí (server)</string>
+    <string name="title_received_header">Použít hlavičku „přijato“</string>
+    <string name="title_date_header">Použít hlavičku „datum“ (čas odeslání)</string>
+    <string name="title_date_remark">Změny budou použity pouze u nových zpráv</string>
     <string name="title_related_identity">Přidat související identitu</string>
     <string name="title_check">Ověřit</string>
     <string name="title_trust">Důvěřovat certifikátu serveru s digitálním otiskem %1$s</string>
     <string name="title_no_name">Chybí jméno</string>
     <string name="title_no_email">Chybí e-mailová adresa</string>
-    <string name="title_email_invalid">E-mailová adresa je neplatná: \'%1$s\'</string>
-    <string name="title_address_parse_error">Adresa \"%1$s\" neplatná: %2$s</string>
+    <string name="title_email_invalid">E-mailová adresa je neplatná: „%1$s“</string>
+    <string name="title_address_duplicate">Duplikát adresy „%1$s“</string>
+    <string name="title_address_parse_error">Adresa „%1$s“ je neplatná: %2$s</string>
     <string name="title_no_account">Chybí účet</string>
     <string name="title_no_host">Chybí název hostitele</string>
     <string name="title_no_user">Chybí uživatelské jméno</string>
     <string name="title_no_password">Chybí heslo</string>
     <string name="title_no_inbox">Složka \"Doručené\" nenalezena</string>
-    <string name="title_no_primary_drafts">Žádný hlavní účet nebo žádná složka konceptů</string>
-    <string name="title_no_identities">Odesílání e-mailů vyžaduje alespoň jednu identitu a složku konceptů</string>
+    <string name="title_no_drafts">Žádná složka konceptů</string>
+    <string name="title_no_junk_folder">Pro tento účet není zvolena žádná složka pro nevyžádanou poštu</string>
+    <string name="title_no_composable">Odesílání e-mailů vyžaduje nastavenou identitu a v nastavení účtu zvolit složku pro koncepty</string>
     <string name="title_no_standard">Tento poskytovatel používá proprietární e-mailový protokol, a proto není možné použít e-mailové klienty třetích stran</string>
     <string name="title_no_idle">Tento poskytovatel nepodporuje okamžité zprávy. Následkem bude opožděný příjem nových zpráv a zvýšená spotřeba baterie.</string>
     <string name="title_no_utf8">Tento poskytovatel nepodporuje UTF-8</string>
     <string name="title_no_sync">Chyby synchronizace od %1$s</string>
     <string name="title_reply_domain">Doména odesílatele (%1$s) a odpovědi (%2$s) se liší</string>
-    <string name="title_identity_required">Identita je nutná pro odesílání zpráv</string>
-    <string name="title_drafts_required">Složka konceptů je nutná pro odesílání zpráv</string>
+    <string name="title_identity_required">Pro odesílání zpráv je vyžadována identita</string>
+    <string name="title_drafts_required">Pro odesílání zpráv je vyžadována složka konceptů</string>
+    <string name="title_drafts_select">Odesílání e-mailů vyžaduje nastavenou složku pro koncepty v nastavení účtu</string>
     <string name="title_account_delete">Trvale smazat tento účet?</string>
     <string name="title_identity_delete">Trvale smazat tuto identitu?</string>
     <string name="title_edit_html">Upravit jako HTML</string>
@@ -561,8 +623,10 @@
     <string name="title_oauth_support">OAuth není podporováno</string>
     <string name="title_review">Zkontrolovat</string>
     <string name="title_hint_alias">Dlouze podržet pro možnosti, např. kopírování pro vytvoření aliasu identity</string>
+    <string name="title_service_auth">E-mailový server navrátil: \'%1$s\'</string>
     <string name="title_service_vpn">Toto může být zapříčiněno použitou VPN</string>
     <string name="title_service_port">Překontrolujte prosím číslo portu</string>
+    <string name="title_service_protocol">Překontrolujte prosím protokol (SSL/TLS nebo STARTTLS)</string>
     <string name="title_advanced_browse">Procházet zprávy na serveru</string>
     <string name="title_advanced_expand_read">Označit zprávy jako přečtené při rozbalení</string>
     <string name="title_synchronize_now">Synchronizovat nyní</string>
@@ -580,10 +644,11 @@
     <string name="title_insert_contact">Přidat kontakt</string>
     <string name="title_edit_contact">Upravit kontakt</string>
     <string name="title_create_sub_folder">Vytvořit podsložku</string>
-    <string name="title_empty_trash_ask">Trvale odstranit všechny zprávy v koši?</string>
-    <string name="title_empty_spam_ask">Trvale odstranit všechny nevyžádané zprávy?</string>
-    <string name="title_empty_trash_all_ask">Trvale odstranit všechny zprávy v koši ze všech účtů?</string>
-    <string name="title_empty_spam_all_ask">Trvale odstranit všechny nevyžádané zprávy ze všech účtů?</string>
+    <string name="title_empty_trash_ask">Trvale smazat všechny zprávy v koši?</string>
+    <string name="title_empty_spam_ask">Trvale smazat všechny nevyžádané zprávy?</string>
+    <string name="title_empty_trash_all_ask">Trvale smazat všechny zprávy v koši ze všech účtů?</string>
+    <string name="title_empty_spam_all_ask">Trvale smazat všechny nevyžádané zprávy ze všech účtů?</string>
+    <string name="title_empty_all">Tímto smažete všechny zprávy jak ze zařízení, tak i ze serveru</string>
     <string name="title_delete_operation">Smazat operace s chybovou hláškou?</string>
     <string name="title_delete_contacts">Smazat všechny lokální kontakty?</string>
     <string name="title_no_operations">Žádné probíhající operace</string>
@@ -614,7 +679,7 @@
     </string>
     <string name="title_folder_name_missing">Chybí název složky</string>
     <string name="title_folder_exists">Složka %1$s již existuje</string>
-    <string name="title_folder_delete">Trvale odstranit tuto složku a všechny její zprávy?</string>
+    <string name="title_folder_delete">Trvale smazat tuto složku a všechny její zprávy?</string>
     <string name="title_months">Měsíce</string>
     <string name="title_months_all">Všechny</string>
     <string name="title_folder_unified">Sjednocené doručené</string>
@@ -636,8 +701,10 @@
     <string name="title_duplicate_in">Duplikát zprávy v %1$s</string>
     <string name="title_subject_reply">Re: %1$s</string>
     <string name="title_subject_forward">Fwd: %1$s</string>
+    <string name="title_buttons">Tlačítka</string>
     <string name="title_seen">Označit přečtené</string>
     <string name="title_unseen">Označit nepřečtené</string>
+    <string name="title_toggle_seen">Označit ne/přečteno</string>
     <string name="title_hide">Skrýt</string>
     <string name="title_unhide">Zobrazit</string>
     <string name="title_flag">Přidat hvězdičku</string>
@@ -660,6 +727,7 @@
     <string name="title_raw_save">Uložit zdrojovou zprávu</string>
     <string name="title_raw_send">Odeslat jako přílohu</string>
     <string name="title_manage_keywords">Spravovat klíčová slova</string>
+    <string name="title_manage_labels">Spravovat Gmail štítky</string>
     <string name="title_add_keyword">Přidat klíčové slovo</string>
     <string name="title_show_inline">Zobrazit vložené přílohy</string>
     <string name="title_download_all">Stáhnout vše</string>
@@ -673,12 +741,16 @@
     <string name="title_more">Více</string>
     <string name="title_spam">Nevyžádané</string>
     <string name="title_move">Přesunout</string>
+    <string name="title_copy_btn">Kopírovat</string>
+    <string name="title_keywords_btn">Klíčová slova</string>
+    <string name="title_unsubscribe">Odhlásit odběr</string>
+    <string name="title_message_rule">Vytvořit pravidlo</string>
     <string name="title_no_junk">Není spam</string>
     <string name="title_move_to">Přesunout do &#8230;</string>
     <string name="title_move_to_folder">Přesunout do &#8230;</string>
     <string name="title_move_to_account">Přesunout do %1$s &#8230;</string>
     <string name="title_report_spam">Považovat za nevyžádané</string>
-    <string name="title_delete_permanently">Trvale odstranit</string>
+    <string name="title_delete_permanently">Trvale smazat</string>
     <string name="title_snooze">Odložit &#8230;</string>
     <string name="title_archive">Archiv</string>
     <string name="title_reply">Odpovědět</string>
@@ -687,7 +759,7 @@
     <string name="title_reply_list">Odpovědět seznamu</string>
     <string name="title_reply_receipt">Odeslat potvrzení o přečtení</string>
     <string name="title_reply_template">Odpovědět šablonou</string>
-    <string name="title_moving">Přesouvám do %1$s</string>
+    <string name="title_move_undo">Přesouvání do %1$s (%2$d)</string>
     <string name="title_open_with">Otevřít v aplikaci</string>
     <string name="title_authentication_failed">%1$s ověření se nezdařilo</string>
     <string name="title_receipt_subject">Potvrzení o přečtení: %1$s</string>
@@ -698,7 +770,6 @@
     <string name="title_no_camera">Není k dispozici žádná vhodná aplikace fotoaparátu</string>
     <string name="title_no_saf">Rozhraní přístupu k úložišti není k dispozici</string>
     <string name="title_no_stream">Zastaralá aplikace poslala cestu k souboru namísto datového proudu</string>
-    <string name="title_no_contacts">Výběr kontaktů není k dispozici</string>
     <string name="title_no_internet">Žádné nebo nevyhovující internetové připojení</string>
     <string name="title_no_connection">Připojování k jednomu nebo více účtům &#8230;</string>
     <string name="title_no_folder">Složka neexistuje</string>
@@ -712,16 +783,17 @@
     <string name="title_unused_inline">Nepoužité vložené obrázky budou při odeslání odebrány</string>
     <string name="title_accross_remark">Zprávy přesunuté napříč účty budou opětovně staženy, což povede ke spotřebě dat navíc</string>
     <string name="title_raw_saved">Zdrojová zpráva uložena</string>
+    <string name="title_attachment_eml">Přiložená zpráva</string>
     <string name="title_attachment_saved">Příloha uložena</string>
     <string name="title_attachments_saved">Přílohy uloženy</string>
     <string name="title_attachments_incomplete">Některé přílohy nebo obrázky nebyly staženy a nemohly být proto přidány</string>
     <string name="title_ask_save">Uložit změny?</string>
-    <string name="title_ask_delete">Trvale odstranit zprávu?</string>
-    <string name="title_ask_delete_answer">Trvale odstranit šablonu odpovědi?</string>
-    <string name="title_ask_delete_rule">Trvale odstranit pravidlo?</string>
+    <string name="title_ask_delete">Trvale smazat zprávu?</string>
+    <string name="title_ask_delete_answer">Trvale smazat šablonu odpovědi?</string>
+    <string name="title_ask_delete_rule">Trvale smazat pravidlo?</string>
     <string name="title_ask_discard">Zahodit koncept?</string>
     <string name="title_ask_show_html">Zobrazením původní zprávy může dojít k úniku citlivých informací</string>
-    <string name="title_ask_show_html_remark">Zobrazení původní zprávy s tmavým pozadím není možné, neboť může způsobit zneviditelnění tmavého textu a obrázků</string>
+    <string name="title_ask_show_html_remark">Zobrazení původní zprávy na tmavém pozadí není možné, neboť může způsobit zneviditelnění tmavých textů a obrázků</string>
     <string name="title_ask_show_html_images">Vždy zobrazit obrázky při zobrazení původních zpráv</string>
     <string name="title_ask_show_image">Zobrazením obrázků může dojít k úniku citlivých informací</string>
     <string name="title_ask_show_image_hint">Obrázky rozpoznané jako sledovací nebudou zobrazeny</string>
@@ -731,12 +803,13 @@
     <string name="title_reporting_why">Zprávami o chybách pomůžete zlepšit FairEmail</string>
     <string name="title_ask_review">Prosím, ohodnoťte FairEmail</string>
     <string name="title_ask_review_rationale">        Již nějakou dobu FairEmail používáte.
-        Vážil bych si, kdyby jste mohli FairEmail ohodnotit v Obchodě Play.
-        Pomůže to udržet rovnováhu mezi nepříznivými a příznivými recenzemi.
+        Cenili bychom si, kdyby jste mohli FairEmail ohodnotit v obchodě Google Play.
     </string>
+    <string name="title_ask_once">Tato zpráva se zobrazí pouze jednou, nezvolíte-li „Později“</string>
     <string name="title_third_party">Používáte verzi třetí strany</string>
     <string name="title_expand_warning">Rozbalení této zprávy stáhne %1$s</string>
     <string name="title_download_message">Stahování &#8230;</string>
+    <string name="title_reformatted">Toto je přeformátované zobrazení zprávy. Stisknutím ikony &#x26F6; lze zobrazit původní zprávu a skrýt toto oznámení.</string>
     <string name="title_compose">Napsat zprávu</string>
     <string name="title_submitter">Odeslal:</string>
     <string name="title_delivered_to">Doručeno na:</string>
@@ -745,6 +818,7 @@
     <string name="title_reply_to">Odpovědět na:</string>
     <string name="title_cc">Kopie:</string>
     <string name="title_bcc">Skrytá kopie:</string>
+    <string name="title_recipients">%1$d příjemců</string>
     <string name="title_via_identity">Přes:</string>
     <string name="title_sent">Odesláno:</string>
     <string name="title_received">Přijato:</string>
@@ -761,19 +835,35 @@
     <string name="title_send_at">Odeslat později &#8230;</string>
     <string name="title_send_encryption">Šifrování</string>
     <string name="title_send_priority">Priorita</string>
-    <string name="title_no_server">Nenalezen žádný server na \'%1$s\'</string>
+    <string name="title_no_server">Nenalezen žádný server na „%1$s“</string>
+    <string name="title_style">Styl</string>
     <string name="title_style_bold">Tučně</string>
     <string name="title_style_italic">Kurzíva</string>
     <string name="title_style_underline">Podtržení</string>
     <string name="title_style_size">Velikost</string>
-    <string name="title_style_color">Barva</string>
+    <string name="title_style_size_small">Malý</string>
+    <string name="title_style_size_medium">Střední</string>
+    <string name="title_style_size_large">Velký</string>
+    <string name="title_style_color">Barva &#8230;</string>
+    <string name="title_style_align">Zarovnání</string>
+    <string name="title_style_align_start">Na začátek</string>
+    <string name="title_style_align_center">Na střed</string>
+    <string name="title_style_align_end">Na konec</string>
+    <string name="title_style_list">Seznam</string>
+    <string name="title_style_list_bullets">Odrážky</string>
+    <string name="title_style_list_numbered">Číslovaný</string>
+    <string name="title_style_font">Písmo</string>
+    <string name="title_style_font_default">Výchozí</string>
+    <string name="title_style_blockquote">Bloková citace</string>
+    <string name="title_style_strikethrough">Přeškrtnutí</string>
     <string name="title_style_clear">Vymazat formátování</string>
     <string name="title_style_link">Vložit odkaz</string>
     <string name="title_add_image">Přidat obrázek</string>
     <string name="title_add_image_inline">Vložit</string>
     <string name="title_add_image_attach">Přiložit</string>
     <string name="title_add_image_resize">Změnit velikost</string>
-    <string name="title_add_image_privacy">Odstranit geografickou polohu</string>
+    <string name="title_add_image_privacy">Odebrat citlivé osobní údaje</string>
+    <string name="title_add_image_privacy_remark">Zeměpisná poloha, sériová čísla, názvy souborů, apod.</string>
     <string name="title_add_resize_pixels">&lt; %1$d pixelů</string>
     <string name="title_add_image_select">Vybrat soubor</string>
     <string name="title_add_attachment">Přidat přílohu</string>
@@ -781,6 +871,7 @@
     <string name="title_attachment_photo">Pořídit fotografii</string>
     <string name="title_attachment_audio">Nahrát zvuk</string>
     <string name="title_show_addresses">Zobrazit kopii/skrytou kopii</string>
+    <string name="title_save_drafts">Ukládat koncepty na serveru</string>
     <string name="title_send_dialog">Zobrazit možnosti odeslání</string>
     <string name="title_image_dialog">Zobrazit možnosti obrázku</string>
     <string name="title_media_toolbar">Panel médií</string>
@@ -794,6 +885,8 @@
     <string name="title_no_key">Žádný privátní klíč</string>
     <string name="title_invalid_key">Neplatný privátní klíč</string>
     <string name="title_unknown_key">Privátní klíč neodpovídá žádnému z šifrovacích klíčů</string>
+    <string name="title_key_missing">Není klíč pro %1$s</string>
+    <string name="title_send_reminder_remark">Připomenutí lze znovu zapnout v nastavení odesílání</string>
     <string name="title_send_plain_text">Pouze prostý text</string>
     <string name="title_send_receipt">Požádat o potvrzení</string>
     <string name="title_send_receipt_remark">Většina poskytovatelů a e-mailových klientů ignoruje žádosti o potvrzení</string>
@@ -805,6 +898,8 @@
     <string name="title_text_reminder">Zpráva je prázdná</string>
     <string name="title_attachment_keywords">příloha,přílohy,příloze,přílohu,přiložené,přiloženém,přiložený,přiložená,připojené,připojeném,připojený,připojená</string>
     <string name="title_attachment_reminder">Měl jste v úmyslu přidat přílohu?</string>
+    <string name="title_plain_reminder">Veškeré formátování bude ztraceno</string>
+    <string name="title_size_reminder">Zpráva (%1$s) je větší než limit serveru (%2$s)</string>
     <string name="title_attachments_missing">Nebyly staženy všechny přílohy</string>
     <string name="title_dialog_hint">Toto dialogové okno může být znovu zapnuto v menu s třemi tečkami horní liště akcí</string>
     <string name="title_draft_deleted">Koncept zahozen</string>
@@ -813,6 +908,7 @@
     <string name="title_queued">Odesílám zprávu</string>
     <string name="title_queued_at">Zpráva bude odeslána přibližně %1$s</string>
     <string name="title_sign">Podepsat</string>
+    <string name="title_verify">Ověřit</string>
     <string name="title_encrypt">Šifrovat</string>
     <string name="title_decrypt">Dešifrovat</string>
     <string name="title_resync">Znovu synchronizovat</string>
@@ -841,10 +937,11 @@
     <string name="title_search">Hledat</string>
     <string name="title_search_for_hint">Zadejte text</string>
     <string name="title_search_hint">        Hledání se zpočátku zaměří na zprávy uložené ve vašem zařízení.
-        Pro hledání i na serveru, stiskněte tlačítko \"Hledat znovu\".
+        Pro hledání i na serveru, stiskněte tlačítko „Hledat znovu“.
     </string>
     <string name="title_search_index_hint">Hledání s pomocí indexu vyhledávání je rychlé, ale najde pouze celá slova</string>
-    <string name="title_search_text_hint">Některé e-mailové servery mají potíže s hledáním textu ve velkém množství zpráv</string>
+    <string name="title_search_text_hint">Hledání textu ve zprávách, při velkém počtu zpráv, nemusí fungovat na některých serverech</string>
+    <string name="title_search_size_hint">Vyhledávání zpráv podle velikosti, při velkém počtu zpráv, nemusí fungovat na některých serverech</string>
     <string name="title_search_more">Více možností</string>
     <string name="title_search_use_index">Použít index vyhledávání</string>
     <string name="title_search_in_senders">V odesílatelích (od)</string>
@@ -858,6 +955,7 @@
     <string name="title_search_with_hidden">Skryto (pouze v zařízení)</string>
     <string name="title_search_with_encrypted">Šifrováno (pouze v zařízení)</string>
     <string name="title_search_with_attachments">S přílohami (pouze v zařízení)</string>
+    <string name="title_search_with_size">Velikost zprávy větší než</string>
     <string name="title_search_with_before">Před</string>
     <string name="title_search_with_after">Po</string>
     <string name="title_search_flag_unseen">nepřečteno</string>
@@ -865,6 +963,8 @@
     <string name="title_search_flag_hidden">skryto</string>
     <string name="title_search_flag_encrypted">šifrováno</string>
     <string name="title_search_flag_attachments">přílohy</string>
+    <string name="title_search_flag_invite">pozvánka</string>
+    <string name="title_search_flag_size">velikost &gt; %1$s</string>
     <string name="title_search_device">Hledat v zařízení</string>
     <string name="title_search_server">Hledat na serveru</string>
     <string name="title_search_in">Hledat v</string>
@@ -890,6 +990,7 @@
     <string name="title_select_language">Vybrat jazyk</string>
     <string name="title_select_all">Vybrat vše</string>
     <string name="title_select_found">Vybrat nalezené</string>
+    <string name="title_mark_all_read">Označit vše jako přečtené</string>
     <string name="title_force_sync">Vynutit synchronizaci</string>
     <string name="title_force_send">Vynutit odeslání</string>
     <string name="title_language_all">Všechny</string>
@@ -901,6 +1002,8 @@
     <string name="title_answer_caption">Upravit šablonu</string>
     <string name="title_answer_reply">Šablona odpovědi</string>
     <string name="title_answer_name">Název šablony</string>
+    <string name="title_answer_group">Skupina šablon (nepovinné)</string>
+    <string name="title_answer_standard">Výchozí</string>
     <string name="title_answer_favorite">Oblíbená</string>
     <string name="title_answer_hide">Skrýt z nabídek</string>
     <string name="title_answer_text">Text šablony</string>
@@ -917,7 +1020,8 @@
     <string name="title_rule_keyword">Přidat klíčové slovo</string>
     <string name="title_rule_move">Přesunout</string>
     <string name="title_rule_copy">Kopírovat (štítek)</string>
-    <string name="title_rule_answer">Odpovědět</string>
+    <string name="title_rule_answer">Odpovědět/přeposlat</string>
+    <string name="title_rule_tts">Převod textu na řeč</string>
     <string name="title_rule_automation">Automatizace</string>
     <string name="title_rule_caption">Upravit pravidlo</string>
     <string name="title_rule_title">Pravidlo platí pro</string>
@@ -942,25 +1046,34 @@
     <string name="title_rule_thread">Všechny zprávy ve stejné konverzaci a složce</string>
     <string name="title_rule_identity">Identita</string>
     <string name="title_rule_template">Šablona odpovědi</string>
+    <string name="title_rule_forward_to">Přeposlat na</string>
     <string name="title_rule_cc">Odpovědět na adresy kopie</string>
+    <string name="title_rule_with_attachments">S přílohami</string>
     <string name="title_rule_answer_remark">Aby se zabránilo smyčkám odpovědí, bude na každou konverzaci odeslána pouze jedna odpověď</string>
     <string name="title_rule_name_missing">Chybí název pravidla</string>
     <string name="title_rule_condition_missing">Chybí podmínka</string>
-    <string name="title_rule_automation_hint">Bude odeslán záměr (intent) \"%1$s\" s dodatky (extras) \"%2$s\"</string>
+    <string name="title_rule_automation_hint">Bude odeslán záměr „%1$s“ s dodatky „%2$s“</string>
     <string name="title_rule_execute">Provést nyní</string>
     <string name="title_rule_applied">Ovlivněné zprávy: %1$d</string>
     <string name="title_rule_check">Zkontrolovat</string>
     <string name="title_rule_no_headers">Podmínky hlavičky nelze zkontrolovat</string>
     <string name="title_rule_matched">Odpovídající zprávy</string>
     <string name="title_rule_no_matches">Žádné odpovídající zprávy</string>
+    <string name="title_rule_tts_ok">Nastavení v pořádku</string>
+    <string name="title_rule_tts_setup">Ověřit nastavení</string>
+    <string name="title_rule_tts_data">Nainstalovat hlasová data</string>
+    <string name="title_rule_tts_prefix">Nová zpráva</string>
+    <string name="title_rule_tts_from">Od</string>
+    <string name="title_rule_tts_subject">Předmět</string>
+    <string name="title_rule_tts_content">Text</string>
     <string name="title_legend_section_synchronize">Synchronizace</string>
     <string name="title_legend_section_folders">Složky</string>
     <string name="title_legend_section_messages">Zprávy</string>
     <string name="title_legend_section_compose">Psaní zprávy</string>
     <string name="title_legend_section_keyboard">Klávesnice</string>
     <string name="title_legend_oauth">OAuth autorizace</string>
-    <string name="title_legend_primary_connected">Účet připojen</string>
-    <string name="title_legend_primary_disconnected">Účet odpojen</string>
+    <string name="title_legend_folder_connected">Složka připojena</string>
+    <string name="title_legend_folder_disconnected">Složka odpojena</string>
     <string name="title_legend_download_on">Stáhnout obsah zprávy automaticky</string>
     <string name="title_legend_download_off">Stáhnout obsah zprávy na vyžádání</string>
     <string name="title_legend_synchronize_on">Synchronizace zapnuta</string>
@@ -989,6 +1102,7 @@
     <string name="title_legend_download_fetch">Počet stažených zpráv / načtených hlaviček</string>
     <string name="title_legend_stop">Zastavit zpracování pravidel</string>
     <string name="title_legend_thread">Konverzace</string>
+    <string name="title_legend_bookmark">Poslední otevřená konverzace</string>
     <string name="title_legend_zoom">Změnit velikost textu</string>
     <string name="title_legend_draft">Má koncept</string>
     <string name="title_legend_priority">Má vysokou prioritu</string>
@@ -1005,6 +1119,7 @@
     <string name="title_legend_forwarded">Bylo přeposláno</string>
     <string name="title_legend_plain_only">Je pouze prostý text</string>
     <string name="title_legend_receipt">Potvrzení o přečtení bylo vyžádáno</string>
+    <string name="title_legend_auto_submitted">Byl automaticky odeslán</string>
     <string name="title_legend_attachment">Má přílohu</string>
     <string name="title_legend_flagged">Je oblíbené</string>
     <string name="title_legend_contacts">Spravovat kontakty</string>
@@ -1026,8 +1141,7 @@
     <string name="title_legend_bold">Změnit text na tučný</string>
     <string name="title_legend_italic">Změnit text na kurzívu</string>
     <string name="title_legend_underline">Podtrhnout text</string>
-    <string name="title_legend_text_size">Nastavit velikost textu</string>
-    <string name="title_legend_text_color">Nastavit barvu textu</string>
+    <string name="title_legend_text_style">Nastavit styl textu</string>
     <string name="title_legend_metered">Současné připojení je účtováno</string>
     <string name="title_legend_unmetered">Současné připojení není účtováno</string>
     <string name="title_legend_roaming">Roaming</string>
@@ -1035,9 +1149,10 @@
     <string name="title_legend_avatar">Avatar</string>
     <string name="title_legend_show_quotes">Zobrazit citace</string>
     <string name="title_legend_show_junk">Považovat za nevyžádané</string>
+    <string name="title_legend_create_rule">Vytvořit pravidlo</string>
     <string name="title_legend_show_unsubscribe">Ukončit odebírání kanálu</string>
     <string name="title_legend_show_images">Zobrazit obrázky</string>
-    <string name="title_legend_show_full">Zobrazit na celou obrazovku</string>
+    <string name="title_legend_show_full">Zobrazit původní zprávu</string>
     <string name="title_legend_edit">Upravit</string>
     <string name="title_legend_default_color">Výchozí barva</string>
     <string name="title_legend_close_hint">Zavřít tip</string>
@@ -1067,10 +1182,13 @@
     <string name="title_hint_sync">Stažení zpráv může nějakou dobu trvat, v závislosti na rychlosti poskytovatele, internetového připojení a zařízení a na počtu zpráv. V průběhu stahování může aplikace reagovat pomaleji.</string>
     <string name="title_hint_battery">Neboť FairEmail ve výchozím nastavení přijímá zprávy neustále, Android bude hlásit, že je stále aktivní. Díky tomu se může zdát, jako by FairEmail konstantně spotřebovával baterii, ačkoli tomu tak ve skutečnosti není.</string>
     <string name="title_hint_reformat">FairEmail ve výchozím nastavení přeformátuje zprávy z důvodů bezpečnosti a ochrany soukromí. Pro zobrazení původní zprávy, stiskněte ikonu \'zobrazení na celou obrazovku\' nad textem zprávy.</string>
+    <string name="title_hint_design">Design záměrně není rozptylující, nýbrž je udržován vysoce funkčním. Pro přizpůsobení vzhledu je zde mnoho nastavení, avšak prosím pochopte, že není možné každého zároveň kompletně uspokojit.</string>
+    <string name="title_hint_junk">Filtrování nevyžádané pošty by měl zprostředkovávat e-mailový server, neb na baterií napájeném zařízení s omezenými prostředky jej nelze provádět spolehlivě.</string>
     <string name="title_hint_contact_actions">Dlouze podržet pro možnosti</string>
-    <string name="title_hint_eml">Toto je souhrn obsahu souboru zdrojové zprávy. Uložte zdrojovou zprávu pomocí ikony uložit v panelu akcí pro zobrazení celého obsahu.</string>
+    <string name="title_hint_eml">Toto je souhrn obsahu souboru zdrojové zprávy. Pro zobrazení celého obsahu uložte zdrojovou zprávu pomocí ikony uložit v panelu akcí.</string>
     <string name="title_open_link">Otevřít odkaz</string>
     <string name="title_different_link">Název a adresa odkazu jsou odlišné</string>
+    <string name="title_tracking_link">Tato stránka vás může sledovat</string>
     <string name="title_link_http">Provoz nebude šifrován</string>
     <string name="title_link_https">Provoz bude šifrován</string>
     <string name="title_sanitize_link">Odebrat sledovací parametry</string>
@@ -1089,12 +1207,14 @@
     <string name="title_add">Přidat</string>
     <string name="title_browse">Otevřít s</string>
     <string name="title_info">Info</string>
+    <string name="title_download">Stáhnout</string>
     <string name="title_report">Nahlásit</string>
     <string name="title_fix">Opravit</string>
     <string name="title_enable">Zapnout</string>
     <string name="title_enabled">Zapnuto</string>
     <string name="title_executing">Provádím</string>
     <string name="title_completed">Dokončeno</string>
+    <string name="title_default_changed">Výchozí hodnota změněna</string>
     <string name="title_clipboard_copy">Kopírovat do schránky</string>
     <string name="title_clipboard_copied">Zkopírováno do schránky</string>
     <string name="title_ask_what">Zeptej se, co dělat</string>
@@ -1114,26 +1234,27 @@
     <string name="title_dismiss">Zavřít</string>
     <string name="title_snooze_now">Odložit</string>
     <string name="title_loading">Načítání &#8230;</string>
-    <string name="title_set">Nastavit</string>
     <string name="title_fetching_again">Opětovné získávání zprávy ze serveru</string>
     <string name="title_conversation_actions">Akce</string>
-    <string name="title_conversation_action_reply">Odpovědět s: \'%1$s\'</string>
-    <string name="title_conversation_action_copy">Kopírovat: \'%1$s\'</string>
+    <string name="title_conversation_action_reply">Odpovědět s: „%1$s“</string>
+    <string name="title_conversation_action_copy">Kopírovat: „%1$s“</string>
     <string name="title_icalendar_accept">Přijmout</string>
     <string name="title_icalendar_decline">Odmítnout</string>
     <string name="title_icalendar_maybe">Nezávazně</string>
     <string name="title_icalendar_calendar">Kalendář</string>
-    <string name="title_try">Vyzkoušej FairEmail, e-mailový klient pro Android s otevřeným zdrojovým kódem respektující soukromí</string>
     <string name="title_pro_feature">Toto je Pro funkce</string>
     <string name="title_pro_list">Seznam Pro funkcí</string>
     <string name="title_pro_purchase">Koupit</string>
     <string name="title_pro_once">Jen jednou</string>
-    <string name="title_pro_info">  Vývoj FairEmail trval doslova tisíce hodin a i přesto lze většinu funkcí používat volně.
-  Abychom učinili FairEmail dlouhodobě udržitelným, některé pokročilé funkce a usnadnění nejsou volně k dispozici.
-  Jako připomínku téhož zobrazuje FairEmail stručnou zprávu, jež bude odstraněna, zakoupíte-li si funkce Pro.    </string>
-    <string name="title_pro_hide">Skrýt stručnou zprávu na dva týdny</string>
+    <string name="title_pro_info">        Vývoj FairEmailu trval doslova tisíce hodin a i přesto je většina funkcí k dispozici bez omezení.
+        FairEmail bere vaše soukromí vážně a nezobrazuje reklamy, ani nepoužívá sledování či analytika pro získávání příjmů.
+        Pro učinění FairEmailu dlouhodobě udržitelným, některé pokročilé funkce a usnadnění nejsou volně přístupné.
+        Jako připomínku téhož zobrazuje FairEmail stručnou zprávu, jež bude odstraněna, zakoupíte-li si funkce Pro.
+    </string>
+    <string name="title_pro_hide">Skrýt stručnou zprávu po dobu %1$d týdnů</string>
     <string name="title_pro_hint">Zakoupením Pro funkcí získáte přístup ke všem současným i budoucím Pro funkcím a pomůžete zachovat tuto aplikaci udržovanou a podporovanou</string>
-    <string name="title_pro_price">Pro odůvodnění ceny Pro funkcí si prosím přečtěte <a href="https://github.com/M66B/open-source-email/blob/master/FAQ.md#user-content-faq19">časté dotazy</a></string>
+    <string name="title_pro_price">Proč jsou Pro funkce tak drahé?</string>
+    <string name="title_pro_restore">Jak mohu obnovit svůj nákup?</string>
     <string name="title_pro_pending">Probíhá nákup</string>
     <string name="title_pro_activated">Všechny Pro funkce jsou aktivní</string>
     <string name="title_pro_valid">Všechny Pro funkce aktivovány</string>
@@ -1142,12 +1263,20 @@
     <string name="title_boundary_error">Chyba při stahování zpráv z e-mailového serveru</string>
     <string name="title_boundary_retry">Zkusit znovu</string>
     <string name="title_unexpected_error">Neočekávaná chyba</string>
-    <string name="title_log">Záznam</string>
+    <string name="title_log">Protokol</string>
     <string name="title_auto_scroll">Automatické posouvání</string>
     <string name="title_log_clear">Vyčistit</string>
+    <string name="title_rules_search_hint">Hledat název nebo podmínku</string>
+    <string name="title_rules_export">Exportovat pravidla</string>
+    <string name="title_rules_import">Importovat pravidla</string>
+    <string name="title_rules_delete_all">Smazat všechna pravidla</string>
+    <string name="title_rules_delete_junk">Smazat pravidla nevyžádané pošty</string>
+    <string name="title_rules_delete_all_confirm">Smazat všechna pravidla?</string>
+    <string name="title_rules_delete_junk_confirm">Smazat všechna pravidla, která přesouvají zprávy do složky nevyžádané pošty?</string>
     <string name="title_debug_info">Ladící informace</string>
     <string name="title_debug_info_remark">Prosím, popište problém a uveďte čas, kdy k němu došlo:</string>
     <string name="title_crash_info_remark">Popište prosím, co jste dělali, když došlo k pádu aplikace:</string>
+    <string name="title_unexpected_info_remark">Popište prosím, co jste dělali, když došlo k chybě:</string>
     <string name="title_widget_title_count">Počet nových zpráv</string>
     <string name="title_widget_title_list">Seznam zpráv</string>
     <string name="title_widget_account">Účet</string>
@@ -1156,9 +1285,10 @@
     <string name="title_widget_folder_unified">Složky sjednocené doručené pošty</string>
     <string name="title_widget_unseen">Pouze nepřečtené zprávy</string>
     <string name="title_widget_flagged">Pouze zprávy označené hvězdičkou</string>
-    <string name="title_widget_font_size">Velikost písma</string>
+    <string name="title_widget_font_size">Velikost textu</string>
     <string name="title_widget_padding">Velikost odsazení položek</string>
     <string name="title_widget_semi_transparent">Poloprůhledné pozadí</string>
+    <string name="title_widget_background">Barva pozadí</string>
     <string name="title_accessibility_collapsed">Sbaleno</string>
     <string name="title_accessibility_expanded">Rozbaleno</string>
     <string name="title_accessibility_seen">Přečteno</string>
@@ -1197,7 +1327,7 @@
     <string name="title_accessibility_from">Odesílatel</string>
     <string name="title_accessibility_to">Příjemce</string>
     <string-array name="pollIntervalNames">
-        <item>Nepřetržitě</item>
+        <item>Neustále</item>
         <item>Každých 15 minut</item>
         <item>Každých 30 minut</item>
         <item>Každou hodinu</item>
@@ -1261,6 +1391,7 @@
         <item>Na začátku</item>
         <item>Uprostřed</item>
         <item>Na konci</item>
+        <item>Zobrazit nezkrácené</item>
     </string-array>
     <string-array name="priorityNames">
         <item>Nízká</item>
@@ -1295,5 +1426,29 @@
         <item>PGP podpis+šifrovat</item>
         <item>S/MIME pouze podpis</item>
         <item>S/MIME podpis+šifrovat</item>
+    </string-array>
+    <string-array name="sizeNames">
+        <item>0 B</item>
+        <item>256 KB</item>
+        <item>512 KB</item>
+        <item>1 MB</item>
+        <item>2 MB</item>
+        <item>5 MB</item>
+        <item>10 MB</item>
+        <item>20 MB</item>
+        <item>50 MB</item>
+    </string-array>
+    <string-array name="undoNames">
+        <item>Vyp.</item>
+        <item>2,5 s</item>
+        <item>5 s</item>
+        <item>7,5 s</item>
+        <item>10 s</item>
+    </string-array>
+    <string-array name="fontNameNames">
+        <item>Kurzíva</item>
+        <item>Patkové</item>
+        <item>Bezpatkové</item>
+        <item>Neproporcionální</item>
     </string-array>
 </resources>

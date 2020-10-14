@@ -49,11 +49,15 @@ import androidx.constraintlayout.widget.Group;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.snackbar.Snackbar;
 
+import org.jsoup.nodes.Document;
+
 import static android.app.Activity.RESULT_OK;
 
 public class FragmentAnswer extends FragmentBase {
     private ViewGroup view;
     private EditText etName;
+    private EditText etGroup;
+    private CheckBox cbStandard;
     private CheckBox cbFavorite;
     private CheckBox cbHide;
     private EditTextCompose etText;
@@ -92,6 +96,8 @@ public class FragmentAnswer extends FragmentBase {
 
         // Get controls
         etName = view.findViewById(R.id.etName);
+        etGroup = view.findViewById(R.id.etGroup);
+        cbStandard = view.findViewById(R.id.cbStandard);
         cbFavorite = view.findViewById(R.id.cbFavorite);
         cbHide = view.findViewById(R.id.cbHide);
         etText = view.findViewById(R.id.etText);
@@ -138,6 +144,7 @@ public class FragmentAnswer extends FragmentBase {
         // Initialize
         grpReady.setVisibility(View.GONE);
         style_bar.setVisibility(View.GONE);
+
         pbWait.setVisibility(View.VISIBLE);
 
         return view;
@@ -152,6 +159,16 @@ public class FragmentAnswer extends FragmentBase {
 
         new SimpleTask<EntityAnswer>() {
             @Override
+            protected void onPreExecute(Bundle args) {
+                pbWait.setVisibility(View.VISIBLE);
+            }
+
+            @Override
+            protected void onPostExecute(Bundle args) {
+                pbWait.setVisibility(View.GONE);
+            }
+
+            @Override
             protected EntityAnswer onExecute(Context context, Bundle args) {
                 long id = args.getLong("id");
                 return DB.getInstance(context).answer().getAnswer(id);
@@ -159,21 +176,25 @@ public class FragmentAnswer extends FragmentBase {
 
             @Override
             protected void onExecuted(Bundle args, EntityAnswer answer) {
-                etName.setText(answer == null ? null : answer.name);
-                cbFavorite.setChecked(answer == null ? false : answer.favorite);
-                cbHide.setChecked(answer == null ? false : answer.hide);
-                if (answer == null)
-                    etText.setText(null);
-                else
-                    etText.setText(HtmlHelper.fromHtml(answer.text, new Html.ImageGetter() {
-                        @Override
-                        public Drawable getDrawable(String source) {
-                            return ImageHelper.decodeImage(getContext(), -1, source, true, 0, etText);
-                        }
-                    }, null));
+                if (savedInstanceState == null) {
+                    etName.setText(answer == null ? null : answer.name);
+                    etGroup.setText(answer == null ? null : answer.group);
+                    cbStandard.setChecked(answer == null ? false : answer.standard);
+                    cbFavorite.setChecked(answer == null ? false : answer.favorite);
+                    cbHide.setChecked(answer == null ? false : answer.hide);
+                    if (answer == null)
+                        etText.setText(null);
+                    else
+                        etText.setText(HtmlHelper.fromHtml(answer.text, false, new Html.ImageGetter() {
+                            @Override
+                            public Drawable getDrawable(String source) {
+                                return ImageHelper.decodeImage(getContext(), -1, source, true, 0, 1.0f, etText);
+                            }
+                        }, null, getContext()));
+                }
+
                 bottom_navigation.findViewById(R.id.action_delete).setVisibility(answer == null ? View.GONE : View.VISIBLE);
 
-                pbWait.setVisibility(View.GONE);
                 grpReady.setVisibility(View.VISIBLE);
             }
 
@@ -231,9 +252,11 @@ public class FragmentAnswer extends FragmentBase {
         Bundle args = new Bundle();
         args.putLong("id", id);
         args.putString("name", etName.getText().toString().trim());
+        args.putString("group", etGroup.getText().toString().trim());
+        args.putBoolean("standard", cbStandard.isChecked());
         args.putBoolean("favorite", cbFavorite.isChecked());
         args.putBoolean("hide", cbHide.isChecked());
-        args.putString("text", HtmlHelper.toHtml(etText.getText()));
+        args.putString("html", HtmlHelper.toHtml(etText.getText(), getContext()));
 
         new SimpleTask<Void>() {
             @Override
@@ -250,28 +273,49 @@ public class FragmentAnswer extends FragmentBase {
             protected Void onExecute(Context context, Bundle args) {
                 long id = args.getLong("id");
                 String name = args.getString("name");
+                String group = args.getString("group");
+                boolean standard = args.getBoolean("standard");
                 boolean favorite = args.getBoolean("favorite");
                 boolean hide = args.getBoolean("hide");
-                String text = args.getString("text");
+                String html = args.getString("html");
 
                 if (TextUtils.isEmpty(name))
                     throw new IllegalArgumentException(context.getString(R.string.title_no_name));
+                if (TextUtils.isEmpty(group))
+                    group = null;
+
+                Document document = JsoupEx.parse(html);
 
                 DB db = DB.getInstance(context);
-                if (id < 0) {
-                    EntityAnswer answer = new EntityAnswer();
-                    answer.name = name;
-                    answer.favorite = favorite;
-                    answer.hide = hide;
-                    answer.text = text;
-                    answer.id = db.answer().insertAnswer(answer);
-                } else {
-                    EntityAnswer answer = db.answer().getAnswer(id);
-                    answer.name = name;
-                    answer.favorite = favorite;
-                    answer.hide = hide;
-                    answer.text = text;
-                    db.answer().updateAnswer(answer);
+                try {
+                    db.beginTransaction();
+
+                    if (standard)
+                        db.answer().resetStandard();
+
+                    if (id < 0) {
+                        EntityAnswer answer = new EntityAnswer();
+                        answer.name = name;
+                        answer.group = group;
+                        answer.standard = standard;
+                        answer.favorite = favorite;
+                        answer.hide = hide;
+                        answer.text = document.body().html();
+                        answer.id = db.answer().insertAnswer(answer);
+                    } else {
+                        EntityAnswer answer = db.answer().getAnswer(id);
+                        answer.name = name;
+                        answer.group = group;
+                        answer.standard = standard;
+                        answer.favorite = favorite;
+                        answer.hide = hide;
+                        answer.text = document.body().html();
+                        db.answer().updateAnswer(answer);
+                    }
+
+                    db.setTransactionSuccessful();
+                } finally {
+                    db.endTransaction();
                 }
 
                 return null;
@@ -285,7 +329,8 @@ public class FragmentAnswer extends FragmentBase {
             @Override
             protected void onException(Bundle args, Throwable ex) {
                 if (ex instanceof IllegalArgumentException)
-                    Snackbar.make(view, ex.getMessage(), Snackbar.LENGTH_LONG).show();
+                    Snackbar.make(view, ex.getMessage(), Snackbar.LENGTH_LONG)
+                            .setGestureInsetBottomIgnored(true).show();
                 else
                     Log.unexpectedError(getParentFragmentManager(), ex);
             }
@@ -324,11 +369,21 @@ public class FragmentAnswer extends FragmentBase {
             SpannableStringBuilder ssb = new SpannableStringBuilder(etText.getText());
             ssb.insert(start, " \uFFFC"); // Object replacement character
             String source = uri.toString();
-            Drawable d = ImageHelper.decodeImage(getContext(), -1, source, true, 0, etText);
+            Drawable d = ImageHelper.decodeImage(getContext(), -1, source, true, 0, 1.0f, etText);
             ImageSpan is = new ImageSpan(d, source);
             ssb.setSpan(is, start + 1, start + 2, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
             etText.setText(ssb);
             etText.setSelection(start + 2);
+        } catch (SecurityException ex) {
+            Snackbar sb = Snackbar.make(view, R.string.title_no_stream, Snackbar.LENGTH_INDEFINITE)
+                    .setGestureInsetBottomIgnored(true);
+            sb.setAction(R.string.title_info, new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Helper.viewFAQ(getContext(), 49);
+                }
+            });
+            sb.show();
         } catch (Throwable ex) {
             Log.unexpectedError(getParentFragmentManager(), ex);
         }
@@ -339,7 +394,7 @@ public class FragmentAnswer extends FragmentBase {
         int start = args.getInt("start");
         int end = args.getInt("end");
         etText.setSelection(start, end);
-        StyleHelper.apply(R.id.menu_link, etText, link);
+        StyleHelper.apply(R.id.menu_link, null, etText, link);
     }
 
     private void onDelete() {
@@ -402,7 +457,7 @@ public class FragmentAnswer extends FragmentBase {
 
             return true;
         } else
-            return StyleHelper.apply(action, etText);
+            return StyleHelper.apply(action, view.findViewById(action), etText);
     }
 
     public static class FragmentInfo extends FragmentDialogBase {
@@ -413,7 +468,7 @@ public class FragmentAnswer extends FragmentBase {
                     getString(R.string.title_answer_template_name) +
                     "<br>" +
                     getString(R.string.title_answer_template_email) +
-                    "</p>");
+                    "</p>", false, getContext());
 
             View dview = LayoutInflater.from(getContext()).inflate(R.layout.dialog_ask_again, null);
             TextView tvMessage = dview.findViewById(R.id.tvMessage);

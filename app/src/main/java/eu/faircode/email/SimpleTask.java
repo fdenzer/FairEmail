@@ -21,8 +21,8 @@ package eu.faircode.email;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.os.Handler;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -33,8 +33,10 @@ import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.LifecycleService;
 import androidx.lifecycle.OnLifecycleEvent;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import androidx.preference.PreferenceManager;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -53,10 +55,8 @@ public abstract class SimpleTask<T> implements LifecycleObserver {
     private String name;
     private Future<?> future;
 
+    private static ExecutorService executor = null;
     private static final List<SimpleTask> tasks = new ArrayList<>();
-
-    private static final ExecutorService executor =
-            Helper.getBackgroundExecutor(Runtime.getRuntime().availableProcessors(), "task");
 
     static final String ACTION_TASK_COUNT = BuildConfig.APPLICATION_ID + ".ACTION_TASK_COUNT";
 
@@ -92,8 +92,6 @@ public abstract class SimpleTask<T> implements LifecycleObserver {
     }
 
     private void run(final Context context, final LifecycleOwner owner, final Bundle args, final String name) {
-        final Handler handler = new Handler();
-
         this.name = name;
 
         if (owner instanceof TwoStateOwner)
@@ -116,15 +114,29 @@ public abstract class SimpleTask<T> implements LifecycleObserver {
             onException(args, ex);
         }
 
+        if (executor == null) {
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+            int threads = prefs.getInt("query_threads", Runtime.getRuntime().availableProcessors());
+            Log.i("Task threads=" + threads);
+            executor = Helper.getBackgroundExecutor(threads, "task");
+        }
+
         future = executor.submit(new Runnable() {
             private Object data;
+            private long elapsed;
             private Throwable ex;
 
             @Override
             public void run() {
                 // Run in background thread
                 try {
+                    if (log)
+                        Log.i("Executing task=" + name);
+                    long start = new Date().getTime();
                     data = onExecute(context, args);
+                    elapsed = new Date().getTime() - start;
+                    if (log)
+                        Log.i("Executed task=" + name + " elapsed=" + elapsed + " ms");
                 } catch (Throwable ex) {
                     if (!(ex instanceof IllegalArgumentException))
                         Log.e(ex);
@@ -132,7 +144,7 @@ public abstract class SimpleTask<T> implements LifecycleObserver {
                 }
 
                 // Run on UI thread
-                handler.post(new Runnable() {
+                ApplicationEx.getMainHandler().post(new Runnable() {
                     @Override
                     public void run() {
                         Lifecycle.State state = owner.getLifecycle().getCurrentState();
@@ -141,10 +153,11 @@ public abstract class SimpleTask<T> implements LifecycleObserver {
                             cleanup(context);
                         } else if (state.isAtLeast(Lifecycle.State.RESUMED)) {
                             // Inline delivery
-                            Log.i("Deliver task " + name + " state=" + state);
+                            Log.i("Deliver task " + name + " state=" + state + " elapse=" + elapsed + " ms");
                             deliver();
                             cleanup(context);
-                        } else
+                        } else {
+                            Log.i("Deferring task " + name + " state=" + state);
                             owner.getLifecycle().addObserver(new LifecycleObserver() {
                                 @OnLifecycleEvent(Lifecycle.Event.ON_ANY)
                                 public void onAny() {
@@ -162,6 +175,7 @@ public abstract class SimpleTask<T> implements LifecycleObserver {
                                         Log.i("Deferring task " + name + " state=" + state);
                                 }
                             });
+                        }
                     }
 
                     private void deliver() {

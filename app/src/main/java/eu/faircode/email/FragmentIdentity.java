@@ -21,13 +21,11 @@ package eu.faircode.email;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
-import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Handler;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
@@ -106,6 +104,7 @@ public class FragmentIdentity extends FragmentBase {
 
     private CheckBox cbSynchronize;
     private CheckBox cbPrimary;
+    private CheckBox cbSelf;
 
     private CheckBox cbSenderExtra;
     private TextView etSenderExtra;
@@ -113,6 +112,7 @@ public class FragmentIdentity extends FragmentBase {
     private EditText etCc;
     private EditText etBcc;
     private CheckBox cbUnicode;
+    private EditText etMaxSize;
 
     private Button btnSave;
     private ContentLoadingProgressBar pbSave;
@@ -197,6 +197,7 @@ public class FragmentIdentity extends FragmentBase {
 
         cbSynchronize = view.findViewById(R.id.cbSynchronize);
         cbPrimary = view.findViewById(R.id.cbPrimary);
+        cbSelf = view.findViewById(R.id.cbSelf);
 
         cbSenderExtra = view.findViewById(R.id.cbSenderExtra);
         etSenderExtra = view.findViewById(R.id.etSenderExtra);
@@ -204,6 +205,7 @@ public class FragmentIdentity extends FragmentBase {
         etCc = view.findViewById(R.id.etCc);
         etBcc = view.findViewById(R.id.etBcc);
         cbUnicode = view.findViewById(R.id.cbUnicode);
+        etMaxSize = view.findViewById(R.id.etMaxSize);
 
         btnSave = view.findViewById(R.id.btnSave);
         pbSave = view.findViewById(R.id.pbSave);
@@ -239,51 +241,31 @@ public class FragmentIdentity extends FragmentBase {
                     return;
                 adapterView.setTag(position);
 
-                EntityAccount account = (EntityAccount) adapterView.getAdapter().getItem(position);
+                if (FragmentIdentity.this.id < 0) {
+                    EntityAccount account = (EntityAccount) adapterView.getAdapter().getItem(position);
 
-                // Select associated provider
-                if (position == 0)
-                    spProvider.setSelection(0);
-                else {
                     boolean found = false;
                     for (int pos = 1; pos < spProvider.getAdapter().getCount(); pos++) {
                         EmailProvider provider = (EmailProvider) spProvider.getItemAtPosition(pos);
                         if (provider.imap.host.equals(account.host) &&
                                 provider.imap.port == account.port &&
-                                provider.imap.starttls == account.starttls) {
+                                provider.imap.starttls == (account.encryption == EmailService.ENCRYPTION_STARTTLS)) {
                             found = true;
-
+                            spProvider.setTag(pos);
                             spProvider.setSelection(pos);
-
-                            // This is needed because the spinner might be invisible
-                            etHost.setText(provider.smtp.host);
-                            etPort.setText(Integer.toString(provider.smtp.port));
-                            rgEncryption.check(provider.smtp.starttls ? R.id.radio_starttls : R.id.radio_ssl);
-                            cbUseIp.setChecked(provider.useip);
-                            etEhlo.setText(null);
-
+                            setProvider(provider);
                             break;
                         }
                     }
-                    if (!found)
+                    if (!found) {
+                        spProvider.setTag(0);
+                        spProvider.setSelection(0);
+                        setProvider((EmailProvider) spProvider.getItemAtPosition(0));
                         grpAdvanced.setVisibility(View.VISIBLE);
+                    }
+
+                    setAccount(account);
                 }
-
-                // Copy account credentials
-                auth = account.auth_type;
-                provider = account.provider;
-                etEmail.setText(account.user);
-                etUser.setText(account.user);
-                tilPassword.getEditText().setText(account.password);
-                tilPassword.setEndIconMode(Helper.isSecure(getContext()) ? END_ICON_PASSWORD_TOGGLE : END_ICON_NONE);
-                certificate = account.certificate_alias;
-                tvCertificate.setText(certificate == null ? getString(R.string.title_optional) : certificate);
-                etRealm.setText(account.realm);
-
-                etUser.setEnabled(auth == EmailService.AUTH_TYPE_PASSWORD);
-                tilPassword.setEnabled(auth == EmailService.AUTH_TYPE_PASSWORD);
-                btnCertificate.setEnabled(auth == EmailService.AUTH_TYPE_PASSWORD);
-                cbTrust.setChecked(false);
             }
 
             @Override
@@ -358,7 +340,7 @@ public class FragmentIdentity extends FragmentBase {
                 grpAdvanced.setVisibility(visibility);
                 checkPassword(tilPassword.getEditText().getText().toString());
                 if (visibility == View.VISIBLE)
-                    new Handler().post(new Runnable() {
+                    getMainHandler().post(new Runnable() {
                         @Override
                         public void run() {
                             scroll.smoothScrollTo(0, btnAdvanced.getTop());
@@ -376,24 +358,12 @@ public class FragmentIdentity extends FragmentBase {
                 adapterView.setTag(position);
 
                 EmailProvider provider = (EmailProvider) adapterView.getSelectedItem();
-
-                // Set associated host/port/starttls
-                etHost.setText(provider.smtp.host);
-                etPort.setText(position == 0 ? null : Integer.toString(provider.smtp.port));
-                rgEncryption.check(provider.smtp.starttls ? R.id.radio_starttls : R.id.radio_ssl);
-                cbUseIp.setChecked(provider.useip);
-                etEhlo.setText(null);
+                if (provider != null)
+                    setProvider(provider);
 
                 EntityAccount account = (EntityAccount) spAccount.getSelectedItem();
-                if (account == null ||
-                        provider.imap.host == null || !provider.imap.host.equals(account.host))
-                    auth = EmailService.AUTH_TYPE_PASSWORD;
-                else
-                    auth = account.auth_type;
-
-                etUser.setEnabled(auth == EmailService.AUTH_TYPE_PASSWORD);
-                tilPassword.setEnabled(auth == EmailService.AUTH_TYPE_PASSWORD);
-                btnCertificate.setEnabled(auth == EmailService.AUTH_TYPE_PASSWORD);
+                if (account != null && Objects.equals(account.host, provider.imap.host))
+                    setAccount(account);
             }
 
             @Override
@@ -411,7 +381,12 @@ public class FragmentIdentity extends FragmentBase {
         rgEncryption.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(RadioGroup group, int id) {
-                etPort.setHint(id == R.id.radio_starttls ? "587" : "465");
+                if (id == R.id.radio_starttls)
+                    etPort.setHint("587");
+                if (id == R.id.radio_none)
+                    etPort.setHint("25");
+                else
+                    etPort.setHint("465");
             }
         });
 
@@ -493,6 +468,8 @@ public class FragmentIdentity extends FragmentBase {
 
         btnAdvanced.setVisibility(View.GONE);
 
+        etEhlo.setHint(EmailService.getDefaultEhlo());
+
         btnSave.setVisibility(View.GONE);
         pbSave.setVisibility(View.GONE);
         cbTrust.setVisibility(View.GONE);
@@ -504,7 +481,34 @@ public class FragmentIdentity extends FragmentBase {
         grpAdvanced.setVisibility(View.GONE);
         grpError.setVisibility(View.GONE);
 
+        pbWait.setVisibility(View.VISIBLE);
+
         return view;
+    }
+
+    private void setAccount(EntityAccount account) {
+        auth = account.auth_type;
+        provider = account.provider;
+        etEmail.setText(account.user);
+        etUser.setText(account.user);
+        tilPassword.getEditText().setText(account.password);
+        tilPassword.setEndIconMode(Helper.isSecure(getContext()) ? END_ICON_PASSWORD_TOGGLE : END_ICON_NONE);
+        certificate = account.certificate_alias;
+        tvCertificate.setText(certificate == null ? getString(R.string.title_optional) : certificate);
+        etRealm.setText(account.realm);
+        cbTrust.setChecked(false);
+
+        etUser.setEnabled(auth == EmailService.AUTH_TYPE_PASSWORD);
+        tilPassword.setEnabled(auth == EmailService.AUTH_TYPE_PASSWORD);
+        btnCertificate.setEnabled(auth == EmailService.AUTH_TYPE_PASSWORD);
+    }
+
+    private void setProvider(EmailProvider provider) {
+        etHost.setText(provider.smtp.host);
+        etPort.setText(provider.smtp.port == 0 ? null : Integer.toString(provider.smtp.port));
+        rgEncryption.check(provider.smtp.starttls ? R.id.radio_starttls : R.id.radio_ssl);
+        cbUseIp.setChecked(provider.useip);
+        etEhlo.setText(null);
     }
 
     private void onAutoConfig() {
@@ -547,7 +551,8 @@ public class FragmentIdentity extends FragmentBase {
             @Override
             protected void onException(Bundle args, Throwable ex) {
                 if (ex instanceof IllegalArgumentException || ex instanceof UnknownHostException)
-                    Snackbar.make(view, ex.getMessage(), Snackbar.LENGTH_LONG).show();
+                    Snackbar.make(view, ex.getMessage(), Snackbar.LENGTH_LONG)
+                            .setGestureInsetBottomIgnored(true).show();
                 else
                     Log.unexpectedError(getParentFragmentManager(), ex);
             }
@@ -573,6 +578,14 @@ public class FragmentIdentity extends FragmentBase {
                 name = hint.toString();
         }
 
+        int encryption;
+        if (rgEncryption.getCheckedRadioButtonId() == R.id.radio_starttls)
+            encryption = EmailService.ENCRYPTION_STARTTLS;
+        else if (rgEncryption.getCheckedRadioButtonId() == R.id.radio_none)
+            encryption = EmailService.ENCRYPTION_NONE;
+        else
+            encryption = EmailService.ENCRYPTION_SSL;
+
         Bundle args = new Bundle();
         args.putLong("id", id);
         args.putString("name", name);
@@ -585,9 +598,10 @@ public class FragmentIdentity extends FragmentBase {
         args.putString("cc", etCc.getText().toString().trim());
         args.putString("bcc", etBcc.getText().toString().trim());
         args.putBoolean("unicode", cbUnicode.isChecked());
+        args.putString("max_size", etMaxSize.getText().toString());
         args.putLong("account", account == null ? -1 : account.id);
-        args.putString("host", etHost.getText().toString().trim());
-        args.putBoolean("starttls", rgEncryption.getCheckedRadioButtonId() == R.id.radio_starttls);
+        args.putString("host", etHost.getText().toString().trim().replace(" ", ""));
+        args.putInt("encryption", encryption);
         args.putBoolean("insecure", cbInsecure.isChecked());
         args.putString("port", etPort.getText().toString());
         args.putInt("auth", auth);
@@ -602,6 +616,7 @@ public class FragmentIdentity extends FragmentBase {
         args.putString("signature", signature);
         args.putBoolean("synchronize", cbSynchronize.isChecked());
         args.putBoolean("primary", cbPrimary.isChecked());
+        args.putBoolean("self", cbSelf.isChecked());
 
         args.putBoolean("should", should);
 
@@ -638,7 +653,7 @@ public class FragmentIdentity extends FragmentBase {
                 String signature = args.getString("signature");
 
                 String host = args.getString("host");
-                boolean starttls = args.getBoolean("starttls");
+                int encryption = args.getInt("encryption");
                 boolean insecure = args.getBoolean("insecure");
                 String port = args.getString("port");
                 int auth = args.getInt("auth");
@@ -652,6 +667,7 @@ public class FragmentIdentity extends FragmentBase {
                 String ehlo = args.getString("ehlo");
                 boolean synchronize = args.getBoolean("synchronize");
                 boolean primary = args.getBoolean("primary");
+                boolean self = args.getBoolean("self");
 
                 boolean sender_extra = args.getBoolean("sender_extra");
                 String sender_extra_regex = args.getString("sender_extra_regex");
@@ -659,6 +675,7 @@ public class FragmentIdentity extends FragmentBase {
                 String cc = args.getString("cc");
                 String bcc = args.getString("bcc");
                 boolean unicode = args.getBoolean("unicode");
+                String max_size = args.getString("max_size");
 
                 boolean should = args.getBoolean("should");
 
@@ -676,7 +693,12 @@ public class FragmentIdentity extends FragmentBase {
                 if (TextUtils.isEmpty(host) && !should)
                     throw new IllegalArgumentException(context.getString(R.string.title_no_host));
                 if (TextUtils.isEmpty(port))
-                    port = (starttls ? "587" : "465");
+                    if (encryption == EmailService.ENCRYPTION_STARTTLS)
+                        port = "587";
+                    else if (encryption == EmailService.ENCRYPTION_NONE)
+                        port = "25";
+                    else
+                        port = "465";
                 if (TextUtils.isEmpty(user) && !should)
                     throw new IllegalArgumentException(context.getString(R.string.title_no_user));
                 if (synchronize && TextUtils.isEmpty(password) && !insecure && certificate == null && !should)
@@ -735,6 +757,8 @@ public class FragmentIdentity extends FragmentBase {
                 if (TextUtils.isEmpty(signature))
                     signature = null;
 
+                Long user_max_size = (TextUtils.isEmpty(max_size) ? null : Integer.parseInt(max_size) * 1000 * 1000L);
+
                 DB db = DB.getInstance(context);
                 EntityIdentity identity = db.identity().getIdentity(id);
 
@@ -756,7 +780,7 @@ public class FragmentIdentity extends FragmentBase {
                         return true;
                     if (!Objects.equals(identity.host, host))
                         return true;
-                    if (!Objects.equals(identity.starttls, starttls))
+                    if (!Objects.equals(identity.encryption, encryption))
                         return true;
                     if (!Objects.equals(identity.insecure, insecure))
                         return true;
@@ -782,6 +806,8 @@ public class FragmentIdentity extends FragmentBase {
                         return true;
                     if (!Objects.equals(identity.primary, (identity.synchronize && primary)))
                         return true;
+                    if (!Objects.equals(identity.self, self))
+                        return true;
                     if (!Objects.equals(identity.sender_extra, sender_extra))
                         return true;
                     if (!Objects.equals(identity.sender_extra_regex, sender_extra_regex))
@@ -794,6 +820,8 @@ public class FragmentIdentity extends FragmentBase {
                         return true;
                     if (!Objects.equals(identity.unicode, unicode))
                         return true;
+                    if (user_max_size != null && !Objects.equals(identity.max_size, user_max_size))
+                        return true;
 
                     return false;
                 }
@@ -802,14 +830,19 @@ public class FragmentIdentity extends FragmentBase {
 
                 boolean check = (synchronize && (identity == null ||
                         !identity.synchronize || identity.error != null ||
-                        !identity.insecure.equals(insecure) ||
-                        !host.equals(identity.host) || Integer.parseInt(port) != identity.port ||
-                        !user.equals(identity.user) || !password.equals(identity.password) ||
-                        !Objects.equals(identity.certificate_alias, certificate) ||
+                        !host.equals(identity.host) ||
+                        encryption != identity.encryption ||
+                        insecure != identity.insecure ||
+                        Integer.parseInt(port) != identity.port ||
+                        !user.equals(identity.user) ||
+                        !password.equals(identity.password) ||
+                        !Objects.equals(certificate, identity.certificate_alias) ||
                         !Objects.equals(realm, identityRealm) ||
-                        !Objects.equals(identity.fingerprint, fingerprint) ||
+                        !Objects.equals(fingerprint, identity.fingerprint) ||
                         use_ip != identity.use_ip ||
-                        !Objects.equals(identity.ehlo, ehlo)));
+                        !Objects.equals(ehlo, identity.ehlo) ||
+                        (user_max_size != null && !Objects.equals(user_max_size, identity.max_size)) ||
+                        BuildConfig.DEBUG));
                 Log.i("Identity check=" + check);
 
                 Long last_connected = null;
@@ -817,17 +850,20 @@ public class FragmentIdentity extends FragmentBase {
                     last_connected = identity.last_connected;
 
                 // Check SMTP server
+                Long server_max_size = null;
                 if (check) {
                     // Create transport
-                    String protocol = (starttls ? "smtp" : "smtps");
+                    String protocol = (encryption == EmailService.ENCRYPTION_SSL ? "smtps" : "smtp");
                     try (EmailService iservice = new EmailService(
-                            context, protocol, realm, insecure, EmailService.PURPOSE_CHECK, true)) {
+                            context, protocol, realm, encryption, insecure,
+                            EmailService.PURPOSE_CHECK, true)) {
                         iservice.setUseIp(use_ip, ehlo);
                         iservice.connect(
                                 host, Integer.parseInt(port),
                                 auth, provider,
                                 user, password,
                                 certificate, fingerprint);
+                        server_max_size = iservice.getMaxSize();
                     }
                 }
 
@@ -853,7 +889,7 @@ public class FragmentIdentity extends FragmentBase {
                     identity.signature = signature;
 
                     identity.host = host;
-                    identity.starttls = starttls;
+                    identity.encryption = encryption;
                     identity.insecure = insecure;
                     identity.port = Integer.parseInt(port);
                     identity.auth_type = auth;
@@ -867,6 +903,7 @@ public class FragmentIdentity extends FragmentBase {
                     identity.ehlo = ehlo;
                     identity.synchronize = synchronize;
                     identity.primary = (identity.synchronize && primary);
+                    identity.self = self;
 
                     identity.sender_extra = sender_extra;
                     identity.sender_extra_regex = sender_extra_regex;
@@ -879,6 +916,7 @@ public class FragmentIdentity extends FragmentBase {
                     identity.sign_key_alias = null;
                     identity.error = null;
                     identity.last_connected = last_connected;
+                    identity.max_size = (user_max_size == null ? server_max_size : user_max_size);
 
                     if (identity.primary)
                         db.identity().resetPrimary(account);
@@ -893,11 +931,6 @@ public class FragmentIdentity extends FragmentBase {
                     db.setTransactionSuccessful();
                 } finally {
                     db.endTransaction();
-                }
-
-                if (!synchronize) {
-                    NotificationManager nm = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-                    nm.cancel("send:" + identity.id, 1);
                 }
 
                 return false;
@@ -920,7 +953,8 @@ public class FragmentIdentity extends FragmentBase {
             @Override
             protected void onException(Bundle args, Throwable ex) {
                 if (ex instanceof IllegalArgumentException)
-                    Snackbar.make(view, ex.getMessage(), Snackbar.LENGTH_LONG).show();
+                    Snackbar.make(view, ex.getMessage(), Snackbar.LENGTH_LONG)
+                            .setGestureInsetBottomIgnored(true).show();
                 else
                     showError(ex);
             }
@@ -972,7 +1006,7 @@ public class FragmentIdentity extends FragmentBase {
 
             @Override
             protected void onException(Bundle args, Throwable ex) {
-                Log.unexpectedError(getParentFragmentManager(), ex);
+                Log.unexpectedError(getParentFragmentManager(), ex, false);
             }
         }.execute(this, args, "identity:oauth");
     }
@@ -998,11 +1032,11 @@ public class FragmentIdentity extends FragmentBase {
         btnSupport.setVisibility(View.VISIBLE);
 
         if (provider != null && provider.documentation != null) {
-            tvInstructions.setText(HtmlHelper.fromHtml(provider.documentation.toString()));
+            tvInstructions.setText(HtmlHelper.fromHtml(provider.documentation.toString(), true, getContext()));
             tvInstructions.setVisibility(View.VISIBLE);
         }
 
-        new Handler().post(new Runnable() {
+        getMainHandler().post(new Runnable() {
             @Override
             public void run() {
                 if (provider != null && provider.documentation != null)
@@ -1017,6 +1051,7 @@ public class FragmentIdentity extends FragmentBase {
     public void onSaveInstanceState(Bundle outState) {
         outState.putInt("fair:account", spAccount.getSelectedItemPosition());
         outState.putInt("fair:provider", spProvider.getSelectedItemPosition());
+        outState.putString("fair:certificate", certificate);
         outState.putString("fair:password", tilPassword.getEditText().getText().toString());
         outState.putInt("fair:advanced", grpAdvanced.getVisibility());
         outState.putInt("fair:auth", auth);
@@ -1033,6 +1068,16 @@ public class FragmentIdentity extends FragmentBase {
         args.putLong("id", copy < 0 ? id : copy);
 
         new SimpleTask<EntityIdentity>() {
+            @Override
+            protected void onPreExecute(Bundle args) {
+                pbWait.setVisibility(View.VISIBLE);
+            }
+
+            @Override
+            protected void onPostExecute(Bundle args) {
+                pbWait.setVisibility(View.GONE);
+            }
+
             @Override
             protected EntityIdentity onExecute(Context context, Bundle args) {
                 long id = args.getLong("id");
@@ -1052,7 +1097,14 @@ public class FragmentIdentity extends FragmentBase {
                         signature = (identity == null ? null : identity.signature);
 
                     etHost.setText(identity == null ? null : identity.host);
-                    rgEncryption.check(identity != null && identity.starttls ? R.id.radio_starttls : R.id.radio_ssl);
+
+                    if (identity != null && identity.encryption == EmailService.ENCRYPTION_STARTTLS)
+                        rgEncryption.check(R.id.radio_starttls);
+                    else if (identity != null && identity.encryption == EmailService.ENCRYPTION_NONE)
+                        rgEncryption.check(R.id.radio_none);
+                    else
+                        rgEncryption.check(R.id.radio_ssl);
+
                     cbInsecure.setChecked(identity == null ? false : identity.insecure);
                     etPort.setText(identity == null ? null : Long.toString(identity.port));
                     etUser.setText(identity == null ? null : identity.user);
@@ -1076,6 +1128,7 @@ public class FragmentIdentity extends FragmentBase {
                     etEhlo.setText(identity == null ? null : identity.ehlo);
                     cbSynchronize.setChecked(identity == null ? true : identity.synchronize);
                     cbPrimary.setChecked(identity == null ? true : identity.primary);
+                    cbSelf.setChecked(identity == null ? true : identity.self);
 
                     cbSenderExtra.setChecked(identity != null && identity.sender_extra);
                     etSenderExtra.setText(identity == null ? null : identity.sender_extra_regex);
@@ -1105,6 +1158,9 @@ public class FragmentIdentity extends FragmentBase {
                             }
                         }.execute(FragmentIdentity.this, new Bundle(), "identity:count");
                 } else {
+                    certificate = savedInstanceState.getString("fair:certificate");
+                    tvCertificate.setText(certificate == null ? getString(R.string.title_optional) : certificate);
+
                     tilPassword.getEditText().setText(savedInstanceState.getString("fair:password"));
                     grpAdvanced.setVisibility(savedInstanceState.getInt("fair:advanced"));
                     auth = savedInstanceState.getInt("fair:auth");
@@ -1126,8 +1182,37 @@ public class FragmentIdentity extends FragmentBase {
 
                 cbPrimary.setEnabled(cbSynchronize.isChecked());
 
-                pbWait.setVisibility(View.GONE);
+                // Get providers
+                List<EmailProvider> providers = EmailProvider.loadProfiles(getContext());
+                providers.add(0, new EmailProvider(getString(R.string.title_custom)));
 
+                ArrayAdapter<EmailProvider> aaProfile =
+                        new ArrayAdapter<>(getContext(), R.layout.spinner_item1, android.R.id.text1, providers);
+                aaProfile.setDropDownViewResource(R.layout.spinner_item1_dropdown);
+                spProvider.setAdapter(aaProfile);
+
+                if (savedInstanceState == null) {
+                    spProvider.setTag(0);
+                    spProvider.setSelection(0);
+                    if (identity != null)
+                        for (int pos = 1; pos < providers.size(); pos++) {
+                            EmailProvider provider = providers.get(pos);
+                            if ((provider.oauth != null) == (identity.auth_type == EmailService.AUTH_TYPE_OAUTH) &&
+                                    provider.smtp.host.equals(identity.host) &&
+                                    provider.smtp.port == identity.port &&
+                                    provider.smtp.starttls == (identity.encryption == EmailService.ENCRYPTION_STARTTLS)) {
+                                spProvider.setTag(pos);
+                                spProvider.setSelection(pos);
+                                break;
+                            }
+                        }
+                } else {
+                    int provider = savedInstanceState.getInt("fair:provider");
+                    spProvider.setTag(provider);
+                    spProvider.setSelection(provider);
+                }
+
+                // Get accounts
                 new SimpleTask<List<EntityAccount>>() {
                     @Override
                     protected List<EntityAccount> onExecute(Context context, Bundle args) {
@@ -1151,30 +1236,7 @@ public class FragmentIdentity extends FragmentBase {
                         aaAccount.setDropDownViewResource(R.layout.spinner_item1_dropdown);
                         spAccount.setAdapter(aaAccount);
 
-                        // Get providers
-                        List<EmailProvider> providers = EmailProvider.loadProfiles(getContext());
-                        providers.add(0, new EmailProvider(getString(R.string.title_custom)));
-
-                        ArrayAdapter<EmailProvider> aaProfile =
-                                new ArrayAdapter<>(getContext(), R.layout.spinner_item1, android.R.id.text1, providers);
-                        aaProfile.setDropDownViewResource(R.layout.spinner_item1_dropdown);
-                        spProvider.setAdapter(aaProfile);
-
                         if (savedInstanceState == null) {
-                            spProvider.setTag(0);
-                            spProvider.setSelection(0);
-                            if (identity != null)
-                                for (int pos = 1; pos < providers.size(); pos++) {
-                                    EmailProvider provider = providers.get(pos);
-                                    if (provider.smtp.host.equals(identity.host) &&
-                                            provider.smtp.port == identity.port &&
-                                            provider.smtp.starttls == identity.starttls) {
-                                        spProvider.setTag(pos);
-                                        spProvider.setSelection(pos);
-                                        break;
-                                    }
-                                }
-
                             spAccount.setTag(0);
                             spAccount.setSelection(0);
                             for (int pos = 0; pos < accounts.size(); pos++) {
@@ -1187,10 +1249,6 @@ public class FragmentIdentity extends FragmentBase {
                                 }
                             }
                         } else {
-                            int provider = savedInstanceState.getInt("fair:provider");
-                            spProvider.setTag(provider);
-                            spProvider.setSelection(provider);
-
                             int account = savedInstanceState.getInt("fair:account");
                             spAccount.setTag(account);
                             spAccount.setSelection(account);
@@ -1261,7 +1319,7 @@ public class FragmentIdentity extends FragmentBase {
                     break;
                 case REQUEST_SAVE:
                     if (resultCode == RESULT_OK) {
-                        new Handler().post(new Runnable() {
+                        getMainHandler().post(new Runnable() {
                             @Override
                             public void run() {
                                 scroll.smoothScrollTo(0, btnSave.getBottom());

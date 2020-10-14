@@ -68,28 +68,30 @@ public class FragmentOptionsBehavior extends FragmentBase implements SharedPrefe
     private SwitchCompat swSwipeNav;
     private SwitchCompat swVolumeNav;
     private SwitchCompat swReversed;
+    private SwitchCompat swSwipeClose;
+    private SwitchCompat swSwipeMove;
     private SwitchCompat swAutoExpand;
     private SwitchCompat swExpandAll;
     private SwitchCompat swExpandOne;
     private SwitchCompat swAutoClose;
     private Spinner spOnClose;
+    private Spinner spUndoTimeout;
     private SwitchCompat swCollapseMultiple;
     private SwitchCompat swAutoRead;
     private SwitchCompat swFlagSnoozed;
     private SwitchCompat swAutoUnflag;
     private SwitchCompat swAutoImportant;
     private SwitchCompat swResetImportance;
-    private SwitchCompat swDiscardDelete;
     private Group grpConversationActions;
 
     private final static String[] RESET_OPTIONS = new String[]{
             "double_back", "conversation_actions", "conversation_actions_replies", "language_detection",
             "default_snooze",
             "pull", "autoscroll", "quick_filter", "quick_scroll",
-            "doubletap", "swipenav", "volumenav", "reversed",
+            "doubletap", "swipenav", "volumenav", "reversed", "swipe_close", "swipe_move",
             "autoexpand", "expand_all", "expand_one", "collapse_multiple",
-            "autoclose", "onclose",
-            "autoread", "flag_snoozed", "autounflag", "auto_important", "reset_importance", "discard_delete",
+            "autoclose", "onclose", "undo_timeout",
+            "autoread", "flag_snoozed", "autounflag", "auto_important", "reset_importance"
     };
 
     @Override
@@ -116,18 +118,20 @@ public class FragmentOptionsBehavior extends FragmentBase implements SharedPrefe
         swSwipeNav = view.findViewById(R.id.swSwipeNav);
         swVolumeNav = view.findViewById(R.id.swVolumeNav);
         swReversed = view.findViewById(R.id.swReversed);
+        swSwipeClose = view.findViewById(R.id.swSwipeClose);
+        swSwipeMove = view.findViewById(R.id.swSwipeMove);
         swAutoExpand = view.findViewById(R.id.swAutoExpand);
         swExpandAll = view.findViewById(R.id.swExpandAll);
         swExpandOne = view.findViewById(R.id.swExpandOne);
         swCollapseMultiple = view.findViewById(R.id.swCollapseMultiple);
         swAutoClose = view.findViewById(R.id.swAutoClose);
         spOnClose = view.findViewById(R.id.spOnClose);
+        spUndoTimeout = view.findViewById(R.id.spUndoTimeout);
         swAutoRead = view.findViewById(R.id.swAutoRead);
         swFlagSnoozed = view.findViewById(R.id.swFlagSnoozed);
         swAutoUnflag = view.findViewById(R.id.swAutoUnflag);
         swAutoImportant = view.findViewById(R.id.swAutoImportant);
         swResetImportance = view.findViewById(R.id.swResetImportance);
-        swDiscardDelete = view.findViewById(R.id.swDiscardDelete);
         grpConversationActions = view.findViewById(R.id.grpConversationActions);
 
         setOptions();
@@ -253,6 +257,20 @@ public class FragmentOptionsBehavior extends FragmentBase implements SharedPrefe
             }
         });
 
+        swSwipeClose.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean checked) {
+                prefs.edit().putBoolean("swipe_close", checked).apply();
+            }
+        });
+
+        swSwipeMove.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean checked) {
+                prefs.edit().putBoolean("swipe_move", checked).apply();
+            }
+        });
+
         swAutoExpand.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean checked) {
@@ -309,6 +327,20 @@ public class FragmentOptionsBehavior extends FragmentBase implements SharedPrefe
             }
         });
 
+        spUndoTimeout.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View view, int position, long id) {
+                int[] values = getResources().getIntArray(R.array.undoValues);
+                int value = values[position];
+                prefs.edit().putInt("undo_timeout", value).apply();
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+                prefs.edit().remove("undo_timeout").apply();
+            }
+        });
+
         swAutoRead.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean checked) {
@@ -341,13 +373,6 @@ public class FragmentOptionsBehavior extends FragmentBase implements SharedPrefe
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean checked) {
                 prefs.edit().putBoolean("reset_importance", checked).apply();
-            }
-        });
-
-        swDiscardDelete.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton compoundButton, boolean checked) {
-                prefs.edit().putBoolean("discard_delete", checked).apply();
             }
         });
 
@@ -419,6 +444,8 @@ public class FragmentOptionsBehavior extends FragmentBase implements SharedPrefe
         swSwipeNav.setChecked(prefs.getBoolean("swipenav", true));
         swVolumeNav.setChecked(prefs.getBoolean("volumenav", false));
         swReversed.setChecked(prefs.getBoolean("reversed", false));
+        swSwipeClose.setChecked(prefs.getBoolean("swipe_close", false));
+        swSwipeMove.setChecked(prefs.getBoolean("swipe_move", false));
 
         swAutoExpand.setChecked(prefs.getBoolean("autoexpand", true));
         swExpandAll.setChecked(prefs.getBoolean("expand_all", false));
@@ -439,12 +466,19 @@ public class FragmentOptionsBehavior extends FragmentBase implements SharedPrefe
 
         spOnClose.setEnabled(!swAutoClose.isChecked());
 
+        int undo_timeout = prefs.getInt("undo_timeout", 5000);
+        int[] undoValues = getResources().getIntArray(R.array.undoValues);
+        for (int pos = 0; pos < undoValues.length; pos++)
+            if (undoValues[pos] == undo_timeout) {
+                spUndoTimeout.setSelection(pos);
+                break;
+            }
+
         swAutoRead.setChecked(prefs.getBoolean("autoread", false));
         swFlagSnoozed.setChecked(prefs.getBoolean("flag_snoozed", false));
         swAutoUnflag.setChecked(prefs.getBoolean("autounflag", false));
         swAutoImportant.setChecked(prefs.getBoolean("auto_important", false));
         swResetImportance.setChecked(prefs.getBoolean("reset_importance", false));
-        swDiscardDelete.setChecked(prefs.getBoolean("discard_delete", false));
 
         grpConversationActions.setVisibility(Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q ? View.VISIBLE : View.GONE);
     }

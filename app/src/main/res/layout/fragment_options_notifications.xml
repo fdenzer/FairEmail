@@ -2,6 +2,7 @@
 <eu.faircode.email.ScrollViewEx xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/scroll"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:paddingStart="6dp"
@@ -60,6 +61,16 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/tvManageHint" />
 
+        <ImageView
+            android:id="@+id/ivChannelDefault"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_marginStart="12dp"
+            app:layout_constraintBottom_toBottomOf="@+id/btnManageDefault"
+            app:layout_constraintStart_toEndOf="@+id/btnManageDefault"
+            app:layout_constraintTop_toTopOf="@+id/btnManageDefault"
+            app:srcCompat="@drawable/switch_off_on" />
+
         <eu.faircode.email.FixedTextView
             android:id="@+id/tvManageDefaultHint"
             android:layout_width="0dp"
@@ -81,6 +92,16 @@
             android:text="@string/title_advanced_notifications_service"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/tvManageDefaultHint" />
+
+        <ImageView
+            android:id="@+id/ivChannelService"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_marginStart="12dp"
+            app:layout_constraintBottom_toBottomOf="@+id/btnManageService"
+            app:layout_constraintStart_toEndOf="@+id/btnManageService"
+            app:layout_constraintTop_toTopOf="@+id/btnManageService"
+            app:srcCompat="@drawable/switch_off_on" />
 
         <eu.faircode.email.FixedTextView
             android:id="@+id/tvManageServiceHint"
@@ -328,6 +349,40 @@
             app:switchPadding="12dp" />
 
         <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/swNotifyBackgroundOnly"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="@string/title_advanced_notify_background"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/swUnseenIgnored"
+            app:switchPadding="12dp" />
+
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/swNotifyKnownOnly"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="@string/title_advanced_notify_known"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/swNotifyBackgroundOnly"
+            app:switchPadding="12dp" />
+
+        <eu.faircode.email.FixedTextView
+            android:id="@+id/tvNotifyKnownPro"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="48dp"
+            android:text="@string/title_pro_feature"
+            android:textAppearance="@style/TextAppearance.AppCompat.Small"
+            android:textColor="?android:attr/textColorLink"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/swNotifyKnownOnly" />
+
+        <androidx.appcompat.widget.SwitchCompat
             android:id="@+id/swNotifySummary"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
@@ -335,7 +390,7 @@
             android:text="@string/title_advanced_notify_summary"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/swUnseenIgnored"
+            app:layout_constraintTop_toBottomOf="@id/tvNotifyKnownPro"
             app:switchPadding="12dp" />
 
         <androidx.appcompat.widget.SwitchCompat
@@ -423,6 +478,29 @@
             app:layout_constraintTop_toBottomOf="@id/swNotifyPreviewAll" />
 
         <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/swNotifyPreviewOnly"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="@string/title_advanced_notify_preview_only"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/tvNotifyPreviewAllHint"
+            app:switchPadding="12dp" />
+
+        <eu.faircode.email.FixedTextView
+            android:id="@+id/tvNotifyPreviewOnlyHint"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="48dp"
+            android:text="@string/title_advanced_notify_preview_only_hint"
+            android:textAppearance="@style/TextAppearance.AppCompat.Small"
+            android:textStyle="italic"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/swNotifyPreviewOnly" />
+
+        <androidx.appcompat.widget.SwitchCompat
             android:id="@+id/swWearablePreview"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
@@ -430,7 +508,7 @@
             android:text="@string/title_advanced_wearable_preview"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/tvNotifyPreviewAllHint"
+            app:layout_constraintTop_toBottomOf="@id/tvNotifyPreviewOnlyHint"
             app:switchPadding="12dp" />
 
         <eu.faircode.email.FixedTextView

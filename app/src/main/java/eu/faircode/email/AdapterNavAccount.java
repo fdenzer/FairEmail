@@ -90,8 +90,8 @@ public class AdapterNavAccount extends RecyclerView.Adapter<AdapterNavAccount.Vi
 
         private void bindTo(TupleAccountEx account) {
             ivItem.setImageResource("connected".equals(account.state)
-                    ? account.primary ? R.drawable.baseline_folder_special_24 : R.drawable.baseline_folder_24
-                    : R.drawable.baseline_folder_open_24);
+                    ? account.primary ? R.drawable.twotone_folder_special_24 : R.drawable.twotone_folder_done_24
+                    : R.drawable.twotone_folder_24);
 
             if (account.color == null)
                 ivItem.clearColorFilter();
@@ -153,14 +153,15 @@ public class AdapterNavAccount extends RecyclerView.Adapter<AdapterNavAccount.Vi
 
                 @Override
                 protected void onExecuted(Bundle args, EntityFolder inbox) {
-                    if (inbox != null) {
-                        LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(context);
-                        lbm.sendBroadcast(
-                                new Intent(ActivityView.ACTION_VIEW_MESSAGES)
-                                        .putExtra("account", inbox.account)
-                                        .putExtra("folder", inbox.id)
-                                        .putExtra("type", inbox.type));
-                    }
+                    if (inbox == null)
+                        return;
+
+                    LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(context);
+                    lbm.sendBroadcast(
+                            new Intent(ActivityView.ACTION_VIEW_MESSAGES)
+                                    .putExtra("account", inbox.account)
+                                    .putExtra("folder", inbox.id)
+                                    .putExtra("type", inbox.type));
                 }
 
                 @Override
@@ -168,6 +169,7 @@ public class AdapterNavAccount extends RecyclerView.Adapter<AdapterNavAccount.Vi
                     // Ignored
                 }
             }.execute(context, owner, args, "account:inbox");
+
             return true;
         }
     }
@@ -179,7 +181,8 @@ public class AdapterNavAccount extends RecyclerView.Adapter<AdapterNavAccount.Vi
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
         boolean highlight_unread = prefs.getBoolean("highlight_unread", true);
-        this.colorUnread = Helper.resolveColor(context, highlight_unread ? R.attr.colorUnreadHighlight : android.R.attr.textColorPrimary);
+        int colorHighlight = prefs.getInt("highlight_color", Helper.resolveColor(context, R.attr.colorUnreadHighlight));
+        this.colorUnread = (highlight_unread ? colorHighlight : Helper.resolveColor(context, R.attr.colorUnread));
         this.textColorSecondary = Helper.resolveColor(context, android.R.attr.textColorSecondary);
 
         this.DTF = Helper.getTimeInstance(context, SimpleDateFormat.SHORT);

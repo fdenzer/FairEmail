@@ -19,15 +19,17 @@ package eu.faircode.email;
     Copyright 2018-2020 by Marcel Bokhorst (M66B)
 */
 
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.database.Cursor;
+import android.os.Build;
+import android.text.TextUtils;
 
 import androidx.annotation.NonNull;
 import androidx.preference.PreferenceManager;
-import androidx.work.Data;
 import androidx.work.ExistingPeriodicWorkPolicy;
-import androidx.work.OneTimeWorkRequest;
 import androidx.work.PeriodicWorkRequest;
 import androidx.work.WorkManager;
 import androidx.work.Worker;
@@ -62,7 +64,7 @@ public class WorkerCleanup extends Worker {
         Log.i("Running " + getName());
 
         Thread.currentThread().setPriority(THREAD_PRIORITY_BACKGROUND);
-        cleanup(getApplicationContext(), getInputData().getBoolean("manual", false));
+        cleanup(getApplicationContext(), false);
 
         return Result.success();
     }
@@ -109,11 +111,11 @@ public class WorkerCleanup extends Worker {
                 if (cleanup_attachments) {
                     int purged = db.attachment().purge(new Date().getTime());
                     Log.i("Attachments purged=" + purged);
-                }
 
-                // Clear raw headers
-                int headers = db.message().clearMessageHeaders();
-                Log.i("Cleared message headers=" + headers);
+                    // Clear raw headers
+                    int headers = db.message().clearMessageHeaders();
+                    Log.i("Cleared message headers=" + headers);
+                }
 
                 // Restore alarms
                 for (EntityMessage message : db.message().getSnoozed(null))
@@ -122,7 +124,31 @@ public class WorkerCleanup extends Worker {
                 ServiceSynchronize.reschedule(context);
 
                 // Contact info cache
-                ContactInfo.clearCache();
+                ContactInfo.clearCache(context);
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    Log.i("Checking notification channels");
+                    NotificationManager nm = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+                    for (NotificationChannel channel : nm.getNotificationChannels()) {
+                        String cid = channel.getId();
+                        Log.i("Notification channel id=" + cid + " name=" + channel.getName());
+                        String[] parts = cid.split("\\.");
+                        if (parts.length > 1 && "notification".equals(parts[0]))
+                            if (parts.length == 2 && TextUtils.isDigitsOnly(parts[1])) {
+                                long id = Integer.parseInt(parts[1]);
+                                EntityAccount account = db.account().getAccount(id);
+                                Log.i("Notification channel id=" + cid + " account=" + (account == null ? null : account.id));
+                                if (account == null)
+                                    nm.deleteNotificationChannel(cid);
+                            } else if (parts.length == 3 && TextUtils.isDigitsOnly(parts[2])) {
+                                long id = Integer.parseInt(parts[2]);
+                                EntityFolder folder = db.folder().getFolder(id);
+                                Log.i("Notification channel id=" + cid + " folder=" + (folder == null ? null : folder.id));
+                                if (folder == null)
+                                    nm.deleteNotificationChannel(cid);
+                            }
+                    }
+                }
             }
 
             long now = new Date().getTime();
@@ -235,12 +261,17 @@ public class WorkerCleanup extends Worker {
             if (manual) {
                 // https://www.sqlite.org/lang_vacuum.html
                 long size = context.getDatabasePath(db.getOpenHelper().getDatabaseName()).length();
-                long space = Helper.getAvailableStorageSpace();
-                if (size * 2 < space) {
-                    Log.i("Running VACUUM");
+                long available = Helper.getAvailableStorageSpace();
+                if (size > 0 && size * 2.5 < available) {
+                    Log.i("Running VACUUM" +
+                            " size=" + Helper.humanReadableByteCount(size) +
+                            "/" + Helper.humanReadableByteCount(available));
                     db.getOpenHelper().getWritableDatabase().execSQL("VACUUM;");
                 } else
-                    Log.w("Insufficient space for VACUUM");
+                    Log.w("Insufficient space for VACUUM" +
+                            " size=" + Helper.humanReadableByteCount(size) +
+                            "/" + Helper.humanReadableByteCount(available));
+
             }
 
         } catch (Throwable ex) {
@@ -267,24 +298,6 @@ public class WorkerCleanup extends Worker {
                     .enqueueUniquePeriodicWork(getName(), ExistingPeriodicWorkPolicy.KEEP, workRequest);
 
             Log.i("Queued " + getName());
-        } catch (IllegalStateException ex) {
-            // https://issuetracker.google.com/issues/138465476
-            Log.w(ex);
-        }
-    }
-
-    static void queueOnce(Context context) {
-        try {
-            Log.i("Queuing " + getName() + " once");
-
-            Data data = new Data.Builder().putBoolean("manual", true).build();
-
-            OneTimeWorkRequest workRequest = new OneTimeWorkRequest.Builder(WorkerCleanup.class)
-                    .setInputData(data)
-                    .build();
-            WorkManager.getInstance(context).enqueue(workRequest);
-
-            Log.i("Queued " + getName() + " once");
         } catch (IllegalStateException ex) {
             // https://issuetracker.google.com/issues/138465476
             Log.w(ex);

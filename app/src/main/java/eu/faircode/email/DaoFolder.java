@@ -23,6 +23,7 @@ import androidx.lifecycle.LiveData;
 import androidx.room.Dao;
 import androidx.room.Insert;
 import androidx.room.Query;
+import androidx.room.Transaction;
 
 import java.util.List;
 
@@ -72,6 +73,7 @@ public interface DaoFolder {
             " WHERE account.`synchronize`")
     List<TupleFolderSort> getSortedFolders();
 
+    @Transaction
     @Query("SELECT folder.*" +
             ", account.id AS accountId, account.pop AS accountProtocol, account.`order` AS accountOrder" +
             ", account.name AS accountName, account.state AS accountState" +
@@ -172,6 +174,10 @@ public interface DaoFolder {
             " AND folder.`synchronize`" +
             " AND folder.notify")
     List<EntityFolder> getNotifyingFolders(long account);
+
+    @Query("SELECT * FROM folder" +
+            " WHERE parent = :parent")
+    List<EntityFolder> getChildFolders(long parent);
 
     @Query("SELECT folder.type" +
             ", COUNT(message.id) AS messages" +
@@ -289,13 +295,10 @@ public interface DaoFolder {
             int sync_days, int keep_days, boolean auto_delete);
 
     @Query("UPDATE folder" +
-            " SET poll = :poll" +
-            ", download = :download" +
-            ", sync_days = :sync_days" +
-            ", keep_days = :keep_days" +
+            " SET sync_days = :sync_days, keep_days = :keep_days" +
             " WHERE account = :account" +
             " AND type = '" + EntityFolder.USER + "'")
-    int setFolderProperties(long account, boolean poll, boolean download, int sync_days, int keep_days);
+    int setFolderProperties(long account, int sync_days, int keep_days);
 
     @Query("UPDATE folder SET keywords = :keywords WHERE id = :id")
     int setFolderKeywords(long id, String keywords);
@@ -326,6 +329,9 @@ public interface DaoFolder {
 
     @Query("UPDATE folder SET tbd = 1 WHERE id = :id")
     int setFolderTbd(long id);
+
+    @Query("UPDATE folder SET poll = :poll, poll_count = 1 WHERE id = :id")
+    int setFolderPoll(long id, boolean poll);
 
     @Query("UPDATE folder SET poll_count = :count WHERE id = :id")
     int setFolderPollCount(long id, int count);

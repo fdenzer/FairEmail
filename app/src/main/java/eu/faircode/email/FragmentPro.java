@@ -19,23 +19,29 @@ package eu.faircode.email;
     Copyright 2018-2020 by Marcel Bokhorst (M66B)
 */
 
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Paint;
 import android.net.Uri;
 import android.os.Bundle;
-import android.text.method.LinkMovementMethod;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.preference.PreferenceManager;
 
@@ -51,12 +57,14 @@ public class FragmentPro extends FragmentBase implements SharedPreferences.OnSha
     private TextView tvPrice;
     private ImageView ivExternal;
     private TextView tvPriceHint;
+    private TextView tvRestoreHint;
     private Button btnCheck;
 
     @Override
     @Nullable
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         setSubtitle(R.string.menu_pro);
+        setHasOptionsMenu(true);
 
         final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
         boolean debug = prefs.getBoolean("debug", false);
@@ -72,6 +80,7 @@ public class FragmentPro extends FragmentBase implements SharedPreferences.OnSha
         tvPrice = view.findViewById(R.id.tvPrice);
         ivExternal = view.findViewById(R.id.ivExternal);
         tvPriceHint = view.findViewById(R.id.tvPriceHint);
+        tvRestoreHint = view.findViewById(R.id.tvRestoreHint);
 
         btnCheck = view.findViewById(R.id.btnCheck);
 
@@ -80,6 +89,7 @@ public class FragmentPro extends FragmentBase implements SharedPreferences.OnSha
 
         long banner_hidden = prefs.getLong("banner_hidden", 0);
         cbHide.setChecked(banner_hidden > 0);
+        cbHide.setText(getString(R.string.title_pro_hide, ServiceUI.HIDE_BANNER));
 
         cbHide.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
@@ -106,7 +116,21 @@ public class FragmentPro extends FragmentBase implements SharedPreferences.OnSha
 
         ivExternal.setVisibility(Helper.isPlayStoreInstall() ? View.GONE : View.VISIBLE);
 
-        tvPriceHint.setMovementMethod(LinkMovementMethod.getInstance());
+        tvPriceHint.setPaintFlags(tvPriceHint.getPaintFlags() | Paint.UNDERLINE_TEXT_FLAG);
+        tvPriceHint.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Helper.viewFAQ(getContext(), 19);
+            }
+        });
+
+        tvRestoreHint.setPaintFlags(tvRestoreHint.getPaintFlags() | Paint.UNDERLINE_TEXT_FLAG);
+        tvRestoreHint.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Helper.viewFAQ(getContext(), 117);
+            }
+        });
 
         btnCheck.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -121,6 +145,7 @@ public class FragmentPro extends FragmentBase implements SharedPreferences.OnSha
         cbHide.setVisibility(View.GONE);
         btnPurchase.setEnabled(!Helper.isPlayStoreInstall());
         tvPrice.setText(null);
+        tvRestoreHint.setVisibility(Helper.isPlayStoreInstall() || BuildConfig.DEBUG ? View.VISIBLE : View.GONE);
         btnCheck.setEnabled(false);
         btnCheck.setVisibility(Helper.isPlayStoreInstall() && debug ? View.VISIBLE : View.GONE);
 
@@ -172,7 +197,8 @@ public class FragmentPro extends FragmentBase implements SharedPreferences.OnSha
                 if (view == null)
                     return;
 
-                Snackbar snackbar = Snackbar.make(view, message, Snackbar.LENGTH_INDEFINITE);
+                Snackbar snackbar = Snackbar.make(view, message, Snackbar.LENGTH_INDEFINITE)
+                        .setGestureInsetBottomIgnored(true);
                 snackbar.setAction(R.string.title_setup_help, new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
@@ -200,6 +226,56 @@ public class FragmentPro extends FragmentBase implements SharedPreferences.OnSha
         super.onPause();
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
         prefs.unregisterOnSharedPreferenceChangeListener(this);
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        inflater.inflate(R.menu.menu_pro, menu);
+        super.onCreateOptionsMenu(menu, inflater);
+    }
+
+    @Override
+    public void onPrepareOptionsMenu(@NonNull Menu menu) {
+        menu.findItem(R.id.menu_response).setVisible(!Helper.isPlayStoreInstall());
+        super.onPrepareOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.menu_response:
+                onMenuResponse();
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+
+    private void onMenuResponse() {
+        final View dview = LayoutInflater.from(getContext()).inflate(R.layout.dialog_response, null);
+        final EditText etResponse = dview.findViewById(R.id.etResponse);
+
+        new AlertDialog.Builder(getContext())
+                .setView(dview)
+                .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        try {
+                            String response = etResponse.getText().toString().trim();
+                            int q = response.indexOf("?response=");
+                            if (q > 0)
+                                response = response.substring(q + 10);
+                            if (ActivityBilling.activatePro(getContext(), response))
+                                ToastEx.makeText(getContext(), R.string.title_pro_valid, Toast.LENGTH_LONG).show();
+                            else
+                                ToastEx.makeText(getContext(), R.string.title_pro_invalid, Toast.LENGTH_LONG).show();
+                        } catch (Throwable ex) {
+                            Log.e(ex);
+                            ToastEx.makeText(getContext(), Log.formatThrowable(ex), Toast.LENGTH_LONG).show();
+                        }
+                    }
+                })
+                .show();
     }
 
     @Override

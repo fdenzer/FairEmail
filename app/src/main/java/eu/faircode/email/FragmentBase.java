@@ -27,19 +27,22 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.IntentSender;
+import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.ParcelFileDescriptor;
+import android.os.Handler;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.ActionBar;
@@ -47,13 +50,13 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.documentfile.provider.DocumentFile;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentResultListener;
 import androidx.lifecycle.Lifecycle;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.HashMap;
@@ -67,9 +70,14 @@ public class FragmentBase extends Fragment {
     private String title = null;
     private String subtitle = " ";
     private boolean finish = false;
+    private boolean finished = false;
+    private String requestKey = null;
 
     private long message = -1;
     private long attachment = -1;
+    private int scrollTo = 0;
+
+    private static int requestSequence = 0;
 
     private static final int REQUEST_ATTACHMENT = 51;
     private static final int REQUEST_ATTACHMENTS = 52;
@@ -96,38 +104,76 @@ public class FragmentBase extends Fragment {
         updateSubtitle();
     }
 
+    void scrollTo(int resid) {
+        scrollTo = resid;
+        scrollTo();
+    }
+
+    private void scrollTo() {
+        if (scrollTo == 0)
+            return;
+
+        View view = getView();
+        if (view == null)
+            return;
+
+        final ScrollView scroll = view.findViewById(R.id.scroll);
+        if (scroll == null)
+            return;
+
+        final View child = scroll.findViewById(scrollTo);
+        if (child == null)
+            return;
+
+        scrollTo = 0;
+
+        scroll.post(new Runnable() {
+            @Override
+            public void run() {
+                scroll.scrollTo(0, child.getTop());
+            }
+        });
+    }
+
     @Override
     public void startActivity(Intent intent) {
         try {
+            Log.i("Start intent=" + intent);
+            Log.logExtras(intent);
             super.startActivity(intent);
         } catch (ActivityNotFoundException ex) {
+            Log.w(ex);
+            ToastEx.makeText(getContext(), getString(R.string.title_no_viewer, intent), Toast.LENGTH_LONG).show();
+        } catch (Throwable ex) {
             Log.e(ex);
-            ToastEx.makeText(getContext(), getString(R.string.title_no_viewer, intent.getAction()), Toast.LENGTH_LONG).show();
+            ToastEx.makeText(getContext(), Log.formatThrowable(ex), Toast.LENGTH_LONG).show();
         }
     }
 
     @Override
     public void startActivityForResult(Intent intent, int requestCode) {
         try {
+            Log.i("Start intent=" + intent + " request=" + requestCode);
+            Log.logExtras(intent);
             super.startActivityForResult(intent, requestCode);
         } catch (ActivityNotFoundException ex) {
+            Log.w(ex);
+            ToastEx.makeText(getContext(), getString(R.string.title_no_viewer, intent), Toast.LENGTH_LONG).show();
+        } catch (Throwable ex) {
             Log.e(ex);
-            ToastEx.makeText(getContext(), getString(R.string.title_no_viewer, intent.getAction()), Toast.LENGTH_LONG).show();
+            ToastEx.makeText(getContext(), Log.formatThrowable(ex), Toast.LENGTH_LONG).show();
         }
     }
 
     protected void finish() {
+        if (finished)
+            return;
+        finished = true;
+
         if (getLifecycle().getCurrentState().isAtLeast(Lifecycle.State.STARTED))
             getParentFragmentManager().popBackStack();
         else
             finish = true;
-    }
-
-    protected void restart() {
-        Intent intent = new Intent(getContext(), ActivityMain.class);
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        startActivity(intent);
-        Runtime.getRuntime().exit(0);
     }
 
     @Override
@@ -135,6 +181,7 @@ public class FragmentBase extends Fragment {
         Log.d("Save instance " + this);
         int before = Helper.getSize(outState);
         outState.putString("fair:subtitle", subtitle);
+        outState.putString("fair:requestKey", requestKey);
         super.onSaveInstanceState(outState);
         int after = Helper.getSize(outState);
         Log.d("Saved instance " + this + " size=" + before + "/" + after);
@@ -153,12 +200,52 @@ public class FragmentBase extends Fragment {
             Log.d("Saved " + this + " " + key + "=" + outState.get(key));
     }
 
+    public String getRequestKey() {
+        if (requestKey == null)
+            requestKey = getClass().getName() + "_" + (++requestSequence);
+        return requestKey;
+    }
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         Log.i("Create " + this + " saved=" + (savedInstanceState != null));
         super.onCreate(savedInstanceState);
-        if (savedInstanceState != null)
+
+        if (savedInstanceState != null) {
             subtitle = savedInstanceState.getString("fair:subtitle");
+            requestKey = savedInstanceState.getString("fair:requestKey");
+        }
+
+        // https://developer.android.com/training/basics/fragments/pass-data-between
+        getParentFragmentManager().setFragmentResultListener(getRequestKey(), this, new FragmentResultListener() {
+            @Override
+            public void onFragmentResult(@NonNull String requestKey, @NonNull Bundle result) {
+                try {
+                    result.setClassLoader(ApplicationEx.class.getClassLoader());
+                    int requestCode = result.getInt("requestCode");
+                    int resultCode = result.getInt("resultCode");
+
+                    Intent data = new Intent();
+                    data.putExtra("args", result);
+                    onActivityResult(requestCode, resultCode, data);
+                } catch (Throwable ex) {
+                    Log.w(ex);
+                    /*
+                        android.os.BadParcelableException: ClassNotFoundException when unmarshalling: eu.faircode.email.FragmentMessages$MessageTarget
+                                at android.os.Parcel.readParcelableCreator(Parcel.java:2839)
+                                at android.os.Parcel.readParcelable(Parcel.java:2765)
+                                at android.os.Parcel.readValue(Parcel.java:2668)
+                                at android.os.Parcel.readListInternal(Parcel.java:3098)
+                                at android.os.Parcel.readArrayList(Parcel.java:2319)
+                                at android.os.Parcel.readValue(Parcel.java:2689)
+                                at android.os.Parcel.readArrayMapInternal(Parcel.java:3037)
+                                at android.os.BaseBundle.initializeFromParcelLocked(BaseBundle.java:288)
+                                at android.os.BaseBundle.unparcel(BaseBundle.java:232)
+                                at android.os.BaseBundle.getInt(BaseBundle.java:1017)
+                     */
+                }
+            }
+        });
     }
 
     @Override
@@ -171,6 +258,7 @@ public class FragmentBase extends Fragment {
     public void onActivityCreated(Bundle savedInstanceState) {
         Log.d("Activity " + this + " saved=" + (savedInstanceState != null));
         super.onActivityCreated(savedInstanceState);
+        scrollTo();
     }
 
     @Override
@@ -307,24 +395,32 @@ public class FragmentBase extends Fragment {
 
     private void onStoreAttachment(Intent intent) {
         attachment = intent.getLongExtra("id", -1);
+        Log.i("Save attachment id=" + attachment);
+
         Intent create = new Intent(Intent.ACTION_CREATE_DOCUMENT);
         create.addCategory(Intent.CATEGORY_OPENABLE);
         create.setType(intent.getStringExtra("type"));
         create.putExtra(Intent.EXTRA_TITLE, intent.getStringExtra("name"));
         Helper.openAdvanced(create);
-        if (create.resolveActivity(getContext().getPackageManager()) == null)
+        PackageManager pm = getContext().getPackageManager();
+        if (create.resolveActivity(pm) == null) { // system whitelisted
+            Log.w("SAF missing");
             ToastEx.makeText(getContext(), R.string.title_no_saf, Toast.LENGTH_LONG).show();
-        else
+        } else
             startActivityForResult(Helper.getChooser(getContext(), create), REQUEST_ATTACHMENT);
     }
 
     private void onStoreAttachments(Intent intent) {
         message = intent.getLongExtra("id", -1);
+        Log.i("Save attachments message=" + message);
+
         Intent tree = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
         Helper.openAdvanced(tree);
-        if (tree.resolveActivity(getContext().getPackageManager()) == null)
+        PackageManager pm = getContext().getPackageManager();
+        if (tree.resolveActivity(pm) == null) { // system whitelisted
+            Log.w("SAF missing");
             ToastEx.makeText(getContext(), R.string.title_no_saf, Toast.LENGTH_LONG).show();
-        else
+        } else
             startActivityForResult(Helper.getChooser(getContext(), tree), REQUEST_ATTACHMENTS);
     }
 
@@ -350,12 +446,10 @@ public class FragmentBase extends Fragment {
                     return null;
                 File file = attachment.getFile(context);
 
-                ParcelFileDescriptor pfd = null;
                 OutputStream os = null;
                 InputStream is = null;
                 try {
-                    pfd = context.getContentResolver().openFileDescriptor(uri, "w");
-                    os = new FileOutputStream(pfd.getFileDescriptor());
+                    os = context.getContentResolver().openOutputStream(uri);
                     is = new FileInputStream(file);
 
                     byte[] buffer = new byte[Helper.BUFFER_SIZE];
@@ -363,12 +457,6 @@ public class FragmentBase extends Fragment {
                     while ((read = is.read(buffer)) != -1)
                         os.write(buffer, 0, read);
                 } finally {
-                    try {
-                        if (pfd != null)
-                            pfd.close();
-                    } catch (Throwable ex) {
-                        Log.w(ex);
-                    }
                     try {
                         if (os != null)
                             os.close();
@@ -438,12 +526,10 @@ public class FragmentBase extends Fragment {
                     if (document == null)
                         throw new FileNotFoundException("Could not save " + uri + ":" + name);
 
-                    ParcelFileDescriptor pfd = null;
                     OutputStream os = null;
                     InputStream is = null;
                     try {
-                        pfd = context.getContentResolver().openFileDescriptor(document.getUri(), "w");
-                        os = new FileOutputStream(pfd.getFileDescriptor());
+                        os = context.getContentResolver().openOutputStream(document.getUri());
                         is = new FileInputStream(file);
 
                         byte[] buffer = new byte[Helper.BUFFER_SIZE];
@@ -451,12 +537,6 @@ public class FragmentBase extends Fragment {
                         while ((read = is.read(buffer)) != -1)
                             os.write(buffer, 0, read);
                     } finally {
-                        try {
-                            if (pfd != null)
-                                pfd.close();
-                        } catch (Throwable ex) {
-                            Log.w(ex);
-                        }
                         try {
                             if (os != null)
                                 os.close();
@@ -482,6 +562,7 @@ public class FragmentBase extends Fragment {
 
             @Override
             protected void onException(Bundle args, Throwable ex) {
+                Log.w(ex);
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
                     if (ex instanceof RecoverableSecurityException) {
                         handle((RecoverableSecurityException) ex);
@@ -517,5 +598,9 @@ public class FragmentBase extends Fragment {
                 })
                 .setNegativeButton(android.R.string.cancel, null)
                 .show();
+    }
+
+    Handler getMainHandler() {
+        return ApplicationEx.getMainHandler();
     }
 }

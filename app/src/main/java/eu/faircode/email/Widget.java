@@ -31,6 +31,7 @@ import android.text.TextUtils;
 import android.view.View;
 import android.widget.RemoteViews;
 
+import androidx.core.graphics.ColorUtils;
 import androidx.preference.PreferenceManager;
 
 import java.text.NumberFormat;
@@ -57,6 +58,7 @@ public class Widget extends AppWidgetProvider {
                     String name = prefs.getString("widget." + appWidgetId + ".name", null);
                     long account = prefs.getLong("widget." + appWidgetId + ".account", -1L);
                     boolean semi = prefs.getBoolean("widget." + appWidgetId + ".semi", true);
+                    int background = prefs.getInt("widget." + appWidgetId + ".background", Color.TRANSPARENT);
                     int layout = prefs.getInt("widget." + appWidgetId + ".layout", 0);
 
                     List<EntityFolder> folders = db.folder().getNotifyingFolders(account);
@@ -99,7 +101,7 @@ public class Widget extends AppWidgetProvider {
                     views.setOnClickPendingIntent(R.id.widget, pi);
 
                     if (!semi)
-                        views.setInt(R.id.widget, "setBackgroundColor", Color.TRANSPARENT);
+                        views.setInt(R.id.widget, "setBackgroundColor", background);
 
                     if (layout == 1)
                         views.setImageViewResource(R.id.ivMessage, unseen == 0
@@ -107,7 +109,7 @@ public class Widget extends AppWidgetProvider {
                                 : R.drawable.baseline_mail_widget_24);
                     else
                         views.setImageViewResource(R.id.ivMessage, unseen == 0
-                                ? R.drawable.baseline_mail_outline_24
+                                ? R.drawable.twotone_mail_outline_24
                                 : R.drawable.baseline_mail_24);
                     views.setTextViewText(R.id.tvCount, unseen < 100 ? nf.format(unseen) : "99+");
                     views.setViewVisibility(R.id.tvCount, layout == 1 && unseen == 0 ? View.GONE : View.VISIBLE);
@@ -115,6 +117,15 @@ public class Widget extends AppWidgetProvider {
                     if (!TextUtils.isEmpty(name)) {
                         views.setTextViewText(R.id.tvAccount, name);
                         views.setViewVisibility(R.id.tvAccount, ViewStripe.VISIBLE);
+                    }
+
+                    if (!semi && background != Color.TRANSPARENT) {
+                        float lum = (float) ColorUtils.calculateLuminance(background);
+                        if (lum > 0.7f) {
+                            views.setInt(R.id.ivMessage, "setColorFilter", Color.BLACK);
+                            views.setTextColor(R.id.tvCount, Color.BLACK);
+                            views.setTextColor(R.id.tvAccount, Color.BLACK);
+                        }
                     }
 
                     appWidgetManager.updateAppWidget(appWidgetId, views);

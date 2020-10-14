@@ -20,8 +20,7 @@
     </provider>
     <provider
         name="Outlook"
-        domain="outlook\\..*,live\\..*,hotmail\\..*"
-        id="outlook"
+        domain="outlook\\..*"
         link="https://github.com/M66B/FairEmail/blob/master/FAQ.md#user-content-faq14"
         order="2"
         partial="false">
@@ -35,10 +34,53 @@
             starttls="true" />
     </provider>
     <provider
+        name="Live"
+        domain="live\\..*"
+        link="https://github.com/M66B/FairEmail/blob/master/FAQ.md#user-content-faq14"
+        order="3"
+        partial="false">
+        <imap
+            host="outlook.office365.com"
+            port="993"
+            starttls="false" />
+        <smtp
+            host="smtp.office365.com"
+            port="587"
+            starttls="true" />
+    </provider>
+    <provider
+        name="Hotmail"
+        domain="hotmail\\..*"
+        link="https://github.com/M66B/FairEmail/blob/master/FAQ.md#user-content-faq14"
+        order="4"
+        partial="false">
+        <imap
+            host="outlook.office365.com"
+            port="993"
+            starttls="false" />
+        <smtp
+            host="smtp.office365.com"
+            port="587"
+            starttls="true" />
+    </provider>
+    <provider
+        name="MSN"
+        domain="\\.msn\\..*"
+        partial="false">
+        <imap
+            host="imap-mail.outlook.com"
+            port="993"
+            starttls="false" />
+        <smtp
+            host="smtp-mail.outlook.com"
+            port="587"
+            starttls="true" />
+    </provider>
+    <provider
         name="Office365"
         id="office365"
         link="https://github.com/M66B/FairEmail/blob/master/FAQ.md#user-content-faq14"
-        order="3"
+        order="5"
         partial="false">
         <imap
             host="outlook.office365.com"
@@ -55,7 +97,7 @@
             clientSecret="r=o4@SlzU:MA6MlXM6mPG[44i4gYPq[@"
             enabled="true"
             redirectUri="https://oauth.faircode.eu/"
-            scopes="offline_access,https://outlook.office365.com/IMAP.AccessAsUser.All,https://outlook.office365.com/SMTP.Send"
+            scopes="openid,email,offline_access,https://outlook.office365.com/IMAP.AccessAsUser.All,https://outlook.office365.com/SMTP.Send"
             tokenEndpoint="https://login.microsoftonline.com/common/oauth2/v2.0/token" />
         <!-- https://docs.microsoft.com/en-us/exchange/client-developer/legacy-protocols/how-to-authenticate-an-imap-pop-smtp-application-by-using-oauth -->
     </provider>
@@ -75,7 +117,7 @@
     </provider>
     <!-- no IMAP IDLE -->
     <provider
-        name="Yahoo!"
+        name="Yahoo"
         appPassword="true"
         domain="yahoo\\..*"
         id="yahoo"
@@ -89,10 +131,12 @@
             port="465"
             starttls="false" />
         <oauth
+            askAccount="true"
             authorizationEndpoint="https://api.login.yahoo.com/oauth2/request_auth"
-            clientId="dj0yJmk9eDZYbnFSMkVtMEdMJmQ9WVdrOVdXOUZabXBwTnpnbWNHbzlNQS0tJnM9Y29uc3VtZXJzZWNyZXQmc3Y9MCZ4PWJm"
-            clientSecret="927650c8ce98b653d7f88d0398a192dc44cedcd2"
-            enabled="false"
+            clientId="dj0yJmk9SWtNZm1vUFc2THJDJnM9Y29uc3VtZXJzZWNyZXQmc3Y9MCZ4PWRi"
+            clientSecret="261a91fbbdb2852c4e80fdd3d1db4a8ebfa4c42b"
+            enabled="true"
+            pcke="true"
             redirectUri="https://oauth.faircode.eu/"
             scopes="mail-w"
             tokenEndpoint="https://api.login.yahoo.com/oauth2/get_token" />
@@ -101,7 +145,7 @@
         name="Sky.com"
         appPassword="true"
         domain="sky\\.com"
-        link="https://www.sky.com/help/articles/getting-started-with-sky-yahoo-mail">
+        link="https://github.com/M66B/FairEmail/blob/master/FAQ.md#user-content-faq88">
         <imap
             host="imap.tools.sky.com"
             port="993"
@@ -128,7 +172,7 @@
         name="free.fr"
         appPassword="true"
         domain="free\\.fr"
-        link="http://jc.etiemble.free.fr/abc/index.php/trucs-astuces/configurer-smtp-free-fr">
+        link="https://github.com/M66B/FairEmail/blob/master/FAQ.md#user-content-faq157">
         <imap
             host="imap.free.fr"
             port="993"
@@ -290,6 +334,7 @@
         domain="web\\.de"
         keepalive="12"
         link="https://hilfe.web.de/pop-imap/imap/imap-serverdaten.html"
+        requiresEnabling="true"
         user="local">
         <imap
             host="imap.web.de"
@@ -329,6 +374,7 @@
     </provider>
     <provider
         name="Ionos (1und1)"
+        appPassword="true"
         domain="ionos\\.de,ionos\\.com,online\\.de"
         keepalive="12"
         link="https://www.ionos.de/hilfe/e-mail/allgemeine-themen/einstellungen-fuer-ihr-e-mail-programm/">
@@ -527,6 +573,7 @@
     </provider>
     <provider
         name="Mailfence"
+        appPassword="true"
         domain="mailfence\\.com"
         link="https://mailfence.com/en/faq.jsp"
         useip="false"
@@ -595,7 +642,7 @@
     <provider
         name="AOL"
         domain="aol\\..*"
-        link="https://help.aol.com/articles/how-do-i-use-other-email-applications-to-send-and-receive-my-aol-mail">
+        link="https://github.com/M66B/FairEmail/blob/master/FAQ.md#user-content-faq88">
         <imap
             host="imap.aol.com"
             port="993"
@@ -733,7 +780,21 @@
             starttls="false" />
     </provider>
     <provider
+        name="Onet"
+        domain="onet\\.pl"
+        link="https://pomoc.poczta.onet.pl/baza-wiedzy/konfiguracja-poczty-na-urzadzeniach-mobilnych/">
+        <imap
+            host="imap.poczta.onet.pl"
+            port="993"
+            starttls="false" />
+        <smtp
+            host="smtp.poczta.onet.pl"
+            port="465"
+            starttls="false" />
+    </provider>
+    <provider
         name="Alice.it"
+        appPassword="true"
         domain="alice\\.it"
         link="https://assistenzatecnica.tim.it/at/portals/assistenzatecnica.portal">
         <imap
@@ -772,6 +833,7 @@
     </provider>
     <provider
         name="Arcor.de"
+        appPassword="true"
         link="https://www.vodafone.de/hilfe/email/abrufen-senden.html">
         <imap
             host="imap.arcor.de"
@@ -806,5 +868,130 @@
             host="mail.uk2.net"
             port="465"
             starttls="false" />
+    </provider>
+    <provider
+        name="Scarlet.be"
+        appPassword="true"
+        link="https://www.scarlet.be/help/faq/769/59/Welke-standaardinstellingen-gebruikt-Scarlet-voor-e-mail">
+        <imap
+            host="imap.scarlet.be"
+            port="993"
+            starttls="false" />
+        <smtp
+            host="smtp.scarlet.be"
+            port="465"
+            starttls="false" />
+    </provider>
+    <provider
+        name="Amazon EU west 1"
+        link="https://docs.aws.amazon.com/workmail/latest/userguide/using_IMAP_client.html">
+        <imap
+            host="imap.mail.eu-west-1.awsapps.com"
+            port="993"
+            starttls="false" />
+        <smtp
+            host="smtp.mail.eu-west-1.awsapps.com"
+            port="465"
+            starttls="false" />
+    </provider>
+    <provider
+        name="Amazon US east 1"
+        link="https://docs.aws.amazon.com/workmail/latest/userguide/using_IMAP_client.html">
+        <imap
+            host="imap.mail.us-east-1.awsapps.com"
+            port="993"
+            starttls="false" />
+        <smtp
+            host="smtp.mail.us-east-1.awsapps.com"
+            port="465"
+            starttls="false" />
+    </provider>
+    <provider
+        name="Amazon US west 2"
+        link="https://docs.aws.amazon.com/workmail/latest/userguide/using_IMAP_client.html">
+        <imap
+            host="imap.mail.us-west-2.awsapps.com"
+            port="993"
+            starttls="false" />
+        <smtp
+            host="smtp.mail.us-west-2.awsapps.com"
+            port="465"
+            starttls="false" />
+    </provider>
+    <provider
+        name="OnMail"
+        enabled="false"
+        link="https://support.onmail.com/hc/en-us/articles/360048987651-Connecting-My-Custom-Domain-to-Edison-Mail">
+        <imap
+            host="imap.onmail.com"
+            port="993"
+            starttls="false" />
+        <smtp
+            host="smtp.onmail.com"
+            port="465"
+            starttls="false" />
+        <!--- please login the account by OnMail app -->
+    </provider>
+    <provider
+        name="HCCnet"
+        domain="hcc\\.nl,hccnet\\.nl,kader\\.hcc\\.nl"
+        link="https://www.hcc.nl/hccnet">
+        <imap
+            host="pop.hccnet.nl"
+            port="993"
+            starttls="false" />
+        <smtp
+            host="smtp.hccnet.nl"
+            port="465"
+            starttls="false" />
+    </provider>
+    <provider
+        name="Interia"
+        link="https://pomoc.poczta.interia.pl/news-parametry-do-konfiguracji-programow-pocztowych,nId,2136275">
+        <imap
+            host="poczta.interia.pl"
+            port="993"
+            starttls="false" />
+        <smtp
+            host="poczta.interia.pl"
+            port="465"
+            starttls="false" />
+    </provider>
+    <provider
+        name="MXroute"
+        link="https://mxroute.com/support/">
+        <imap
+            host="mail.mxlogin.com"
+            port="993"
+            starttls="false" />
+        <smtp
+            host="mail.mxlogin.com"
+            port="465"
+            starttls="false" />
+    </provider>
+    <provider
+        name="Gandi"
+        link="https://docs.gandi.net/en/gandimail/standard_email_settings/">
+        <imap
+            host="mail.gandi.net"
+            port="993"
+            starttls="false" />
+        <smtp
+            host="mail.gandi.net"
+            port="465"
+            starttls="false" />
+    </provider>
+    <provider
+        name="Ecomail"
+        domain="ecomail\\..*,ecomail-.*\\..*,apiculteur\\.me,asso-nature\\.fr"
+        link="https://sav.ecomail.earth/">
+        <imap
+            host="imap.ecomail.fr"
+            port="993"
+            starttls="false" />
+        <smtp
+            host="smtp.ecomail.fr"
+            port="587"
+            starttls="true" />
     </provider>
 </providers>

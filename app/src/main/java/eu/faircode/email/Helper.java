@@ -24,6 +24,7 @@ import android.app.Activity;
 import android.app.KeyguardManager;
 import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -39,12 +40,11 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
-import android.os.Handler;
 import android.os.LocaleList;
 import android.os.Parcel;
 import android.os.PowerManager;
 import android.os.StatFs;
-import android.provider.DocumentsContract;
+import android.provider.Settings;
 import android.security.KeyChain;
 import android.security.KeyChainAliasCallback;
 import android.security.KeyChainException;
@@ -92,7 +92,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
-import org.jetbrains.annotations.NotNull;
+import org.openintents.openpgp.util.OpenPgpApi;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -109,6 +109,8 @@ import java.text.DateFormat;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
@@ -145,12 +147,12 @@ public class Helper {
     static final String PGP_BEGIN_MESSAGE = "-----BEGIN PGP MESSAGE-----";
     static final String PGP_END_MESSAGE = "-----END PGP MESSAGE-----";
 
-    static final String FAQ_URI = "https://github.com/M66B/FairEmail/blob/master/FAQ.md";
+    static final String FAQ_URI = "https://email.faircode.eu/faq/";
     static final String XDA_URI = "https://forum.xda-developers.com/showthread.php?t=3824168";
     static final String SUPPORT_URI = "https://contact.faircode.eu/?product=fairemailsupport";
     static final String TEST_URI = "https://play.google.com/apps/testing/" + BuildConfig.APPLICATION_ID;
-    static final String CROWDIN_URI = "https://crowdin.com/project/open-source-email";
     static final String GRAVATAR_PRIVACY_URI = "https://meta.stackexchange.com/questions/44717/is-gravatar-a-privacy-risk";
+    static final String LICENSE_URI = "https://www.gnu.org/licenses/gpl-3.0.html";
 
     static final Pattern EMAIL_ADDRESS
             = Pattern.compile(
@@ -162,6 +164,21 @@ public class Helper {
                     "[a-zA-Z0-9][a-zA-Z0-9\\-]{0,25}" +
                     ")+"
     );
+
+    // https://developer.android.com/guide/topics/media/media-formats#image-formats
+    static final List<String> IMAGE_TYPES = Collections.unmodifiableList(Arrays.asList(
+            "image/bmp",
+            "image/gif",
+            "image/jpeg",
+            "image/jpg",
+            "image/png",
+            "image/webp"
+    ));
+
+    static final List<String> IMAGE_TYPES8 = Collections.unmodifiableList(Arrays.asList(
+            "image/heic",
+            "image/heif"
+    ));
 
     private static final ExecutorService executor = getBackgroundExecutor(1, "helper");
 
@@ -283,7 +300,7 @@ public class Helper {
         }
 
         @Override
-        public T get(long timeout, @NotNull TimeUnit unit) throws ExecutionException, InterruptedException, TimeoutException {
+        public T get(long timeout, @NonNull TimeUnit unit) throws ExecutionException, InterruptedException, TimeoutException {
             return wrapped.get(timeout, unit);
         }
     }
@@ -344,17 +361,22 @@ public class Helper {
 
     static String[] getOAuthPermissions() {
         List<String> permissions = new ArrayList<>();
-        permissions.add(Manifest.permission.READ_CONTACTS); // profile
+        //permissions.add(Manifest.permission.READ_CONTACTS); // profile
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O)
             permissions.add(Manifest.permission.GET_ACCOUNTS);
         return permissions.toArray(new String[0]);
     }
 
     static boolean hasCustomTabs(Context context, Uri uri) {
+        String scheme = (uri == null ? null : uri.getScheme());
+        if (!"http".equals(scheme) && !"https".equals(scheme))
+            return false;
+
         PackageManager pm = context.getPackageManager();
         Intent view = new Intent(Intent.ACTION_VIEW, uri);
 
-        for (ResolveInfo info : pm.queryIntentActivities(view, 0)) {
+        List<ResolveInfo> ris = pm.queryIntentActivities(view, 0); // action whitelisted
+        for (ResolveInfo info : ris) {
             Intent intent = new Intent();
             intent.setAction(ACTION_CUSTOM_TABS_CONNECTION);
             intent.setPackage(info.activityInfo.packageName);
@@ -366,16 +388,24 @@ public class Helper {
     }
 
     static boolean hasWebView(Context context) {
-        PackageManager pm = context.getPackageManager();
-        if (pm.hasSystemFeature(PackageManager.FEATURE_WEBVIEW))
-            try {
+        try {
+            PackageManager pm = context.getPackageManager();
+            if (pm.hasSystemFeature(PackageManager.FEATURE_WEBVIEW)) {
                 new WebView(context);
                 return true;
-            } catch (Throwable ex) {
+            } else
                 return false;
-            }
-        else
+        } catch (Throwable ex) {
+            /*
+                Caused by: java.lang.RuntimeException: Package manager has died
+                    at android.app.ApplicationPackageManager.hasSystemFeature(ApplicationPackageManager.java:414)
+                    at eu.faircode.email.Helper.hasWebView(SourceFile:375)
+                    at eu.faircode.email.ApplicationEx.onCreate(SourceFile:110)
+                    at android.app.Instrumentation.callApplicationOnCreate(Instrumentation.java:1014)
+                    at android.app.ActivityThread.handleBindApplication(ActivityThread.java:4751)
+             */
             return false;
+        }
     }
 
     static boolean canPrint(Context context) {
@@ -398,20 +428,58 @@ public class Helper {
     }
 
     static boolean isSecure(Context context) {
+        try {
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+                ContentResolver resolver = context.getContentResolver();
+                int enabled = Settings.System.getInt(resolver, Settings.System.LOCK_PATTERN_ENABLED, 0);
+                return (enabled != 0);
+            } else {
+                KeyguardManager kgm = (KeyguardManager) context.getSystemService(Context.KEYGUARD_SERVICE);
+                return (kgm != null && kgm.isDeviceSecure());
+            }
+        } catch (Throwable ex) {
+            Log.e(ex);
+            return false;
+        }
+    }
+
+    static boolean isOpenKeychainInstalled(Context context) {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-        boolean biometrics = prefs.getBoolean("biometrics", false);
-        String pin = prefs.getString("pin", null);
-        return (biometrics || !TextUtils.isEmpty(pin));
+        String provider = prefs.getString("openpgp_provider", "org.sufficientlysecure.keychain");
+
+        PackageManager pm = context.getPackageManager();
+        Intent intent = new Intent(OpenPgpApi.SERVICE_INTENT_2);
+        intent.setPackage(provider);
+        List<ResolveInfo> ris = pm.queryIntentServices(intent, 0);
+
+        return (ris != null && ris.size() > 0);
+    }
+
+    static void enableComponent(Context context, Class<?> clazz, boolean whether) {
+        enableComponent(context, clazz.getName(), whether);
+    }
+
+    static void enableComponent(Context context, String name, boolean whether) {
+        PackageManager pm = context.getPackageManager();
+        pm.setComponentEnabledSetting(
+                new ComponentName(context, name),
+                whether
+                        ? PackageManager.COMPONENT_ENABLED_STATE_DEFAULT
+                        : PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+                PackageManager.DONT_KILL_APP);
     }
 
     // View
 
     static Intent getChooser(Context context, Intent intent) {
-        PackageManager pm = context.getPackageManager();
-        if (pm.queryIntentActivities(intent, 0).size() == 1)
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
+            PackageManager pm = context.getPackageManager();
+            if (pm.queryIntentActivities(intent, 0).size() == 1)
+                return intent;
+            else
+                return Intent.createChooser(intent, context.getString(R.string.title_select_app));
+        } else
             return intent;
-        else
-            return Intent.createChooser(intent, context.getString(R.string.title_select_app));
     }
 
     static void share(Context context, File file, String type, String name) {
@@ -427,21 +495,56 @@ public class Helper {
             intent.putExtra(Intent.EXTRA_TITLE, Helper.sanitizeFilename(name));
         Log.i("Intent=" + intent + " type=" + type);
 
-        // Get targets
-        PackageManager pm = context.getPackageManager();
-        List<ResolveInfo> ris = pm.queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY);
-        for (ResolveInfo ri : ris) {
-            Log.i("Target=" + ri);
-            context.grantUriPermission(ri.activityInfo.packageName, uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
-        }
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
+            // Get targets
+            List<ResolveInfo> ris = null;
+            try {
+                PackageManager pm = context.getPackageManager();
+                ris = pm.queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY);
+                for (ResolveInfo ri : ris) {
+                    Log.i("Target=" + ri);
+                    context.grantUriPermission(ri.activityInfo.packageName, uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                }
+            } catch (Throwable ex) {
+                Log.e(ex);
+                /*
+                    java.lang.RuntimeException: Package manager has died
+                      at android.app.ApplicationPackageManager.queryIntentActivitiesAsUser(ApplicationPackageManager.java:571)
+                      at android.app.ApplicationPackageManager.queryIntentActivities(ApplicationPackageManager.java:557)
+                      at eu.faircode.email.Helper.share(SourceFile:489)
+                 */
+            }
 
-        // Check if viewer available
-        if (ris.size() == 0) {
-            String message = context.getString(R.string.title_no_viewer,
-                    type != null ? type : name != null ? name : file.getName());
-            ToastEx.makeText(context, message, Toast.LENGTH_LONG).show();
-        } else
-            context.startActivity(intent);
+            // Check if viewer available
+            if (ris == null || ris.size() == 0) {
+                if (isTnef(type))
+                    viewFAQ(context, 155);
+                else {
+                    String message = context.getString(R.string.title_no_viewer,
+                            type != null ? type : name != null ? name : file.getName());
+                    ToastEx.makeText(context, message, Toast.LENGTH_LONG).show();
+                }
+            } else
+                context.startActivity(intent);
+        } else {
+            try {
+                context.startActivity(intent);
+            } catch (ActivityNotFoundException ex) {
+                if (isTnef(type))
+                    viewFAQ(context, 155);
+                else {
+                    String message = context.getString(R.string.title_no_viewer,
+                            type != null ? type : name != null ? name : file.getName());
+                    ToastEx.makeText(context, message, Toast.LENGTH_LONG).show();
+                }
+            }
+        }
+    }
+
+    private static boolean isTnef(String type) {
+        // https://en.wikipedia.org/wiki/Transport_Neutral_Encapsulation_Format
+        return ("application/ms-tnef".equals(type) ||
+                "application/vnd.ms-tnef".equals(type));
     }
 
     static void view(Context context, Intent intent) {
@@ -449,16 +552,31 @@ public class Helper {
         if ("http".equals(uri.getScheme()) || "https".equals(uri.getScheme()))
             view(context, intent.getData(), false);
         else
-            context.startActivity(intent);
+            try {
+                context.startActivity(intent);
+            } catch (ActivityNotFoundException ex) {
+                Log.w(ex);
+                ToastEx.makeText(context, context.getString(R.string.title_no_viewer, uri), Toast.LENGTH_LONG).show();
+            }
     }
 
     static void view(Context context, Uri uri, boolean browse) {
-        Log.i("View=" + uri);
+        view(context, uri, browse, false);
+    }
 
-        if (browse || !hasCustomTabs(context, uri)) {
+    static void view(Context context, Uri uri, boolean browse, boolean task) {
+        boolean has = hasCustomTabs(context, uri);
+        Log.i("View=" + uri + " browse=" + browse + " task=" + task + " has=" + has);
+
+        if (browse || !has) {
             try {
                 Intent view = new Intent(Intent.ACTION_VIEW, uri);
-                context.startActivity(getChooser(context, view));
+                if (task)
+                    view.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                context.startActivity(view);
+            } catch (ActivityNotFoundException ex) {
+                Log.w(ex);
+                ToastEx.makeText(context, context.getString(R.string.title_no_viewer, uri), Toast.LENGTH_LONG).show();
             } catch (Throwable ex) {
                 Log.e(ex);
                 ToastEx.makeText(context, Log.formatThrowable(ex, false), Toast.LENGTH_LONG).show();
@@ -469,15 +587,17 @@ public class Helper {
             builder.setToolbarColor(resolveColor(context, R.attr.colorPrimary));
             builder.setSecondaryToolbarColor(resolveColor(context, R.attr.colorPrimaryDark));
             builder.setColorScheme(Helper.isDarkTheme(context)
-                    ? CustomTabsIntent.COLOR_SCHEME_DARK : CustomTabsIntent.COLOR_SCHEME_LIGHT);
-            builder.addDefaultShareMenuItem();
+                    ? CustomTabsIntent.COLOR_SCHEME_DARK
+                    : CustomTabsIntent.COLOR_SCHEME_LIGHT);
+            builder.setDefaultShareMenuItemEnabled(true);
+            builder.setUrlBarHidingEnabled(true);
 
             CustomTabsIntent customTabsIntent = builder.build();
             try {
                 customTabsIntent.launchUrl(context, uri);
             } catch (ActivityNotFoundException ex) {
                 Log.w(ex);
-                ToastEx.makeText(context, context.getString(R.string.title_no_viewer, uri.toString()), Toast.LENGTH_LONG).show();
+                ToastEx.makeText(context, context.getString(R.string.title_no_viewer, uri), Toast.LENGTH_LONG).show();
             } catch (Throwable ex) {
                 Log.e(ex);
                 ToastEx.makeText(context, Log.formatThrowable(ex, false), Toast.LENGTH_LONG).show();
@@ -515,12 +635,6 @@ public class Helper {
             view(context, Uri.parse(FAQ_URI + "#user-content-faq" + question), false);
     }
 
-    static Intent getIntentOpenKeychain() {
-        Intent intent = new Intent(Intent.ACTION_VIEW);
-        intent.setData(Uri.parse(BuildConfig.OPENKEYCHAIN_URI));
-        return intent;
-    }
-
     static String getOpenKeychainPackage(Context context) {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
         return prefs.getString("openpgp_provider", "org.sufficientlysecure.keychain");
@@ -548,10 +662,7 @@ public class Helper {
     }
 
     static Intent getIntentRate(Context context) {
-        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=" + BuildConfig.APPLICATION_ID));
-        if (intent.resolveActivity(context.getPackageManager()) == null)
-            intent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=" + BuildConfig.APPLICATION_ID));
-        return intent;
+        return new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=" + BuildConfig.APPLICATION_ID));
     }
 
     static long getInstallTime(Context context) {
@@ -564,6 +675,10 @@ public class Helper {
             Log.e(ex);
         }
         return 0;
+    }
+
+    static boolean isFoldable() {
+        return ("Microsoft".equalsIgnoreCase(Build.MANUFACTURER) && "Surface Duo".equals(Build.MODEL));
     }
 
     // Graphics
@@ -626,11 +741,11 @@ public class Helper {
     }
 
     static void hide(View view) {
-        view.setPadding(0, 0, 0, 0);
+        view.setPadding(0, 1, 0, 0);
 
         ViewGroup.LayoutParams lparam = view.getLayoutParams();
         lparam.width = 0;
-        lparam.height = 0;
+        lparam.height = 1;
         if (lparam instanceof ConstraintLayout.LayoutParams)
             ((ConstraintLayout.LayoutParams) lparam).setMargins(0, 0, 0, 0);
         view.setLayoutParams(lparam);
@@ -655,7 +770,11 @@ public class Helper {
 
     private static final DecimalFormat df = new DecimalFormat("@@");
 
-    static String humanReadableByteCount(long bytes, boolean si) {
+    static String humanReadableByteCount(long bytes) {
+        return humanReadableByteCount(bytes, true);
+    }
+
+    private static String humanReadableByteCount(long bytes, boolean si) {
         int unit = si ? 1000 : 1024;
         if (bytes < unit) return bytes + " B";
         int exp = (int) (Math.log(bytes) / Math.log(unit));
@@ -713,23 +832,6 @@ public class Helper {
             return getTimeInstance(context, SimpleDateFormat.SHORT).format(millis);
         else
             return DateUtils.getRelativeTimeSpanString(context, millis);
-    }
-
-    static String localizeFolderType(Context context, String type) {
-        int resid = context.getResources().getIdentifier(
-                "title_folder_" + type.toLowerCase(Locale.ROOT),
-                "string",
-                context.getPackageName());
-        return (resid > 0 ? context.getString(resid) : type);
-    }
-
-    static String localizeFolderName(Context context, String name) {
-        if (name != null && "INBOX".equals(name.toUpperCase(Locale.ROOT)))
-            return context.getString(R.string.title_folder_inbox);
-        else if ("OUTBOX".equals(name))
-            return context.getString(R.string.title_folder_outbox);
-        else
-            return name;
     }
 
     static void linkPro(final TextView tv) {
@@ -793,6 +895,55 @@ public class Helper {
         return result.toArray(new String[0]);
     }
 
+    static String getLocalizedAsset(Context context, String name) throws IOException {
+        if (name == null || !name.contains("."))
+            throw new IllegalArgumentException(name);
+
+        String[] list = context.getResources().getAssets().list("");
+        if (list == null)
+            throw new IllegalArgumentException();
+
+        List<String> names = new ArrayList<>();
+        String[] c = name.split("\\.");
+        List<String> assets = Arrays.asList(list);
+
+        List<Locale> locales = new ArrayList<>();
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N)
+            locales.add(Locale.getDefault());
+        else {
+            LocaleList ll = context.getResources().getConfiguration().getLocales();
+            for (int i = 0; i < ll.size(); i++)
+                locales.add(ll.get(i));
+        }
+
+        for (Locale locale : locales) {
+            String language = locale.getLanguage();
+            String country = locale.getCountry();
+            if ("en".equals(language) && "US".equals(country))
+                names.add(name);
+            else {
+                String localized = c[0] + "-" + language + "-r" + country + "." + c[1];
+                if (assets.contains(localized))
+                    names.add(localized);
+            }
+        }
+
+        for (Locale locale : locales) {
+            String prefix = c[0] + "-" + locale.getLanguage();
+            for (String asset : assets)
+                if (asset.startsWith(prefix))
+                    names.add(asset);
+        }
+
+        names.add(name);
+
+        String asset = names.get(0);
+        Log.i("Using " + asset +
+                " of " + TextUtils.join(",", names) +
+                " (" + TextUtils.join(",", locales) + ")");
+        return asset;
+    }
+
     static boolean containsWhiteSpace(String text) {
         return text.matches(".*\\s+.*");
     }
@@ -812,52 +963,6 @@ public class Helper {
             }
         }
         return false;
-    }
-
-    static boolean isUTF8(String text) {
-        // Get extended ASCII characters
-        byte[] octets = text.getBytes(StandardCharsets.ISO_8859_1);
-
-        int bytes;
-        for (int i = 0; i < octets.length; i++) {
-            if ((octets[i] & 0b10000000) == 0b00000000)
-                bytes = 1;
-            else if ((octets[i] & 0b11100000) == 0b11000000)
-                bytes = 2;
-            else if ((octets[i] & 0b11110000) == 0b11100000)
-                bytes = 3;
-            else if ((octets[i] & 0b11111000) == 0b11110000)
-                bytes = 4;
-            else if ((octets[i] & 0b11111100) == 0b11111000)
-                bytes = 5;
-            else if ((octets[i] & 0b11111110) == 0b11111100)
-                bytes = 6;
-            else
-                return false;
-
-            if (i + bytes > octets.length)
-                return false;
-
-            while (--bytes > 0)
-                if ((octets[++i] & 0b11000000) != 0b10000000)
-                    return false;
-        }
-
-        return true;
-    }
-
-    static boolean isISO8859(String text) {
-        // https://en.wikipedia.org/wiki/ISO/IEC_8859-1
-        int c;
-        byte[] octets = text.getBytes(StandardCharsets.ISO_8859_1);
-        for (byte b : octets) {
-            c = b & 0xFF;
-            if (c < 32)
-                return false;
-            if (c >= 127 && c < 160)
-                return false;
-        }
-        return true;
     }
 
     static boolean isSingleScript(String s) {
@@ -882,6 +987,20 @@ public class Helper {
         return true;
     }
 
+    static Integer parseInt(String text) {
+        if (TextUtils.isEmpty(text))
+            return null;
+
+        if (!TextUtils.isDigitsOnly(text))
+            return null;
+
+        try {
+            return Integer.parseInt(text);
+        } catch (NumberFormatException ignored) {
+            return null;
+        }
+    }
+
     // Files
 
     static String sanitizeFilename(String name) {
@@ -904,14 +1023,48 @@ public class Helper {
         String type = null;
 
         String extension = Helper.getExtension(filename);
-        if (extension != null)
+        if (extension != null) {
+            extension = extension.toLowerCase(Locale.ROOT);
             type = MimeTypeMap.getSingleton()
                     .getMimeTypeFromExtension(extension.toLowerCase(Locale.ROOT));
+        }
 
         if (TextUtils.isEmpty(type))
-            type = "application/octet-stream";
+            if ("csv".equals(extension))
+                return "text/csv";
+            else if ("eml".equals(extension))
+                return "message/rfc822";
+            else if ("gpx".equals(extension))
+                return "application/gpx+xml";
+            else if ("log".equals(extension))
+                return "text/plain";
+            else if ("ovpn".equals(extension))
+                return "application/x-openvpn-profile";
+            else
+                return "application/octet-stream";
 
         return type;
+    }
+
+    static String guessExtension(String mimeType) {
+        String extension = null;
+
+        if (mimeType != null) {
+            mimeType = mimeType.toLowerCase(Locale.ROOT);
+            extension = MimeTypeMap.getSingleton().getExtensionFromMimeType(mimeType);
+        }
+
+        if (TextUtils.isEmpty(extension))
+            if ("text/csv".equals(mimeType))
+                return "csv";
+            else if ("message/rfc822".equals(mimeType))
+                return "eml";
+            else if ("application/gpx+xml".equals(mimeType))
+                return "gpx";
+            else if ("application/x-openvpn-profile".equals(mimeType))
+                return "ovpn";
+
+        return extension;
     }
 
     static void writeText(File file, String content) throws IOException {
@@ -932,6 +1085,16 @@ public class Helper {
     static String readText(File file) throws IOException {
         try (FileInputStream in = new FileInputStream(file)) {
             return readStream(in, StandardCharsets.UTF_8.name());
+        }
+    }
+
+    public static void readBuffer(InputStream is, byte[] buffer) throws IOException {
+        int left = buffer.length;
+        while (left > 0) {
+            int count = is.read(buffer, buffer.length - left, left);
+            if (count < 0)
+                throw new IOException("EOF");
+            left -= count;
         }
     }
 
@@ -995,6 +1158,14 @@ public class Helper {
         //intent.putExtra(DocumentsContract.EXTRA_INITIAL_URI, Uri.fromFile(initial));
     }
 
+    static boolean isImage(String mimeType) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+            if (IMAGE_TYPES8.contains(mimeType))
+                return true;
+
+        return IMAGE_TYPES.contains(mimeType);
+    }
+
     // Cryptography
 
     static String sha256(String data) throws NoSuchAlgorithmException {
@@ -1056,7 +1227,7 @@ public class Helper {
             return true;
 
         BiometricManager bm = BiometricManager.from(context);
-        return (bm.canAuthenticate() == BiometricManager.BIOMETRIC_SUCCESS);
+        return (bm.canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_WEAK) == BiometricManager.BIOMETRIC_SUCCESS);
     }
 
     static boolean shouldAuthenticate(Context context) {
@@ -1079,11 +1250,9 @@ public class Helper {
         return false;
     }
 
-    static void authenticate(final FragmentActivity activity,
+    static void authenticate(final FragmentActivity activity, final LifecycleOwner owner,
                              Boolean enabled, final
                              Runnable authenticated, final Runnable cancelled) {
-        final Handler handler = new Handler();
-
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(activity);
         String pin = prefs.getString("pin", null);
 
@@ -1104,7 +1273,7 @@ public class Helper {
                     ? R.string.title_setup_biometrics_disable
                     : R.string.title_setup_biometrics_enable));
 
-            BiometricPrompt prompt = new BiometricPrompt(activity, executor,
+            final BiometricPrompt prompt = new BiometricPrompt(activity, executor,
                     new BiometricPrompt.AuthenticationCallback() {
                         @Override
                         public void onAuthenticationError(final int errorCode, @NonNull final CharSequence errString) {
@@ -1113,7 +1282,7 @@ public class Helper {
                             if (errorCode != BiometricPrompt.ERROR_NEGATIVE_BUTTON &&
                                     errorCode != BiometricPrompt.ERROR_CANCELED &&
                                     errorCode != BiometricPrompt.ERROR_USER_CANCELED)
-                                handler.post(new Runnable() {
+                                ApplicationEx.getMainHandler().post(new Runnable() {
                                     @Override
                                     public void run() {
                                         ToastEx.makeText(activity,
@@ -1122,24 +1291,45 @@ public class Helper {
                                     }
                                 });
 
-                            handler.post(cancelled);
+                            ApplicationEx.getMainHandler().post(cancelled);
                         }
 
                         @Override
                         public void onAuthenticationSucceeded(@NonNull BiometricPrompt.AuthenticationResult result) {
                             Log.i("Biometric succeeded");
                             setAuthenticated(activity);
-                            handler.post(authenticated);
+                            ApplicationEx.getMainHandler().post(authenticated);
                         }
 
                         @Override
                         public void onAuthenticationFailed() {
                             Log.w("Biometric failed");
-                            handler.post(cancelled);
+                            ApplicationEx.getMainHandler().post(cancelled);
                         }
                     });
 
             prompt.authenticate(info.build());
+
+            final Runnable cancelPrompt = new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        prompt.cancelAuthentication();
+                    } catch (Throwable ex) {
+                        Log.e(ex);
+                    }
+                }
+            };
+
+            ApplicationEx.getMainHandler().postDelayed(cancelPrompt, 60 * 1000L);
+
+            owner.getLifecycle().addObserver(new LifecycleObserver() {
+                @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
+                public void onDestroy() {
+                    ApplicationEx.getMainHandler().post(cancelPrompt);
+                }
+            });
+
         } else {
             final View dview = LayoutInflater.from(activity).inflate(R.layout.dialog_pin_ask, null);
             final EditText etPin = dview.findViewById(R.id.etPin);
@@ -1155,21 +1345,21 @@ public class Helper {
 
                             if (pin.equals(entered)) {
                                 setAuthenticated(activity);
-                                handler.post(authenticated);
+                                ApplicationEx.getMainHandler().post(authenticated);
                             } else
-                                handler.post(cancelled);
+                                ApplicationEx.getMainHandler().post(cancelled);
                         }
                     })
                     .setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
-                            handler.post(cancelled);
+                            ApplicationEx.getMainHandler().post(cancelled);
                         }
                     })
                     .setOnDismissListener(new DialogInterface.OnDismissListener() {
                         @Override
                         public void onDismiss(DialogInterface dialog) {
-                            handler.post(cancelled);
+                            ApplicationEx.getMainHandler().post(cancelled);
                         }
                     })
                     .create();
@@ -1193,7 +1383,7 @@ public class Helper {
                 }
             });
 
-            new Handler().post(new Runnable() {
+            ApplicationEx.getMainHandler().post(new Runnable() {
                 @Override
                 public void run() {
                     etPin.requestFocus();
@@ -1216,8 +1406,6 @@ public class Helper {
 
     static void selectKeyAlias(final Activity activity, final LifecycleOwner owner, final String alias, final IKeyAlias intf) {
         final Context context = activity.getApplicationContext();
-        final Handler handler = new Handler();
-
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -1234,7 +1422,7 @@ public class Helper {
                         Log.e(ex);
                     }
 
-                handler.post(new Runnable() {
+                ApplicationEx.getMainHandler().post(new Runnable() {
                     @Override
                     public void run() {
                         KeyChain.choosePrivateKeyAlias(activity, new KeyChainAliasCallback() {
@@ -1250,7 +1438,7 @@ public class Helper {
             }
 
             private void deliver(final String selected) {
-                handler.post(new Runnable() {
+                ApplicationEx.getMainHandler().post(new Runnable() {
                     @Override
                     public void run() {
                         if (owner.getLifecycle().getCurrentState().isAtLeast(Lifecycle.State.STARTED)) {
@@ -1341,6 +1529,12 @@ public class Helper {
     }
 
     static boolean equal(String[] a1, String[] a2) {
+        if (a1 == null && a2 == null)
+            return true;
+
+        if (a1 == null || a2 == null)
+            return false;
+
         if (a1.length != a2.length)
             return false;
 

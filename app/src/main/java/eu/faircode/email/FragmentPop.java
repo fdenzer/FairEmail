@@ -26,7 +26,6 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
@@ -36,12 +35,14 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.RadioGroup;
 import android.widget.ScrollView;
+import android.widget.Spinner;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -52,7 +53,9 @@ import androidx.lifecycle.Lifecycle;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputLayout;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Objects;
 
 import static android.app.Activity.RESULT_OK;
@@ -76,15 +79,20 @@ public class FragmentPop extends FragmentBase {
     private TextView tvColorPro;
 
     private CheckBox cbSynchronize;
-    private CheckBox cbNotify;
-    private TextView tvNotifyPro;
     private CheckBox cbOnDemand;
     private CheckBox cbPrimary;
+    private CheckBox cbNotify;
+    private TextView tvNotifyPro;
+    private CheckBox cbAutoSeen;
     private CheckBox cbLeaveServer;
     private CheckBox cbLeaveDeleted;
     private CheckBox cbLeaveDevice;
     private EditText etMax;
     private EditText etInterval;
+
+    private ArrayAdapter<EntityFolder> adapterSwipe;
+    private Spinner spLeft;
+    private Spinner spRight;
 
     private Button btnSave;
     private ContentLoadingProgressBar pbSave;
@@ -135,11 +143,15 @@ public class FragmentPop extends FragmentBase {
         cbPrimary = view.findViewById(R.id.cbPrimary);
         cbNotify = view.findViewById(R.id.cbNotify);
         tvNotifyPro = view.findViewById(R.id.tvNotifyPro);
+        cbAutoSeen = view.findViewById(R.id.cbAutoSeen);
         cbLeaveServer = view.findViewById(R.id.cbLeaveServer);
         cbLeaveDeleted = view.findViewById(R.id.cbLeaveDeleted);
         cbLeaveDevice = view.findViewById(R.id.cbLeaveDevice);
         etMax = view.findViewById(R.id.etMax);
         etInterval = view.findViewById(R.id.etInterval);
+
+        spLeft = view.findViewById(R.id.spLeft);
+        spRight = view.findViewById(R.id.spRight);
 
         btnSave = view.findViewById(R.id.btnSave);
         pbSave = view.findViewById(R.id.pbSave);
@@ -148,6 +160,13 @@ public class FragmentPop extends FragmentBase {
         grpError = view.findViewById(R.id.grpError);
 
         pbWait = view.findViewById(R.id.pbWait);
+
+        rgEncryption.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(RadioGroup group, int id) {
+                etPort.setHint(id == R.id.radio_ssl ? "995" : "110");
+            }
+        });
 
         tilPassword.getEditText().addTextChangedListener(new TextWatcher() {
             @Override
@@ -206,6 +225,12 @@ public class FragmentPop extends FragmentBase {
 
         etInterval.setHint(Integer.toString(EntityAccount.DEFAULT_POLL_INTERVAL));
 
+        adapterSwipe = new ArrayAdapter<>(getContext(), R.layout.spinner_item1, android.R.id.text1, getSwipeActions());
+        adapterSwipe.setDropDownViewResource(R.layout.spinner_item1_dropdown);
+
+        spLeft.setAdapter(adapterSwipe);
+        spRight.setAdapter(adapterSwipe);
+
         btnSave.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -228,8 +253,16 @@ public class FragmentPop extends FragmentBase {
         Bundle args = new Bundle();
         args.putLong("id", id);
 
-        args.putString("host", etHost.getText().toString().trim());
-        args.putBoolean("starttls", rgEncryption.getCheckedRadioButtonId() == R.id.radio_starttls);
+        int encryption;
+        if (rgEncryption.getCheckedRadioButtonId() == R.id.radio_starttls)
+            encryption = EmailService.ENCRYPTION_STARTTLS;
+        else if (rgEncryption.getCheckedRadioButtonId() == R.id.radio_none)
+            encryption = EmailService.ENCRYPTION_NONE;
+        else
+            encryption = EmailService.ENCRYPTION_SSL;
+
+        args.putString("host", etHost.getText().toString().trim().replace(" ", ""));
+        args.putInt("encryption", encryption);
         args.putBoolean("insecure", cbInsecure.isChecked());
         args.putString("port", etPort.getText().toString());
         args.putString("user", etUser.getText().toString());
@@ -242,11 +275,16 @@ public class FragmentPop extends FragmentBase {
         args.putBoolean("ondemand", cbOnDemand.isChecked());
         args.putBoolean("primary", cbPrimary.isChecked());
         args.putBoolean("notify", cbNotify.isChecked());
+        args.putBoolean("auto_seen", cbAutoSeen.isChecked());
+
         args.putBoolean("leave_server", cbLeaveServer.isChecked());
         args.putBoolean("leave_deleted", cbLeaveDeleted.isChecked());
         args.putBoolean("leave_device", cbLeaveDevice.isChecked());
         args.putString("max", etMax.getText().toString());
         args.putString("interval", etInterval.getText().toString());
+
+        args.putLong("left", ((EntityFolder) spLeft.getSelectedItem()).id);
+        args.putLong("right", ((EntityFolder) spRight.getSelectedItem()).id);
 
         new SimpleTask<Boolean>() {
             @Override
@@ -254,6 +292,7 @@ public class FragmentPop extends FragmentBase {
                 saving = true;
                 getActivity().invalidateOptionsMenu();
                 Helper.setViewsEnabled(view, false);
+                pbSave.setVisibility(View.VISIBLE);
                 grpError.setVisibility(View.GONE);
             }
 
@@ -270,7 +309,7 @@ public class FragmentPop extends FragmentBase {
                 long id = args.getLong("id");
 
                 String host = args.getString("host");
-                boolean starttls = args.getBoolean("starttls");
+                int encryption = args.getInt("encryption");
                 boolean insecure = args.getBoolean("insecure");
                 String port = args.getString("port");
                 String user = args.getString("user").trim();
@@ -283,11 +322,15 @@ public class FragmentPop extends FragmentBase {
                 boolean ondemand = args.getBoolean("ondemand");
                 boolean primary = args.getBoolean("primary");
                 boolean notify = args.getBoolean("notify");
+                boolean auto_seen = args.getBoolean("auto_seen");
                 boolean leave_server = args.getBoolean("leave_server");
                 boolean leave_deleted = args.getBoolean("leave_deleted");
                 boolean leave_device = args.getBoolean("leave_device");
                 String max = args.getString("max");
                 String interval = args.getString("interval");
+
+                long left = args.getLong("left");
+                long right = args.getLong("right");
 
                 boolean pro = ActivityBilling.isPro(context);
 
@@ -299,7 +342,7 @@ public class FragmentPop extends FragmentBase {
                 if (TextUtils.isEmpty(host))
                     throw new IllegalArgumentException(context.getString(R.string.title_no_host));
                 if (TextUtils.isEmpty(port))
-                    port = "995";
+                    port = (encryption == EmailService.ENCRYPTION_SSL ? "995" : "110");
                 if (TextUtils.isEmpty(user))
                     throw new IllegalArgumentException(context.getString(R.string.title_no_user));
                 if (synchronize && TextUtils.isEmpty(password) && !insecure)
@@ -321,7 +364,7 @@ public class FragmentPop extends FragmentBase {
                         !account.synchronize ||
                         account.error != null ||
                         !account.host.equals(host) ||
-                        !account.starttls.equals(starttls) ||
+                        !account.encryption.equals(encryption) ||
                         !account.insecure.equals(insecure) ||
                         !account.port.equals(Integer.parseInt(port)) ||
                         !account.user.equals(user) ||
@@ -334,9 +377,10 @@ public class FragmentPop extends FragmentBase {
 
                 // Check POP3 server
                 if (check) {
-                    String protocol = "pop3" + (starttls ? "" : "s");
+                    String protocol = "pop3" + (encryption == EmailService.ENCRYPTION_SSL ? "s" : "");
                     try (EmailService iservice = new EmailService(
-                            context, protocol, null, insecure, EmailService.PURPOSE_CHECK, true)) {
+                            context, protocol, null, encryption, insecure,
+                            EmailService.PURPOSE_CHECK, true)) {
                         iservice.connect(
                                 host, Integer.parseInt(port),
                                 EmailService.AUTH_TYPE_PASSWORD, null,
@@ -361,7 +405,7 @@ public class FragmentPop extends FragmentBase {
 
                     account.protocol = EntityAccount.TYPE_POP;
                     account.host = host;
-                    account.starttls = starttls;
+                    account.encryption = encryption;
                     account.insecure = insecure;
                     account.port = Integer.parseInt(port);
                     account.auth_type = EmailService.AUTH_TYPE_PASSWORD;
@@ -375,11 +419,15 @@ public class FragmentPop extends FragmentBase {
                     account.ondemand = ondemand;
                     account.primary = (account.synchronize && primary);
                     account.notify = notify;
+                    account.auto_seen = auto_seen;
                     account.leave_on_server = leave_server;
                     account.leave_deleted = leave_deleted;
                     account.leave_on_device = leave_device;
                     account.max_messages = (TextUtils.isEmpty(max) ? null : Integer.parseInt(max));
                     account.poll_interval = Math.max(1, Integer.parseInt(interval));
+
+                    account.swipe_left = left;
+                    account.swipe_right = right;
 
                     if (!update)
                         account.created = now;
@@ -494,12 +542,13 @@ public class FragmentPop extends FragmentBase {
             @Override
             protected void onException(Bundle args, Throwable ex) {
                 if (ex instanceof IllegalArgumentException)
-                    Snackbar.make(view, ex.getMessage(), Snackbar.LENGTH_LONG).show();
+                    Snackbar.make(view, ex.getMessage(), Snackbar.LENGTH_LONG)
+                            .setGestureInsetBottomIgnored(true).show();
                 else {
                     tvError.setText(Log.formatThrowable(ex, false));
                     grpError.setVisibility(View.VISIBLE);
 
-                    new Handler().post(new Runnable() {
+                    getMainHandler().post(new Runnable() {
                         @Override
                         public void run() {
                             scroll.smoothScrollTo(0, tvError.getBottom());
@@ -538,7 +587,13 @@ public class FragmentPop extends FragmentBase {
                     etHost.setText(account == null ? null : account.host);
                     etPort.setText(account == null ? null : Long.toString(account.port));
 
-                    rgEncryption.check(account != null && account.starttls ? R.id.radio_starttls : R.id.radio_ssl);
+                    if (account != null && account.encryption == EmailService.ENCRYPTION_STARTTLS)
+                        rgEncryption.check(R.id.radio_starttls);
+                    else if (account != null && account.encryption == EmailService.ENCRYPTION_NONE)
+                        rgEncryption.check(R.id.radio_none);
+                    else
+                        rgEncryption.check(R.id.radio_ssl);
+
                     cbInsecure.setChecked(account == null ? false : account.insecure);
 
                     etUser.setText(account == null ? null : account.user);
@@ -547,22 +602,42 @@ public class FragmentPop extends FragmentBase {
                     etName.setText(account == null ? null : account.name);
                     btnColor.setColor(account == null ? null : account.color);
 
+                    cbSynchronize.setChecked(account == null ? true : account.synchronize);
+                    cbOnDemand.setChecked(account == null ? false : account.ondemand);
+                    cbPrimary.setChecked(account == null ? false : account.primary);
+
                     boolean pro = ActivityBilling.isPro(getContext());
                     cbNotify.setChecked(account != null && account.notify && pro);
                     cbNotify.setEnabled(pro);
 
-                    cbSynchronize.setChecked(account == null ? true : account.synchronize);
-                    cbOnDemand.setChecked(account == null ? false : account.ondemand);
-                    cbPrimary.setChecked(account == null ? false : account.primary);
+                    cbAutoSeen.setChecked(account == null ? true : account.auto_seen);
+
                     cbLeaveServer.setChecked(account == null ? true : account.leave_on_server);
                     cbLeaveDeleted.setChecked(account == null ? true : account.leave_deleted);
                     cbLeaveDevice.setChecked(account == null ? false : account.leave_on_device);
+
                     if (account != null && account.max_messages == null)
                         etMax.setText(null);
                     else
                         etMax.setText(Integer.toString(account == null
                                 ? EntityAccount.DEFAULT_MAX_MESSAGES : account.max_messages));
+
                     etInterval.setText(account == null ? "" : Long.toString(account.poll_interval));
+
+                    List<EntityFolder> folders = getSwipeActions();
+                    for (int pos = 0; pos < folders.size(); pos++) {
+                        EntityFolder folder = folders.get(pos);
+
+                        if (account == null || account.swipe_left == null
+                                ? EntityMessage.SWIPE_ACTION_DELETE.equals(folder.id)
+                                : account.swipe_left.equals(folder.id))
+                            spLeft.setSelection(pos);
+
+                        if (account == null || account.swipe_right == null
+                                ? EntityMessage.SWIPE_ACTION_SEEN.equals(folder.id)
+                                : account.swipe_right.equals(folder.id))
+                            spRight.setSelection(pos);
+                    }
 
                     new SimpleTask<EntityAccount>() {
                         @Override
@@ -692,5 +767,41 @@ public class FragmentPop extends FragmentBase {
                 Log.unexpectedError(getParentFragmentManager(), ex);
             }
         }.execute(this, args, "account:delete");
+    }
+
+    private List<EntityFolder> getSwipeActions() {
+        List<EntityFolder> folders = new ArrayList<>();
+
+        EntityFolder ask = new EntityFolder();
+        ask.id = EntityMessage.SWIPE_ACTION_ASK;
+        ask.name = getString(R.string.title_ask_what);
+        folders.add(ask);
+
+        EntityFolder seen = new EntityFolder();
+        seen.id = EntityMessage.SWIPE_ACTION_SEEN;
+        seen.name = getString(R.string.title_seen);
+        folders.add(seen);
+
+        EntityFolder flag = new EntityFolder();
+        flag.id = EntityMessage.SWIPE_ACTION_FLAG;
+        flag.name = getString(R.string.title_flag);
+        folders.add(flag);
+
+        EntityFolder snooze = new EntityFolder();
+        snooze.id = EntityMessage.SWIPE_ACTION_SNOOZE;
+        snooze.name = getString(R.string.title_snooze_now);
+        folders.add(snooze);
+
+        EntityFolder hide = new EntityFolder();
+        hide.id = EntityMessage.SWIPE_ACTION_HIDE;
+        hide.name = getString(R.string.title_hide);
+        folders.add(hide);
+
+        EntityFolder delete = new EntityFolder();
+        delete.id = EntityMessage.SWIPE_ACTION_DELETE;
+        delete.name = getString(R.string.title_delete_permanently);
+        folders.add(delete);
+
+        return folders;
     }
 }

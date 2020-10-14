@@ -60,6 +60,7 @@ public class FragmentAccounts extends FragmentBase {
     private boolean settings;
 
     private boolean cards;
+    private boolean beige;
 
     private ViewGroup view;
     private SwipeRefreshLayout swipeRefresh;
@@ -84,6 +85,7 @@ public class FragmentAccounts extends FragmentBase {
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
         cards = prefs.getBoolean("cards", true);
+        beige = prefs.getBoolean("beige", true);
     }
 
     @Override
@@ -195,14 +197,15 @@ public class FragmentAccounts extends FragmentBase {
 
                     @Override
                     protected void onExecuted(Bundle args, EntityFolder drafts) {
-                        if (drafts != null) {
-                            LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(getContext());
-                            lbm.sendBroadcast(
-                                    new Intent(ActivityView.ACTION_VIEW_MESSAGES)
-                                            .putExtra("account", drafts.account)
-                                            .putExtra("folder", drafts.id)
-                                            .putExtra("type", drafts.type));
-                        }
+                        if (drafts == null)
+                            return;
+
+                        LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(getContext());
+                        lbm.sendBroadcast(
+                                new Intent(ActivityView.ACTION_VIEW_MESSAGES)
+                                        .putExtra("account", drafts.account)
+                                        .putExtra("folder", drafts.id)
+                                        .putExtra("type", drafts.type));
                     }
 
                     @Override
@@ -229,7 +232,9 @@ public class FragmentAccounts extends FragmentBase {
         // Initialize
 
         if (cards && !Helper.isDarkTheme(getContext()))
-            view.setBackgroundColor(ContextCompat.getColor(getContext(), R.color.lightColorBackground_cards));
+            view.setBackgroundColor(ContextCompat.getColor(getContext(), beige
+                    ? R.color.lightColorBackground_cards_beige
+                    : R.color.lightColorBackground_cards));
 
         if (settings) {
             fab.show();
@@ -400,7 +405,8 @@ public class FragmentAccounts extends FragmentBase {
             @Override
             protected void onException(Bundle args, Throwable ex) {
                 if (ex instanceof IllegalStateException) {
-                    Snackbar snackbar = Snackbar.make(view, ex.getMessage(), Snackbar.LENGTH_LONG);
+                    Snackbar snackbar = Snackbar.make(view, ex.getMessage(), Snackbar.LENGTH_LONG)
+                            .setGestureInsetBottomIgnored(true);
                     snackbar.setAction(R.string.title_fix, new View.OnClickListener() {
                         @Override
                         public void onClick(View view) {
@@ -411,7 +417,8 @@ public class FragmentAccounts extends FragmentBase {
                     });
                     snackbar.show();
                 } else if (ex instanceof IllegalArgumentException)
-                    Snackbar.make(view, ex.getMessage(), Snackbar.LENGTH_LONG).show();
+                    Snackbar.make(view, ex.getMessage(), Snackbar.LENGTH_LONG)
+                            .setGestureInsetBottomIgnored(true).show();
                 else
                     Log.unexpectedError(getParentFragmentManager(), ex);
             }

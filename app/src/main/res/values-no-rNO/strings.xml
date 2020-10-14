@@ -6,7 +6,8 @@
     <string name="app_limitations">For eksempel vil meldinger alltid bli formatert for å fjerne usikre elementer, og for å forbedre lesbarheten og åpning av linker må bekreftes for sikkerhet.</string>
     <string name="app_crash">FairEmail støttes ikke på denne enheten fordi feil i Android forårsaker krasjer</string>
     <string name="app_exit">Gå \'tilbake\' igjen for å avslutte</string>
-    <string name="channel_service">Service</string>
+    <string name="app_cake">Ikke nok lagringsplass igjen</string>
+    <string name="channel_service">Motta</string>
     <string name="channel_send">Send</string>
     <string name="channel_notification">Varsler</string>
     <string name="channel_update">Oppdateringer</string>
@@ -14,6 +15,9 @@
     <string name="channel_error">Feil</string>
     <string name="channel_alert">Servervarsler</string>
     <string name="channel_group_contacts">Kontakter</string>
+    <string name="channel_service_description">Synkronisering og overvåking av kontoer</string>
+    <string name="channel_send_description">Sending av meldinger</string>
+    <string name="channel_notification_description">Varsler om nye meldinger</string>
     <plurals name="page_conversation">
         <item quantity="one">Samtale</item>
         <item quantity="other">Samtaler</item>
@@ -54,8 +58,8 @@
         <item quantity="other">Valgte %1$d samtaler</item>
     </plurals>
     <plurals name="title_moving_messages">
-        <item quantity="one">Flytte %1$d melding til %2$s?</item>
-        <item quantity="other">Flytte %1$d meldinger til %2$s?</item>
+        <item quantity="one">Vil du flytte %1$d melding?</item>
+        <item quantity="other">Vil du flytte %1$d meldinger?</item>
     </plurals>
     <plurals name="title_deleting_messages">
         <item quantity="one">Slette %1$d melding permanent?</item>
@@ -66,6 +70,7 @@
         <item quantity="other">Behandle %1$d meldingene som spam?</item>
     </plurals>
     <string name="title_ask_spam_who">Behandle melding fra %1$s som spam?</string>
+    <string name="title_junk_hint">Din e-postleverandør er ansvarlig for filtrering av nettsøppel. En e-postapp har ikke alle dataene som trengs for å gjøre dette pålitelig.</string>
     <string name="title_block">Blokkere %1$s</string>
     <string name="title_block_sender">Blokker avsender</string>
     <string name="title_block_domain">Blokker avsenderdomenet</string>
@@ -77,8 +82,13 @@
     <string name="title_notification_idle">Inaktiv</string>
     <string name="title_notification_failed">\'%1$s\' mislyktes</string>
     <string name="title_notification_alert">\'%1$s\' servervarsling</string>
+    <string name="title_notification_sending_left">Forsøk igjen: %1$d</string>
+    <string name="title_notification_sending_failed">Sending til %1$s mislyktes</string>
+    <string name="title_notification_redacted">Redigert: biometrisk eller PIN-autentisering aktivert</string>
+    <string name="title_of">%1$s/%2$s</string>
     <string name="title_name_count">%1$s (%2$s)</string>
     <string name="title_name_plus">%1$s +%2$d</string>
+    <string name="title_title_description">%1$s: %2$s</string>
     <string name="title_factor_minutes">%1$d minutter</string>
     <string name="menu_exit">Avslutt</string>
     <string name="menu_answers">Maler</string>
@@ -94,11 +104,10 @@
     <string name="menu_privacy">Personvern</string>
     <string name="menu_about">Om</string>
     <string name="menu_pro">Pro-funksjoner</string>
-    <string name="menu_invite">Inviter</string>
     <string name="menu_rate">Anmeld denne appen</string>
-    <string name="menu_other">Andre apper</string>
     <string name="title_welcome">Velkommen</string>
     <string name="title_eula">Lisensavtale for sluttbruker</string>
+    <string name="title_contributors">Bidragsytere</string>
     <string name="title_agree">Enig</string>
     <string name="title_disagree">Uenig</string>
     <string name="title_version">Versjon %1$s</string>
@@ -116,17 +125,20 @@
     </string>
     <string name="title_setup_quick">Hurtig oppsett</string>
     <string name="title_setup_quick_remark">For å raskt sette opp en konto og en identitet for de fleste tilbydere</string>
+    <string name="title_setup_quick_support">Noen leverandører gjør det vanskelig å legge til en konto. Vennligst ikke klandre FairEmail for dette, men be om support i stedet.</string>
     <string name="title_setup_quick_hint">Hurtig oppsettet henter konfigurasjons informasjon fra autoconfig.thunderbird.net</string>
     <string name="title_setup_quick_imap">IMAP-serveren til å motta meldinger</string>
     <string name="title_setup_quick_smtp">SMTP-server for å sende meldinger</string>
     <string name="title_setup_wizard">Veiviser</string>
     <string name="title_setup_wizard_multiple">Installasjonsveiviseren kan brukes flere ganger for å sette opp flere kontoer</string>
+    <string name="title_setup_wizard_new">Jeg trenger en ny e-postadresse</string>
     <string name="title_setup_wizard_remark">Gå \'tilbake\' for å gå til innboksen</string>
     <string name="title_setup_other">Annen leverandør</string>
     <string name="title_setup_gmail_support">Å autorisere Google kontoer fungerer bare i offisielle versjoner fordi Android sjekker appens signatur</string>
     <string name="title_setup_gmail_rationale">Gi tillatelser til å velge en konto og lese navnet ditt</string>
     <string name="title_setup_gmail_permissions">Google vil be om tillatelser til å lese, komponere, sende og slette all e-postmeldingen din permanent. FairEmail vil aldri slette meldingene dine uten ditt eksplisitte samtykke.</string>
     <string name="title_setup_gmail_drafts">Hvis utkast mappen ikke er tilgjengelig med IMAP, kan du fikse dette i Gmail-etikettinnstillingene</string>
+    <string name="title_setup_office_auth">Feilen \'AUTHENTICATE failed\' kan skyldes at IMAP/SMTP er deaktivert av systemadministratoren</string>
     <string name="title_setup_oauth_rationale">Autoriser tilgang til din %1$s konto</string>
     <string name="title_setup_oauth_authorize">Godkjenne</string>
     <string name="title_setup_select_account">Velg konto</string>
@@ -134,7 +146,9 @@
     <string name="title_setup_no_settings">Ingen innstillinger funnet for domene \'%1$s\'</string>
     <string name="title_setup_no_settings_hint">Prøv å konfigurere en konto og identitet i konfigureringstrinn 1 og 2 ved å bruke innstillingene som er levert av e-postleverandøren</string>
     <string name="title_setup_no_auth_hint">Kontroller e-postadressen og passordet ditt, og sørg for at ekstern tilgang (IMAP/SMTP) er aktivert for kontoen din</string>
-    <string name="title_setup_no_system_folders">Innboks eller kladdmappe ikke funnet</string>
+    <string name="title_setup_app_password_hint">Denne leverandøren krever et app-passord i stedet for kontopassordet, vennligst sjekk instruksjonene til leverandøren din</string>
+    <string name="title_setup_no_inbox">Finner ikke innboks</string>
+    <string name="title_setup_advanced_protection">Når du er registrert i det avanserte beskyttelsesprogrammet, er det ikke mulig å bruke en tredjeparts e-postapp. Dette er en begrensning pålagt av Google.</string>
     <string name="title_setup_quick_success">En konto og en identitet har blitt lagt til</string>
     <string name="title_setup_quick_failed">Du kan prøve å konfigurere en konto og en identitet nedenfor også</string>
     <string name="title_setup_manage">Behandle</string>
@@ -146,22 +160,25 @@
     <string name="title_setup_identity">Oppsett av identiteter</string>
     <string name="title_setup_identity_remark">Å sende e-post</string>
     <string name="title_setup_identity_hint">For å endre navn, farge, signatur, osv</string>
+    <string name="title_setup_identity_what">Hva er en identitet?</string>
     <string name="title_setup_permissions">Gi tillatelser</string>
     <string name="title_setup_permissions_remark">Få tilgang til kontaktinformasjon (valgfritt)</string>
     <string name="title_setup_doze">Oppsett av batterioptimaliseringer</string>
-    <string name="title_setup_doze_remark">Slik mottar du kontinuerlig e-post (valgfritt)</string>
+    <string name="title_setup_doze_remark">Å motta e-post pålitelig</string>
     <string name="title_setup_doze_instructions">I den neste dialogboksen velger du \"Alle apper\" øverst, velg så denne appen og så bekrefte \"Ikke optimaliser\"</string>
     <string name="title_setup_doze_battery">Høy batteriforbruk?</string>
     <string name="title_setup_doze_stopped">Synkroniseringen stoppet?</string>
     <string name="title_setup_data">Datasparing er aktivert</string>
+    <string name="title_setup_advanced_options">Vis avanserte innstillinger</string>
     <string name="title_setup_inbox">Gå til meldinger</string>
     <string name="title_setup_go">Utfør</string>
     <string name="title_setup_to_do">Gjøremål</string>
     <string name="title_setup_done">Utført</string>
+    <string name="title_setup_still">Fortsatt å gjøre</string>
     <string name="title_setup_error">Feil</string>
+    <string name="title_setup_configuring">Konfigurerer konto &#8230;</string>
     <string name="title_setup_export">Eksporter innstillingene</string>
     <string name="title_setup_import">Importer innstillinger</string>
-    <string name="title_setup_export_do">Gmail-kontoer som er koblet til Google-kontoer på enheten, kan ikke eksporteres</string>
     <string name="title_setup_import_do">Importerte kontoer vil bli lagt til uten å overskrive eksisterende</string>
     <string name="title_setup_password">Passord</string>
     <string name="title_setup_password_chars">Passord inneholder kontroll eller mellomromstegn</string>
@@ -186,10 +203,11 @@
     <string name="title_setup_theme_red_green">Rød/grønn</string>
     <string name="title_setup_theme_grey">Grå</string>
     <string name="title_setup_theme_black">Svart</string>
+    <string name="title_setup_theme_black_and_white">Svart og hvit</string>
     <string name="title_setup_theme_reverse">Omvendte farger</string>
     <string name="title_setup_theme_dark">Mørk</string>
-    <string name="title_setup_theme_black_background">Svart bakgrunn</string>
     <string name="title_setup_theme_system">Følg systemet</string>
+    <string name="title_setup_theme_black_background">Svart bakgrunn</string>
     <string name="title_setup_theme_system_hint">Følgende system temaer vil automatisk bytte til lys/mørk på dag/natt, hvis det støttes av Android</string>
     <string name="title_setup_advanced">Avansert</string>
     <string name="title_setup_options">Alternativer</string>
@@ -209,26 +227,36 @@
     <string name="title_advanced_section_encryption">Kryptering</string>
     <string name="title_advanced_section_notifications">Varslinger</string>
     <string name="title_advanced_section_misc">Diverse</string>
-    <string name="title_advanced_receive">Motta meldinger</string>
+    <string name="title_advanced_receive">Motta meldinger for alle kontoer</string>
     <string name="title_advanced_when">Når</string>
-    <string name="title_advanced_always">Synkroniser alltid disse kontoene</string>
+    <string name="title_advanced_always">Motta alltid meldinger for disse kontoene</string>
     <string name="title_advanced_schedule">Tidsplan</string>
     <string name="title_advanced_advanced">Avansert</string>
+    <string name="title_advanced_no_date">Meldinger uten dato</string>
     <string name="title_advanced_unseen">Alle uleste meldinger</string>
     <string name="title_advanced_flagged">Alle stjernemerkede meldinger</string>
     <string name="title_advanced_delete_unseen">Slett gamle uleste meldinger</string>
     <string name="title_advanced_kept_removed">Sjekk om gamle meldinger ble fjernet fra serveren</string>
+    <string name="title_advanced_gmail_thread">Gmail-grupperingsstil for Gmail-kontoer</string>
     <string name="title_advanced_sync_folders">Synkroniser mappeliste</string>
+    <string name="title_advanced_sync_shared_folders">Synkroniser delte mappelister</string>
     <string name="title_advanced_subscriptions">Administrere mappeabonnementer</string>
+    <string name="title_advanced_check_mx">Sjekk avsenderens e-postadresser når meldinger synkroniseres</string>
+    <string name="title_advanced_check_reply">Sjekk avsenderens e-postadresser når meldinger synkroniseres</string>
+    <string name="title_advanced_tune_keep_alive">Juster automatisk hold i live intervallet</string>
     <string name="title_advanced_keyboard">Vis tastatur som standard</string>
     <string name="title_advanced_suggest_local">Foreslå lokalt lagrede kontakter</string>
     <string name="title_advanced_suggest_sent">Foreslå adresser som er funnet i sendte meldinger</string>
     <string name="title_advanced_suggest_received">Foreslå adresser som er funnet i sendte meldinger</string>
+    <string name="title_advanced_suggest_frequently">Sorter foreslåtte adresser på bruksfrekvens</string>
+    <string name="title_advanced_compose_font">Standard skriftstil</string>
     <string name="title_advanced_prefix_once">Prefiks emne bare en gang på svar eller videresending</string>
     <string name="title_advanced_extended_reply">Bruk utvidet svar/videresendt overskrift</string>
     <string name="title_advanced_quote_reply">Sitat svarte tekst</string>
+    <string name="title_advanced_resize_reply">Endre størrelse på bilder i tekstsvaret</string>
     <string name="title_advanced_signature_location">Signaturposisjon</string>
-    <string name="title_advanced_signature_end">Legg til signatur etter sitert/videresendt melding</string>
+    <string name="title_advanced_signature_reply">Bruk signatur når du svarer</string>
+    <string name="title_advanced_signature_forward">Bruk signatur når du videresender</string>
     <string name="title_advanced_plain_only">Send bare vanlig tekst som standard</string>
     <string name="title_advanced_flow">\'format strømmet\' for ren tekst</string>
     <string name="title_advanced_receipt">Når du ber om kvittering</string>
@@ -243,7 +271,6 @@
     <string name="title_advanced_rlah">Roam som hjemme</string>
     <string name="title_advanced_timeout">Tilkoblingsavbrudd (sekunder)</string>
     <string name="title_advanced_ssl_harden">Styrke SSL-tilkoblinger</string>
-    <string name="title_advanced_socks">Bruk SOCKS-proxy</string>
     <string name="title_advanced_manage_connectivity">Administrer tilkobling</string>
     <string name="title_advanced_caption_general">Generelt</string>
     <string name="title_advanced_caption_list">Liste</string>
@@ -251,17 +278,21 @@
     <string name="title_advanced_caption_message">Melding</string>
     <string name="title_advanced_caption_message_header">Meldingstittel</string>
     <string name="title_advanced_caption_message_body">Meldingstekst</string>
+    <string name="title_advanced_portrait2">Bruk to rader i stående modus</string>
     <string name="title_advanced_landscape">Bruk to kolonner i liggende modus</string>
+    <string name="title_advanced_landscape3">Vis navigasjonsmenyen i liggende modus som standard</string>
     <string name="title_advanced_startup">Vis på startskjermen</string>
     <string name="title_advanced_cards">Bruk kortstil i stedet for tabellstil</string>
     <string name="title_advanced_date_header">Gruppere etter dato</string>
     <string name="title_advanced_threading">Konversasjonstråder</string>
+    <string name="title_advanced_threading_unread">Vis antall uleste meldinger i samtaler</string>
     <string name="title_advanced_indentation">Venstre/høyre innrykk mottatt/sendt meldinger i samtaler</string>
     <string name="title_advanced_highlight_unread">Merk uleste meldinger</string>
     <string name="title_advanced_highlight_subject">Uthev emne</string>
     <string name="title_advanced_color_stripe">Vis fargestripe</string>
     <string name="title_advanced_avatars">Vis kontakt bilde</string>
     <string name="title_advanced_gravatars">Vis Gravatars</string>
+    <string name="title_advanced_favicons">Vis favicons</string>
     <string name="title_advanced_generated_icons">Vis genererte ikoner</string>
     <string name="title_advanced_identicons">Vis identicons</string>
     <string name="title_advanced_circular">Vis runde ikoner</string>
@@ -271,25 +302,27 @@
     <string name="title_advanced_name_email">Vis navn og e-postadresser</string>
     <string name="title_advanced_replace_name">Foretrekker et kontaktnavn fremfor et sendt navn</string>
     <string name="title_advanced_distinguish_contacts">Understreke avsenderen når avsenderen er kjent som lokal \'til\' -kontakt</string>
+    <string name="title_advanced_show_recipients">Vis mottakere i meldingshode</string>
     <string name="title_advanced_font_size_sender">Skriftstørrelse for avsender</string>
-    <string name="title_advanced_font_size_subject">Skriftstørrelse emne</string>
+    <string name="title_advanced_font_size_subject">Skriftstørrelse på emne</string>
     <string name="title_advanced_subject_top">Vis emne over avsender</string>
     <string name="title_advanced_subject_italic">Vis emnet i kursivt</string>
     <string name="title_advanced_subject_elipsed">Forkorte emnet ved behov</string>
     <string name="title_advanced_keywords">Vis nøkkelord i meldingshode</string>
+    <string name="title_advanced_labels">Vis Gmail-etiketter i meldingshodet</string>
     <string name="title_advanced_flags">Vis stjerner</string>
     <string name="title_advanced_flags_background">Vis farget bakgrunn i stedet for fargede stjerner</string>
     <string name="title_advanced_preview">Vis forhåndsvisning av melding</string>
     <string name="title_advanced_preview_italic">Vis forhåndsvisning av melding i kursiv</string>
     <string name="title_advanced_preview_lines">Antall forhåndsvisningslinjer</string>
-    <string name="title_advanced_archive_trash">Vis knapper for å arkivere eller legge melding i søppelboks</string>
-    <string name="title_advanced_move">Vis knapp for å flytte en melding</string>
     <string name="title_advanced_addresses">Vis adresseinformasjon som standard</string>
     <string name="title_advanced_attachments_alt">Vis vedlegg etter meldingsteksten</string>
+    <string name="title_advanced_thumbnails">Vis miniatyrbilder etter meldingsteksten</string>
+    <string name="title_advanced_message_text_zoom">Standard zooming på tekstmelding</string>
+    <string name="title_advanced_overview_mode">Zoom originale meldinger slik at de passer til skjermen</string>
     <string name="title_advanced_contrast">Bruk høy kontrast for meldingstekst</string>
-    <string name="title_advanced_monospaced">Bruk monospaced skrift for meldingstekst</string>
-    <string name="title_advanced_text_color">Vis tekstfarger</string>
-    <string name="title_advanced_text_size">Vis små og store tekster</string>
+    <string name="title_advanced_monospaced">Bruk monospaced skrift for meldingstekst som standard</string>
+    <string name="title_advanced_text_color">Bruk tekstfarger</string>
     <string name="title_advanced_collapse_quotes">Kollapse sitert tekst</string>
     <string name="title_advanced_images_inline">Vis automatisk innebygde bilder</string>
     <string name="title_advanced_seekbar">Vis relativ samtaleposisjon med en prikk</string>
@@ -320,7 +353,6 @@
     <string name="title_advanced_default_snooze">Standard slumretid</string>
     <string name="title_advanced_notifications">Administrer varsler</string>
     <string name="title_advanced_notifications_default">Standard kanal</string>
-    <string name="title_advanced_notifications_service">Servicekanal</string>
     <string name="title_advanced_badge">Vis epost ikonet med antall nye meldinger</string>
     <string name="title_advanced_unseen_ignored">La antallet nye meldinger samsvare med antall varsler</string>
     <string name="title_advanced_notify_summary">Vis bare sammendragsvarsel</string>
@@ -345,7 +377,6 @@
     <string name="title_advanced_confirm_links">Bekreft åpningen av lenker</string>
     <string name="title_advanced_confirm_images">Bekreft visningen av bilder</string>
     <string name="title_advanced_confirm_html">Vis standardformaterte meldinger</string>
-    <string name="title_advanced_tracking">Automatisk gjenkjenning og deaktivering av sporingsbilder</string>
     <string name="title_advanced_display_hidden">Vis skjulte meldingstekster</string>
     <string name="title_advanced_secure">Skjul fra nylige app-skjermbilde og forhindre å ta skjermbilder</string>
     <string name="title_advanced_pin">PIN</string>
@@ -365,9 +396,7 @@
     <string name="title_advanced_conversation_actions_replies">Foreslå svartekster</string>
     <string name="title_advanced_fts">Bygg søkeindeks</string>
     <string name="title_advanced_fts_indexed">%1$d / %2$d meldinger indeksert (%3$s)</string>
-    <string name="title_advanced_english">Tving bruk av engelsk</string>
     <string name="title_advanced_watchdog">Kontroller regelmessig om FairEmail fortsatt er aktiv</string>
-    <string name="title_advanced_optimize">Optimaliser innstillinger automatisk</string>
     <string name="title_advanced_updates">Se etter oppdateringer</string>
     <string name="title_advanced_experiments">Prøv eksperimentelle funksjoner</string>
     <string name="title_advanced_crash_reports">Send feilrapporter</string>
@@ -375,28 +404,22 @@
     <string name="title_advanced_cleanup">Rydd opp</string>
     <string name="title_advanced_last_cleanup">Siste opprydding: %1$s</string>
     <string name="title_advanced_more">Flere valg</string>
-    <string name="title_advanced_enabled_hint">Globalt deaktivere eller aktivere mottak av meldinger</string>
-    <string name="title_advanced_manual_hint">Hvis synkronisering er deaktivert, er det fortsatt mulig å synkronisere manuelt ved å trekke ned meldingslisten.</string>
-    <string name="title_advanced_poll_hint">Synkronisering med jevne mellomrom vil sammenligne lokale og eksterne meldinger hver gang, noe som er en kostbar operasjon som muligens resulterer i ekstra batteribruk, spesielt når det er mange meldinger å synkronisere. Alltid synkronisering vil unngå dette ved kontinuerlig overvåking for endringer.</string>
     <string name="title_advanced_schedule_hint">Trykk på en tid for å angi en tid</string>
-    <string name="title_advanced_check_mx">Sjekk avsenderens e-postadresser når meldinger synkroniseres</string>
-    <string name="title_advanced_check_reply">Sjekk avsenderens e-postadresser når meldinger synkroniseres</string>
     <string name="title_advanced_unseen_hint">Noen leverandører støtter ikke dette ordentlig, noe som kan føre til synkronisering av ingen eller alle meldinger</string>
     <string name="title_advanced_deleted_unseen">Når den er deaktivert, lagres uleste meldinger på enheten for alltid</string>
     <string name="title_advanced_sync_kept_hint">Dette vil overføre ekstra data og bruke ekstra batteristrøm, spesielt hvis det er lagret mange meldinger på enheten</string>
     <string name="title_advanced_sync_folders_hint">Deaktivering av dette vil redusere data og batteribruk noe, men deaktiverer også oppdateringen av listen over mapper</string>
+    <string name="title_advanced_lookup_mx_hint">Dette vil sjekke om DNS MX-poster eksisterer</string>
     <string name="title_advanced_sync_delay_hint">Dette vil redusere synkroniseringen av meldinger</string>
+    <string name="title_advanced_check_reply_hint">Dette vil sjekke om domenenavnet til avsenderen og svaradressene er det samme</string>
     <string name="title_advanced_suggest_local_hint">I tillegg til kontakter levert av Android. Vil kontaktdata blir lagret for nylig sendte eller mottatte meldinger når de er aktivert.</string>
     <string name="title_advanced_usenet_hint">Sett inn \'-- \' mellom teksten og signaturen</string>
     <string name="title_advanced_send_reminders_hint">Vis en advarsel når meldingsteksten eller emnet er tomt eller når et vedlegg mangler</string>
-    <string name="title_advanced_lookup_mx_hint">Dette vil sjekke om DNS MX-poster eksisterer</string>
-    <string name="title_advanced_check_reply_hint">Dette vil sjekke om domenenavnet til avsenderen og svaradressene er det samme</string>
     <string name="title_advanced_metered_hint">Målte tilkoblinger er vanligvis mobile tilkoblinger eller betalte Wi-Fi-hotspots</string>
     <string name="title_advanced_metered_warning">Deaktivering av dette alternativet deaktiverer mottak og sending av meldinger på mobile internettforbindelser</string>
     <string name="title_advanced_rlah_hint">Forutsatt ingen roaming i EU</string>
     <string name="title_advanced_timeout_hint">Tidsavbrudd for lese/skriving blir satt til den doble av tilkoblings avbruddstiden. Høyere verdier vil føre til mer batteribruk.</string>
     <string name="title_advanced_ssl_harden_hint">Aktivering av dette vil deaktivere svake SSL-protokoller og chiffer, noe som kan føre til tilkoblingsproblemer</string>
-    <string name="title_advanced_socks_hint">Å bruke en ekstern proxy-server er usikker fordi proxy-tilkoblinger ikke er kryptert</string>
     <string name="title_advanced_roaming_hint">Meldingsoverskrifter vil alltid bli hentet når du roamer. Du kan bruke enhetens roaming-innstilling for å deaktivere Internett mens du roamer.</string>
     <string name="title_advanced_browse_hint">Hent flere meldinger når du ruller ned</string>
     <string name="title_advanced_layout_hint">Å bytte til en mer kompakt layout og endre meldingens tekststørrelse kan gjøres i den øverste handlingslinje menyen i meldingsvisningen</string>
@@ -431,7 +454,6 @@
     <string name="title_advanced_fts_hint">Aktivering av dette vil øke søke ytelsen, men også øke batteri bruken og bruke mer lagringsplass</string>
     <string name="title_advanced_english_hint">Dette vil starte appen på nytt</string>
     <string name="title_advanced_experiments_hint">Liste over aktuelle eksperimentelle funksjoner</string>
-    <string name="title_advanced_debug_hint">Aktivere ekstra logging og vis feilsøkingsinformasjon på forskjellige steder</string>
     <string name="title_advanced_cleanup_hint">Dette vil slette alle midlertidige filer</string>
     <string name="title_advanced_never_favorite">Aldri favoritt</string>
     <string name="title_select">Velg &#8230;</string>
@@ -478,7 +500,8 @@
     <string name="title_leave_on_device">Legg igjen meldinger på enheten</string>
     <string name="title_max_messages">Maksimalt antall meldinger du vil laste ned (tomt for alle)</string>
     <string name="title_keep_alive_interval">Holde i live/avstemming intervall (minutter)</string>
-    <string name="title_use_date">Bruk dato overskrift sendt tid i stedet for mottatt tid på serveren</string>
+    <string name="title_received_header">Bruk \'Mottatt\' overskrift</string>
+    <string name="title_date_header">Bruk \'Dato\' overskrift (sendt tid)</string>
     <string name="title_related_identity">Legg til relatert identitet</string>
     <string name="title_check">Sjekk</string>
     <string name="title_trust">Stol på serverbevis med fingeravtrykk %1$s</string>
@@ -491,15 +514,11 @@
     <string name="title_no_user">Brukernavn mangler</string>
     <string name="title_no_password">Passor mangler</string>
     <string name="title_no_inbox">Finner ikke innboks</string>
-    <string name="title_no_primary_drafts">Ingen primærkonto eller ingen utkast-mappe</string>
-    <string name="title_no_identities">Å sende e-postmeldinger krever minst en identitet og en kladd mappe</string>
     <string name="title_no_standard">Denne leverandøren bruker en proprietær e-postprotokoll, og det er derfor ikke mulig å bruke tredjeparts e-postklienter</string>
     <string name="title_no_idle">Denne leverandøren støtter ikke push-meldinger. Dette vil forsinke mottak av nye meldinger og øke batteriforbruket.</string>
     <string name="title_no_utf8">Denne leverandøren støtter ikke UTF-8</string>
     <string name="title_no_sync">Synkroniseringsfeil siden %1$s</string>
     <string name="title_reply_domain">Avsenderen (%1$s) og svardomenet (%2$s) er forskjellige</string>
-    <string name="title_identity_required">En identitet er nødvendig for å sende meldinger</string>
-    <string name="title_drafts_required">Det kreves en kladd mappe for å kunne sende meldinger</string>
     <string name="title_account_delete">Slett denne konto en permanent?</string>
     <string name="title_identity_delete">Slett denne identiteten permanent?</string>
     <string name="title_edit_html">Rediger som HTML</string>
@@ -621,7 +640,6 @@
     <string name="title_reply_list">Svar på listen</string>
     <string name="title_reply_receipt">Send lesekvittering</string>
     <string name="title_reply_template">Svar med mal</string>
-    <string name="title_moving">Flytter til %1$s</string>
     <string name="title_open_with">Åpne med</string>
     <string name="title_authentication_failed">%1$s godkjenning mislyktes</string>
     <string name="title_receipt_subject">Lesebekreftelse: %1$s</string>
@@ -632,7 +650,6 @@
     <string name="title_no_camera">Ingen passende kamera app tilgjengelig</string>
     <string name="title_no_saf">Storage access framework ikke tilgjengelig</string>
     <string name="title_no_stream">En utdatert app sendte en filbane i stedet for en filstrøm</string>
-    <string name="title_no_contacts">Kontaktvelgeren er ikke tilgjengelig</string>
     <string name="title_no_internet">Ingen eller ingen egnet internettforbindelse</string>
     <string name="title_no_connection">Koble til en eller flere kontoer &#8230;</string>
     <string name="title_no_folder">Mappe eksisterer ikke</string>
@@ -664,9 +681,6 @@
     <string name="title_ask_reporting">Send feilrapporter?</string>
     <string name="title_reporting_why">Feilrapportering vil bidra til å forbedre FairEmail</string>
     <string name="title_ask_review">Vennligst anmeld FairEmail</string>
-    <string name="title_ask_review_rationale">Du har brukt FairEmail en stund.
-Det vil bli satt pris på om du kunne rangere FairEmail i Play Store.
-Dette vil bidra til å opprettholde en balanse mellom ugunstige og gunstige anmeldelser.    </string>
     <string name="title_third_party">Du bruker en versjon av en tredjepart</string>
     <string name="title_expand_warning">Å utvide denne meldingen vil laste ned %1$s</string>
     <string name="title_download_message">Laster ned &#8230;</string>
@@ -698,7 +712,6 @@ Dette vil bidra til å opprettholde en balanse mellom ugunstige og gunstige anme
     <string name="title_style_italic">Kursiv</string>
     <string name="title_style_underline">Understrek</string>
     <string name="title_style_size">Størrelse</string>
-    <string name="title_style_color">Farge</string>
     <string name="title_style_clear">Fjern formatering</string>
     <string name="title_style_link">Sett inn lenke</string>
     <string name="title_add_attachment">Legg ved fil</string>
@@ -807,7 +820,6 @@ Dette vil bidra til å opprettholde en balanse mellom ugunstige og gunstige anme
     <string name="title_rule_keyword">Legg til nøkkelord</string>
     <string name="title_rule_move">Flytt</string>
     <string name="title_rule_copy">Kopier (etikett)</string>
-    <string name="title_rule_answer">Svar</string>
     <string name="title_rule_automation">Automatisering</string>
     <string name="title_rule_caption">Rediger regel</string>
     <string name="title_rule_title">Regelen gjelder for</string>
@@ -848,8 +860,6 @@ Dette vil bidra til å opprettholde en balanse mellom ugunstige og gunstige anme
     <string name="title_legend_section_compose">Skriv</string>
     <string name="title_legend_section_keyboard">Tastatur</string>
     <string name="title_legend_oauth">OAuth autorisasjon</string>
-    <string name="title_legend_primary_connected">Konto tilkoblet</string>
-    <string name="title_legend_primary_disconnected">Konto frakoblet</string>
     <string name="title_legend_download_on">Last ned meldingsinnhold automatisk</string>
     <string name="title_legend_download_off">Last ned meldingsinnhold på forespørsel </string>
     <string name="title_legend_synchronize_on">Synkroniser nå</string>
@@ -914,8 +924,6 @@ Dette vil bidra til å opprettholde en balanse mellom ugunstige og gunstige anme
     <string name="title_legend_bold">Gjøre teksten fet</string>
     <string name="title_legend_italic">Gjøre teksten kursiv</string>
     <string name="title_legend_underline">Understreke tekst</string>
-    <string name="title_legend_text_size">Angi tekststørrelse</string>
-    <string name="title_legend_text_color">Angi tekstfarge</string>
     <string name="title_legend_metered">Tilkoblingen er målt</string>
     <string name="title_legend_unmetered">Tilkoblingen er ikke målt</string>
     <string name="title_legend_roaming">Roaming</string>
@@ -925,7 +933,6 @@ Dette vil bidra til å opprettholde en balanse mellom ugunstige og gunstige anme
     <string name="title_legend_show_junk">Behandle som spam</string>
     <string name="title_legend_show_unsubscribe">Avslutt abonnement fra listen</string>
     <string name="title_legend_show_images">Vise bilder</string>
-    <string name="title_legend_show_full">Vis fullskjerm</string>
     <string name="title_legend_edit">Rediger</string>
     <string name="title_legend_default_color">Standard farge</string>
     <string name="title_legend_close_hint">Lukk tips</string>
@@ -1001,7 +1008,6 @@ Dette vil bidra til å opprettholde en balanse mellom ugunstige og gunstige anme
     <string name="title_dismiss">Avvis</string>
     <string name="title_snooze_now">Utsett</string>
     <string name="title_loading">Laster &#8230;</string>
-    <string name="title_set">Bruk</string>
     <string name="title_fetching_again">Henter melding igjen fra serveren</string>
     <string name="title_conversation_actions">Handlinger</string>
     <string name="title_conversation_action_reply">Svar med: \'%1$s\'</string>
@@ -1010,17 +1016,11 @@ Dette vil bidra til å opprettholde en balanse mellom ugunstige og gunstige anme
     <string name="title_icalendar_decline">Avslå</string>
     <string name="title_icalendar_maybe">Kanskje</string>
     <string name="title_icalendar_calendar">Kalender</string>
-    <string name="title_try">Prøv FairEmail, en e-postapp for Android med åpen kildekode som respekterer din integritet</string>
     <string name="title_pro_feature">Dette er en Pro-funksjon</string>
     <string name="title_pro_list">Liste over Pro funksjoner</string>
     <string name="title_pro_purchase">Kjøp</string>
     <string name="title_pro_once">Bare en gang</string>
-    <string name="title_pro_info">Å utvikle FairEmail tok bokstavelig talt tusenvis av timer, og til tross for at de fleste funksjoner er gratis å bruke.
-         For å gjøre FairEmail bærekraftig på lang sikt er det noe brukervennlighet og avanserte funksjoner som ikke er gratis å bruke.
-         FairEmail viser en liten melding for å minne deg på dette, og som vil bli fjernet hvis du kjøper pro funksjonene.
-    </string>
     <string name="title_pro_hint">Ved å kjøpe pro-funksjoner kan du bruke alle aktuelle og fremtidige pro-funksjoner, og vil holde denne appen vedlikeholdt og støttet</string>
-    <string name="title_pro_price">Vennligst se <a href="https://github.com/M66B/open-source-email/blob/master/FAQ.md#user-content-faq19">denne FAQ</a> om pris på Pro-funksjonene</string>
     <string name="title_pro_pending">Ventende kjøp</string>
     <string name="title_pro_activated">Alle pro-funksjoner er aktivert</string>
     <string name="title_pro_valid">Alle pro-funksjoner aktivert</string>
@@ -1136,6 +1136,7 @@ Dette vil bidra til å opprettholde en balanse mellom ugunstige og gunstige anme
         <item>I begynnelsen</item>
         <item>I midten</item>
         <item>På slutten</item>
+        <item>Show untruncated</item>
     </string-array>
     <string-array name="priorityNames">
         <item>Lav</item>
@@ -1170,5 +1171,12 @@ Dette vil bidra til å opprettholde en balanse mellom ugunstige og gunstige anme
         <item>PGP signer+krypter</item>
         <item>Kun S/MIME signering</item>
         <item>S/MIME signer+krypter</item>
+    </string-array>
+    <string-array name="undoNames">
+        <item>Off</item>
+        <item>2,5 s</item>
+        <item>5 s</item>
+        <item>7,5 s</item>
+        <item>10 s</item>
     </string-array>
 </resources>

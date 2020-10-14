@@ -27,7 +27,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 public class ContentLoadingProgressBar extends ProgressBar {
-    private int visibility;
+    private int visibility = VISIBLE;
+    private boolean delaying = false;
 
     private static final int VISIBILITY_DELAY = 500; // milliseconds
 
@@ -39,16 +40,29 @@ public class ContentLoadingProgressBar extends ProgressBar {
         super(context, attrs, 0);
     }
 
+    public ContentLoadingProgressBar(Context context, AttributeSet attrs, int defStyleAttr) {
+        super(context, attrs, defStyleAttr);
+    }
+
+    public ContentLoadingProgressBar(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
+        super(context, attrs, defStyleAttr, defStyleRes);
+    }
+
     @Override
     public void setVisibility(int visibility) {
         this.visibility = visibility;
 
-        removeCallbacks(delayedShow);
         if (visibility == VISIBLE) {
+            if (delaying)
+                return;
+            delaying = true;
             super.setVisibility(INVISIBLE);
-            postDelayed(delayedShow, VISIBILITY_DELAY);
-        } else
+            ApplicationEx.getMainHandler().postDelayed(delayedShow, VISIBILITY_DELAY);
+        } else {
+            ApplicationEx.getMainHandler().removeCallbacks(delayedShow);
+            delaying = false;
             super.setVisibility(visibility);
+        }
     }
 
     @Override
@@ -59,6 +73,7 @@ public class ContentLoadingProgressBar extends ProgressBar {
     private final Runnable delayedShow = new Runnable() {
         @Override
         public void run() {
+            delaying = false;
             if (visibility == VISIBLE)
                 ContentLoadingProgressBar.super.setVisibility(VISIBLE);
         }

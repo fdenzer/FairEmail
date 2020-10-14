@@ -26,6 +26,31 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
+        <eu.faircode.email.EditTextPlain
+            android:id="@+id/etGroup"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
+            android:layout_marginTop="6dp"
+            android:layout_marginEnd="6dp"
+            android:hint="@string/title_answer_group"
+            android:imeOptions="actionNext"
+            android:inputType="textCapSentences|textAutoCorrect"
+            android:textAppearance="@style/TextAppearance.AppCompat.Small"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/etName" />
+
+        <CheckBox
+            android:id="@+id/cbStandard"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
+            android:layout_marginTop="6dp"
+            android:text="@string/title_answer_standard"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/etGroup" />
+
         <CheckBox
             android:id="@+id/cbFavorite"
             android:layout_width="wrap_content"
@@ -34,7 +59,7 @@
             android:layout_marginTop="6dp"
             android:text="@string/title_answer_favorite"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/etName" />
+            app:layout_constraintTop_toBottomOf="@+id/cbStandard" />
 
         <CheckBox
             android:id="@+id/cbHide"
@@ -115,6 +140,6 @@
             android:id="@+id/grpReady"
             android:layout_width="0dp"
             android:layout_height="0dp"
-            app:constraint_referenced_ids="etName,vSeparator,etText,bottom_navigation" />
+            app:constraint_referenced_ids="etName,cbFavorite,cbHide,vSeparator,etText,bottom_navigation" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

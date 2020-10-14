@@ -181,6 +181,7 @@ public class EntityFolder extends EntityOrder implements Serializable {
         put("Entwurf", new TypeScore(EntityFolder.DRAFTS, 100));
         put("brouillon", new TypeScore(EntityFolder.DRAFTS, 100));
         put("Черновики", new TypeScore(EntityFolder.DRAFTS, 100));
+        put("Bozze", new TypeScore(EntityFolder.DRAFTS, 100));
 
         put("trash", new TypeScore(EntityFolder.TRASH, 100));
         put("Papierkorb", new TypeScore(EntityFolder.TRASH, 100));
@@ -192,15 +193,18 @@ public class EntityFolder extends EntityOrder implements Serializable {
         put("pourriel", new TypeScore(EntityFolder.JUNK, 100));
         put("quarantaine", new TypeScore(EntityFolder.JUNK, 50));
         put("Спам", new TypeScore(EntityFolder.JUNK, 100));
+        put("Cestino", new TypeScore(EntityFolder.JUNK, 100));
 
         put("sent", new TypeScore(EntityFolder.SENT, 100));
         put("Gesendet", new TypeScore(EntityFolder.SENT, 100));
         put("envoyé", new TypeScore(EntityFolder.SENT, 100));
         put("Отправленные", new TypeScore(EntityFolder.SENT, 100));
+        put("Inviata", new TypeScore(EntityFolder.SENT, 100));
     }};
 
     static final int DEFAULT_SYNC = 7; // days
     static final int DEFAULT_KEEP = 30; // days
+    static final int DEFAULT_KEEP_DRAFTS = 180; // days
 
     private static final List<String> SYSTEM_FOLDER_SYNC = Collections.unmodifiableList(Arrays.asList(
             INBOX,
@@ -210,6 +214,14 @@ public class EntityFolder extends EntityOrder implements Serializable {
             TRASH,
             JUNK
     ));
+    private static final List<Boolean> SYSTEM_FOLDER_POLL = Collections.unmodifiableList(Arrays.asList(
+            false, // inbox
+            false, // drafts
+            false, // sent
+            true, // archive
+            true, // trash
+            true // junk
+    )); // MUST match SYSTEM_FOLDER_SYNC
     private static final List<Boolean> SYSTEM_FOLDER_DOWNLOAD = Collections.unmodifiableList(Arrays.asList(
             true, // inbox
             true, // drafts
@@ -231,6 +243,7 @@ public class EntityFolder extends EntityOrder implements Serializable {
     void setProperties() {
         int sync = EntityFolder.SYSTEM_FOLDER_SYNC.indexOf(type);
         this.synchronize = (sync >= 0);
+        this.poll = (sync < 0 || EntityFolder.SYSTEM_FOLDER_POLL.get(sync));
         this.download = (sync < 0 || EntityFolder.SYSTEM_FOLDER_DOWNLOAD.get(sync));
 
         this.sync_days = EntityFolder.DEFAULT_SYNC;
@@ -240,6 +253,16 @@ public class EntityFolder extends EntityOrder implements Serializable {
             this.unified = true;
             this.notify = true;
         }
+
+        if (EntityFolder.DRAFTS.equals(type)) {
+            this.initialize = EntityFolder.DEFAULT_KEEP_DRAFTS;
+            this.keep_days = EntityFolder.DEFAULT_KEEP_DRAFTS;
+        }
+    }
+
+    static boolean shouldPoll(String type) {
+        int sync = EntityFolder.SYSTEM_FOLDER_SYNC.indexOf(type);
+        return (sync < 0 || EntityFolder.SYSTEM_FOLDER_POLL.get(sync));
     }
 
     static EntityFolder getOutbox() {
@@ -276,33 +299,33 @@ public class EntityFolder extends EntityOrder implements Serializable {
 
     static int getIcon(String type) {
         if (EntityFolder.INBOX.equals(type))
-            return R.drawable.baseline_inbox_24;
+            return R.drawable.twotone_inbox_24;
         if (EntityFolder.OUTBOX.equals(type))
-            return R.drawable.baseline_send_24;
+            return R.drawable.twotone_send_24;
         if (EntityFolder.DRAFTS.equals(type))
-            return R.drawable.baseline_drafts_24;
+            return R.drawable.twotone_drafts_24;
         if (EntityFolder.SENT.equals(type))
-            return R.drawable.baseline_forward_24;
+            return R.drawable.twotone_forward_24;
         if (EntityFolder.ARCHIVE.equals(type))
-            return R.drawable.baseline_archive_24;
+            return R.drawable.twotone_archive_24;
         if (EntityFolder.TRASH.equals(type))
-            return R.drawable.baseline_delete_24;
+            return R.drawable.twotone_delete_24;
         if (EntityFolder.JUNK.equals(type))
-            return R.drawable.baseline_flag_24;
+            return R.drawable.twotone_report_problem_24;
         if (EntityFolder.SYSTEM.equals(type))
-            return R.drawable.baseline_folder_special_24;
-        return R.drawable.baseline_folder_24;
+            return R.drawable.twotone_folder_special_24;
+        return R.drawable.twotone_folder_24;
     }
 
     String getDisplayName(Context context) {
-        return (display == null ? Helper.localizeFolderName(context, name) : display);
+        return (display == null ? localizeName(context, name) : display);
     }
 
     String getDisplayName(Context context, EntityFolder parent) {
         String n = name;
         if (parent != null && name.startsWith(parent.name))
             n = n.substring(parent.name.length() + 1);
-        return (display == null ? Helper.localizeFolderName(context, n) : display);
+        return (display == null ? localizeName(context, n) : display);
     }
 
     @Override
@@ -430,6 +453,23 @@ public class EntityFolder extends EntityOrder implements Serializable {
             else
                 return name.substring(0, p);
         }
+    }
+
+    static String localizeType(Context context, String type) {
+        int resid = context.getResources().getIdentifier(
+                "title_folder_" + type.toLowerCase(Locale.ROOT),
+                "string",
+                context.getPackageName());
+        return (resid > 0 ? context.getString(resid) : type);
+    }
+
+    static String localizeName(Context context, String name) {
+        if (name != null && "INBOX".equals(name.toUpperCase(Locale.ROOT)))
+            return context.getString(R.string.title_folder_inbox);
+        else if ("OUTBOX".equals(name))
+            return context.getString(R.string.title_folder_outbox);
+        else
+            return name;
     }
 
     @Override

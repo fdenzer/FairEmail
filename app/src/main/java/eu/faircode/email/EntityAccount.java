@@ -66,7 +66,8 @@ public class EntityAccount extends EntityOrder implements Serializable {
     @NonNull
     public String host; // POP3/IMAP
     @NonNull
-    public Boolean starttls;
+    @ColumnInfo(name = "starttls")
+    public Integer encryption;
     @NonNull
     public Boolean insecure = false;
     @NonNull
@@ -126,7 +127,9 @@ public class EntityAccount extends EntityOrder implements Serializable {
     @NonNull
     public Boolean ignore_size = false;
     @NonNull
-    public Boolean use_date = false;
+    public Boolean use_date = false; // Date header
+    @NonNull
+    public Boolean use_received = false; // Received header
     public String prefix; // namespace, obsolete
 
     public Long quota_usage;
@@ -139,6 +142,7 @@ public class EntityAccount extends EntityOrder implements Serializable {
     public String warning;
     public String error;
     public Long last_connected;
+    public Long max_size;
 
     boolean isGmail() {
         return "imap.gmail.com".equalsIgnoreCase(host);
@@ -150,9 +154,9 @@ public class EntityAccount extends EntityOrder implements Serializable {
                 if (isGmail())
                     return "gimaps";
                 else
-                    return "imap" + (starttls ? "" : "s");
+                    return "imap" + (encryption == EmailService.ENCRYPTION_SSL ? "s" : "");
             case TYPE_POP:
-                return "pop3" + (starttls ? "" : "s");
+                return "pop3" + (encryption == EmailService.ENCRYPTION_SSL ? "s" : "");
             default:
                 throw new IllegalArgumentException("Unknown protocol=" + protocol);
         }
@@ -200,7 +204,7 @@ public class EntityAccount extends EntityOrder implements Serializable {
         json.put("order", order);
         json.put("protocol", protocol);
         json.put("host", host);
-        json.put("starttls", starttls);
+        json.put("encryption", encryption);
         json.put("insecure", insecure);
         json.put("port", port);
         json.put("auth_type", auth_type);
@@ -236,6 +240,7 @@ public class EntityAccount extends EntityOrder implements Serializable {
         json.put("partial_fetch", partial_fetch);
         json.put("ignore_size", ignore_size);
         json.put("use_date", use_date);
+        json.put("use_received", use_received);
         // not prefix
         // not created
         // not tbd
@@ -260,7 +265,11 @@ public class EntityAccount extends EntityOrder implements Serializable {
             account.protocol = (json.getBoolean("pop") ? TYPE_POP : TYPE_IMAP);
 
         account.host = json.getString("host");
-        account.starttls = (json.has("starttls") && json.getBoolean("starttls"));
+        if (json.has("starttls"))
+            account.encryption = (json.getBoolean("starttls")
+                    ? EmailService.ENCRYPTION_STARTTLS : EmailService.ENCRYPTION_SSL);
+        else
+            account.encryption = json.getInt("encryption");
         account.insecure = (json.has("insecure") && json.getBoolean("insecure"));
         account.port = json.getInt("port");
         account.auth_type = json.getInt("auth_type");
@@ -314,6 +323,7 @@ public class EntityAccount extends EntityOrder implements Serializable {
         account.partial_fetch = json.optBoolean("partial_fetch", true);
         account.ignore_size = json.optBoolean("ignore_size", false);
         account.use_date = json.optBoolean("use_date", false);
+        account.use_received = json.optBoolean("use_received", false);
 
         return account;
     }
@@ -325,7 +335,7 @@ public class EntityAccount extends EntityOrder implements Serializable {
             return (Objects.equals(this.order, other.order) &&
                     this.protocol.equals(other.protocol) &&
                     this.host.equals(other.host) &&
-                    this.starttls == other.starttls &&
+                    this.encryption.equals(other.encryption) &&
                     this.insecure == other.insecure &&
                     this.port.equals(other.port) &&
                     this.auth_type.equals(other.auth_type) &&
@@ -347,6 +357,8 @@ public class EntityAccount extends EntityOrder implements Serializable {
                     this.poll_interval.equals(other.poll_interval) &&
                     this.partial_fetch == other.partial_fetch &&
                     this.ignore_size == other.ignore_size &&
+                    this.use_date == other.use_date &&
+                    this.use_received == other.use_received &&
                     Objects.equals(this.quota_usage, other.quota_usage) &&
                     Objects.equals(this.quota_limit, other.quota_limit) &&
                     Objects.equals(this.created, other.created) &&
@@ -354,7 +366,8 @@ public class EntityAccount extends EntityOrder implements Serializable {
                     Objects.equals(this.state, other.state) &&
                     Objects.equals(this.warning, other.warning) &&
                     Objects.equals(this.error, other.error) &&
-                    Objects.equals(this.last_connected, other.last_connected));
+                    Objects.equals(this.last_connected, other.last_connected) &&
+                    Objects.equals(this.max_size, other.max_size));
         } else
             return false;
     }

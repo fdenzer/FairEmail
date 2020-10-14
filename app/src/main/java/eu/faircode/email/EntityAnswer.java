@@ -27,6 +27,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 import javax.mail.Address;
 import javax.mail.internet.InternetAddress;
@@ -47,6 +48,9 @@ public class EntityAnswer implements Serializable {
     public Long id;
     @NonNull
     public String name;
+    public String group;
+    @NonNull
+    public Boolean standard;
     @NonNull
     public Boolean favorite;
     @NonNull
@@ -67,6 +71,7 @@ public class EntityAnswer implements Serializable {
         }
 
         if (fullName != null) {
+            fullName = fullName.trim();
             if (fullName.startsWith("\""))
                 fullName = fullName.substring(1);
             if (fullName.endsWith("\""))
@@ -76,13 +81,12 @@ public class EntityAnswer implements Serializable {
         String first = fullName;
         String last = null;
         if (fullName != null) {
-            fullName = fullName.trim();
-            int c = fullName.lastIndexOf(",");
+            int c = fullName.lastIndexOf(',');
             if (c > 0) {
                 last = fullName.substring(0, c).trim();
                 first = fullName.substring(c + 1).trim();
             } else {
-                c = fullName.lastIndexOf(" ");
+                c = fullName.lastIndexOf(' ');
                 if (c > 0) {
                     first = fullName.substring(0, c).trim();
                     last = fullName.substring(c + 1).trim();
@@ -102,6 +106,8 @@ public class EntityAnswer implements Serializable {
         JSONObject json = new JSONObject();
         json.put("id", id);
         json.put("name", name);
+        json.put("group", group);
+        json.put("standard", standard);
         json.put("favorite", favorite);
         json.put("hide", hide);
         json.put("text", text);
@@ -112,6 +118,8 @@ public class EntityAnswer implements Serializable {
         EntityAnswer answer = new EntityAnswer();
         answer.id = json.getLong("id");
         answer.name = json.getString("name");
+        answer.group = json.optString("group");
+        answer.standard = json.optBoolean("standard");
         answer.favorite = json.optBoolean("favorite");
         answer.hide = json.optBoolean("hide");
         answer.text = json.getString("text");
@@ -123,6 +131,8 @@ public class EntityAnswer implements Serializable {
         if (obj instanceof EntityAnswer) {
             EntityAnswer other = (EntityAnswer) obj;
             return (this.name.equals(other.name) &&
+                    Objects.equals(this.group, other.group) &&
+                    this.standard.equals(other.standard) &&
                     this.favorite.equals(other.favorite) &&
                     this.hide.equals(other.hide) &&
                     this.text.equals(other.text)

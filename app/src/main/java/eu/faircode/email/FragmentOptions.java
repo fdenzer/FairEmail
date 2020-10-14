@@ -25,18 +25,28 @@ import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.database.Cursor;
+import android.database.MatrixCursor;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.widget.SearchView;
 import androidx.constraintlayout.widget.Group;
+import androidx.cursoradapter.widget.CursorAdapter;
+import androidx.cursoradapter.widget.SimpleCursorAdapter;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentStatePagerAdapter;
@@ -50,20 +60,35 @@ import com.google.android.material.tabs.TabLayout;
 public class FragmentOptions extends FragmentBase {
     private ViewPager pager;
     private PagerAdapter adapter;
+    private String searching = null;
+
+    private static int[] TAB_PAGES = {
+            R.layout.fragment_setup,
+            R.layout.fragment_options_synchronize,
+            R.layout.fragment_options_send,
+            R.layout.fragment_options_connection,
+            R.layout.fragment_options_display,
+            R.layout.fragment_options_behavior,
+            R.layout.fragment_options_privacy,
+            R.layout.fragment_options_encryption,
+            R.layout.fragment_options_notifications,
+            R.layout.fragment_options_misc
+    };
 
     static String[] OPTIONS_RESTART = new String[]{
             "first", "app_support", "notify_archive", "message_swipe", "message_select", "folder_actions", "folder_sync",
             "subscriptions",
-            "landscape", "landscape3", "startup", "cards", "indentation", "date", "threading",
-            "highlight_unread", "color_stripe",
-            "avatars", "gravatars", "generated_icons", "identicons", "circular", "saturation", "brightness", "threshold",
+            "portrait2", "landscape", "landscape3", "startup", "cards", "beige", "indentation", "date", "threading", "threading_unread",
+            "highlight_unread", "highlight_color", "color_stripe",
+            "avatars", "gravatars", "favicons", "generated_icons", "identicons", "circular", "saturation", "brightness", "threshold",
             "name_email", "prefer_contact", "distinguish_contacts", "show_recipients", "authentication",
             "subject_top", "font_size_sender", "font_size_subject", "subject_italic", "highlight_subject", "subject_ellipsize",
-            "keywords_header", "flags", "flags_background", "preview", "preview_italic", "preview_lines",
-            "addresses", "button_archive_trash", "button_move", "attachments_alt",
-            "contrast", "monospaced", "text_color", "text_size",
+            "keywords_header", "labels_header", "flags", "flags_background", "preview", "preview_italic", "preview_lines",
+            "message_zoom", "overview_mode", "addresses", "attachments_alt", "thumbnails",
+            "contrast", "monospaced",
+            "text_color", "text_size", "text_font", "text_align", "text_separators",
             "inline_images", "collapse_quotes", "seekbar", "actionbar", "actionbar_color", "navbar_colorize",
-            "autoscroll", "swipenav", "autoexpand", "autoclose", "onclose",
+            "autoscroll", "swipenav", "swipe_close", "swipe_move", "autoexpand", "autoclose", "onclose",
             "language_detection",
             "quick_filter", "quick_scroll",
             "experiments", "debug",
@@ -71,9 +96,19 @@ public class FragmentOptions extends FragmentBase {
     };
 
     @Override
+    public void onSaveInstanceState(Bundle outState) {
+        outState.putString("fair:searching", searching);
+        super.onSaveInstanceState(outState);
+    }
+
+    @Override
     @Nullable
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_options, container, false);
+        setHasOptionsMenu(true);
+
+        if (savedInstanceState != null)
+            searching = savedInstanceState.getString("fair:searching");
 
         pager = view.findViewById(R.id.pager);
         adapter = new PagerAdapter(getChildFragmentManager());
@@ -142,6 +177,122 @@ public class FragmentOptions extends FragmentBase {
     @Override
     protected void finish() {
         onExit();
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        inflater.inflate(R.menu.menu_setup, menu);
+
+        final String saved = searching;
+        final MenuItem menuSearch = menu.findItem(R.id.menu_search);
+        final SearchView searchView = (SearchView) menuSearch.getActionView();
+
+        searchView.setQueryHint(getString(R.string.title_search));
+
+        final SearchView.OnSuggestionListener onSuggestionListener = new SearchView.OnSuggestionListener() {
+            @Override
+            public boolean onSuggestionSelect(int position) {
+                return false;
+            }
+
+            @Override
+            public boolean onSuggestionClick(int position) {
+                Cursor cursor = searchView.getSuggestionsAdapter().getCursor();
+
+                if (cursor != null && cursor.moveToPosition(position)) {
+                    int tab = cursor.getInt(cursor.getColumnIndex("tab"));
+                    int resid = cursor.getInt(cursor.getColumnIndex("resid"));
+
+                    pager.setCurrentItem(tab);
+                    FragmentBase fragment = (FragmentBase) adapter.instantiateItem(pager, tab);
+                    fragment.scrollTo(resid);
+                    menuSearch.collapseActionView();
+                }
+
+                return true;
+            }
+        };
+
+        searchView.setOnSuggestionListener(onSuggestionListener);
+
+        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            private String[] titles = null;
+            private View[] views = null;
+
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                searching = query;
+
+                CursorAdapter adapter = searchView.getSuggestionsAdapter();
+                if (adapter != null && adapter.getCount() > 0)
+                    onSuggestionListener.onSuggestionClick(0);
+
+                return false;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                searching = newText;
+                suggest(newText);
+                return false;
+            }
+
+            private void suggest(String query) {
+                MatrixCursor cursor = new MatrixCursor(new String[]{"_id", "tab", "resid", "title"});
+
+                if (query != null && query.length() > 1) {
+                    if (titles == null || views == null) {
+                        titles = new String[TAB_PAGES.length];
+                        views = new View[TAB_PAGES.length];
+                        LayoutInflater inflater = LayoutInflater.from(searchView.getContext());
+                        for (int tab = 0; tab < TAB_PAGES.length; tab++) {
+                            titles[tab] = (String) adapter.getPageTitle(tab);
+                            views[tab] = inflater.inflate(TAB_PAGES[tab], null);
+                        }
+                    }
+
+                    int id = 0;
+                    for (int tab = 0; tab < TAB_PAGES.length; tab++)
+                        id = getSuggestions(query.toLowerCase(), id, tab, titles[tab], views[tab], cursor);
+                }
+
+                searchView.setSuggestionsAdapter(new SimpleCursorAdapter(
+                        searchView.getContext(),
+                        R.layout.spinner_item1_dropdown,
+                        cursor,
+                        new String[]{"title"},
+                        new int[]{android.R.id.text1},
+                        0
+                ));
+            }
+
+            private int getSuggestions(String query, int id, int tab, String title, View view, MatrixCursor cursor) {
+                if (view instanceof ViewGroup) {
+                    ViewGroup group = (ViewGroup) view;
+                    for (int i = 0; i <= group.getChildCount(); i++)
+                        id = getSuggestions(query, id, tab, title, group.getChildAt(i), cursor);
+                } else if (view instanceof TextView) {
+                    String description = ((TextView) view).getText().toString();
+                    if (description.toLowerCase().contains(query)) {
+                        String text = view.getContext().getString(R.string.title_title_description, title, description);
+                        cursor.newRow()
+                                .add(id++)
+                                .add(tab)
+                                .add(view.getId())
+                                .add(text);
+                    }
+                }
+
+                return id;
+            }
+        });
+
+        if (!TextUtils.isEmpty(saved)) {
+            menuSearch.expandActionView();
+            searchView.setQuery(saved, false);
+        }
+
+        super.onCreateOptionsMenu(menu, inflater);
     }
 
     @Override

@@ -21,6 +21,8 @@ FairEmail is easy to setup and works with virtually all email providers, includi
 
 FairEmail might be for you if you value your privacy.
 
+*FairEmail is an email client only, so you need to bring your own email address.*
+
 *FairEmail does not support non-standard protocols, like Microsoft Exchange Web Services and Microsoft ActiveSync.*
 
 ## Main features
@@ -36,7 +38,7 @@ FairEmail might be for you if you value your privacy.
 * Offline storage and operations
 * Battery friendly
 * Low data usage
-* Small (~ 12 MB)
+* Small (~ 15 MB)
 * Material design (including dark/black theme)
 * Maintained and supported
 
@@ -50,7 +52,7 @@ This app starts a foreground service with a low priority status bar notification
 * Reformat messages to prevent [phishing](https://en.wikipedia.org/wiki/Phishing)
 * Confirm showing images to prevent tracking
 * Confirm opening links to prevent tracking and phishing
-* Automatically recognize and disable tracking images
+* Attempt to recognize and disable tracking images
 * Warning if messages could not be [authenticated](https://github.com/M66B/FairEmail/blob/master/FAQ.md#user-content-faq92)
 
 ## Simple
@@ -63,7 +65,7 @@ This app starts a foreground service with a low priority status bar notification
 ## Secure
 
 * No data storage on third party servers
-* Using open standards (IMAP, SMTP, OpenPGP, S/MIME, etc)
+* Using open standards (IMAP, POP3, SMTP, OpenPGP, S/MIME, etc)
 * Safe message view (styling, scripting and unsafe HTML removed)
 * Confirm opening links, images and attachments
 * No special permissions required
@@ -97,7 +99,7 @@ All pro features are convenience or advanced features.
 * Keyword management
 * S/MIME sign/encrypt ([instructions](https://github.com/M66B/FairEmail/blob/master/FAQ.md#user-content-faq12))
 * Biometric/PIN authentication ([instructions](https://github.com/M66B/FairEmail/blob/master/FAQ.md#user-content-faq113))
-* Unified inbox widget
+* Message list widget
 * Export settings
 
 ## Screenshots
@@ -110,11 +112,12 @@ Supported download locations:
 
 * [GitHub](https://github.com/M66B/FairEmail/releases)
 * [Play store](https://play.google.com/store/apps/details?id=eu.faircode.email)
-* ~~[Play store](https://play.google.com/apps/testing/eu.faircode.email) (test)~~
+* [Play store](https://play.google.com/apps/testing/eu.faircode.email) (test)
 * [F-Droid](https://f-droid.org/en/packages/eu.faircode.email/) ([last build status](https://f-droid.org/wiki/page/eu.faircode.email/lastbuild)) (the F-Droid app can be downloaded [here](https://f-droid.org/))
 * ~~[AppGallery](https://wap3.hispace.hicloud.com/uowap/index.jsp#/detailApp/C101678151) (the AppGallery app can be downloaded [here](https://huaweimobileservices.com/appgallery/))~~
 
-**Important**: after enrolling in the [Advanced Protection Program](https://landing.google.com/advancedprotection/) downloading/installing is possible from the Play store only.
+**Important**: after enrolling in the [Advanced Protection Program](https://landing.google.com/advancedprotection/)
+you cannot use third party email apps anymore, please see [this FAQ](https://github.com/M66B/FairEmail/blob/master/FAQ.md#user-content-faq22) for more information.
 
 The Gmail quick setup wizard can be used in official releases only (Play store or GitHub) because Google approved the use of OAuth for one app signature only.
 
@@ -129,6 +132,9 @@ The GitHub release will automatically check for updates on GitHub (this can be t
 
 F-Droid builds new versions irregularly and you'll need the F-Droid client to get update notifications.
 To get updates in a timely fashion you are advised to use the GitHub release.
+
+**Important**: There is support on the F-Droid build only if the version number of the F-Droid build is the same as the version number of the latest GitHub release.
+Please [see here](https://github.com/M66B/FairEmail/blob/master/FAQ.md#user-content-faq147) for more information on third-party builds.
 
 Because F-Droid builds and GitHub releases are signed differently, an F-Droid build needs to be uninstalled first to be able to update to a GitHub release.
 
@@ -145,6 +151,7 @@ One line command to display certificate fingerprints:
 ```unzip -p fairemail.apk META-INF/CERT.RSA | keytool -printcert```
 
 I do not hand over the signing keys of my apps to Google.
+However, in the second half of 2021 [I am required](https://commonsware.com/blog/2020/09/23/uncomfortable-questions-app-signing.html) to hand over my signing keys to Google.
 
 ## Compatibility
 
@@ -165,6 +172,8 @@ Please see [here](https://github.com/M66B/FairEmail/blob/master/FAQ.md#user-cont
 Please see [here](https://github.com/M66B/FairEmail/blob/master/PRIVACY.md#fairemail) for the privacy policy.
 
 ## Support
+
+FairEmail is supported on smartphones, tablets and ChromeOS only.
 
 Please see [here](https://github.com/M66B/FairEmail/blob/master/FAQ.md) for a list of often asked questions and about how to get support.
 
@@ -194,9 +203,13 @@ Please note that by contributing you agree to the license below, including the c
 
 See [here](https://github.com/M66B/FairEmail/blob/master/ATTRIBUTION.md) for a list of used libraries and associated license information.
 
+Online translations are supported by:
+
+![Crowdin logo](/images/localization-at-white-rounded-bordered@1x.png)
+
 Error reporting is sponsored by:
 
-![Bugsnag Logo](/images/bugsnag_logo_navy.png)
+![Bugsnag logo](/images/bugsnag_logo_navy.png)
 
 [Bugsnag](https://www.bugsnag.com/) monitors application stability
 and is used to [help improve FairEmail](https://github.com/M66B/FairEmail/blob/master/FAQ.md#user-content-faq104).

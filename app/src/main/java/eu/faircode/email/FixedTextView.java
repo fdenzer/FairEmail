@@ -19,10 +19,17 @@ package eu.faircode.email;
     Copyright 2018-2020 by Marcel Bokhorst (M66B)
 */
 
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Rect;
+import android.os.Build;
+import android.text.Selection;
+import android.text.Spannable;
+import android.text.Spanned;
 import android.util.AttributeSet;
+import android.view.KeyEvent;
 import android.view.MotionEvent;
 
 import androidx.annotation.NonNull;
@@ -102,6 +109,71 @@ public class FixedTextView extends AppCompatTextView {
     }
 
     @Override
+    public boolean dispatchTouchEvent(MotionEvent event) {
+        // https://issuetracker.google.com/issues/37068143
+        if (event.getActionMasked() == MotionEvent.ACTION_DOWN &&
+                Build.VERSION.RELEASE.equals("6.0") && hasSelection()) {
+            // Remove selection
+            CharSequence text = getText();
+            setText(null);
+            setText(text);
+        }
+
+        try {
+            return super.dispatchTouchEvent(event);
+        } catch (Throwable ex) {
+            /*
+                Attempt to fix
+                java.lang.IndexOutOfBoundsException: setSpan (-1 ... -1) starts before 0
+                  at android.text.SpannableStringInternal.checkRange(SpannableStringInternal.java:434)
+                  at android.text.SpannableStringInternal.setSpan(SpannableStringInternal.java:155)
+                  at android.text.SpannableString.setSpan(SpannableString.java:46)
+                  at android.text.Selection.setSelection(Selection.java:76)
+                  at android.widget.Editor$SelectionHandleView.updateSelection(Editor.java:4687)
+                  at android.widget.Editor$HandleView.positionAtCursorOffset(Editor.java:4262)
+                  at android.widget.Editor$SelectionHandleView.positionAtCursorOffset(Editor.java:4870)
+                  at android.widget.Editor$SelectionHandleView.positionAndAdjustForCrossingHandles(Editor.java:4918)
+                  at android.widget.Editor$SelectionHandleView.updatePosition(Editor.java:4863)
+                  at android.widget.Editor$HandleView.onTouchEvent(Editor.java:4407)
+                  at android.widget.Editor$SelectionHandleView.onTouchEvent(Editor.java:4876)
+                  at android.view.View.dispatchTouchEvent(View.java:10024)
+                  at android.view.ViewGroup.dispatchTransformedTouchEvent(ViewGroup.java:2632)
+                  at android.view.ViewGroup.dispatchTouchEvent(ViewGroup.java:2321)
+                  at android.widget.PopupWindow$PopupDecorView.dispatchTouchEvent(PopupWindow.java:2277)
+                  at android.view.View.dispatchPointerEvent(View.java:10244)
+                  at android.view.ViewRootImpl$ViewPostImeInputStage.processPointerEvent(ViewRootImpl.java:4468)
+                  at android.view.ViewRootImpl$ViewPostImeInputStage.onProcess(ViewRootImpl.java:4336)
+                  at android.view.ViewRootImpl$InputStage.deliver(ViewRootImpl.java:3883)
+                  at android.view.ViewRootImpl$InputStage.onDeliverToNext(ViewRootImpl.java:3936)
+                  at android.view.ViewRootImpl$InputStage.forward(ViewRootImpl.java:3902)
+                  at android.view.ViewRootImpl$AsyncInputStage.forward(ViewRootImpl.java:4029)
+                  at android.view.ViewRootImpl$InputStage.apply(ViewRootImpl.java:3910)
+                  at android.view.ViewRootImpl$AsyncInputStage.apply(ViewRootImpl.java:4086)
+                  at android.view.ViewRootImpl$InputStage.deliver(ViewRootImpl.java:3883)
+                  at android.view.ViewRootImpl$InputStage.onDeliverToNext(ViewRootImpl.java:3936)
+                  at android.view.ViewRootImpl$InputStage.forward(ViewRootImpl.java:3902)
+                  at android.view.ViewRootImpl$InputStage.apply(ViewRootImpl.java:3910)
+                  at android.view.ViewRootImpl$InputStage.deliver(ViewRootImpl.java:3883)
+                  at android.view.ViewRootImpl.deliverInputEvent(ViewRootImpl.java:6284)
+                  at android.view.ViewRootImpl.doProcessInputEvents(ViewRootImpl.java:6258)
+                  at android.view.ViewRootImpl.enqueueInputEvent(ViewRootImpl.java:6219)
+                  at android.view.ViewRootImpl$WindowInputEventReceiver.onInputEvent(ViewRootImpl.java:6387)
+                  at android.view.InputEventReceiver.dispatchInputEvent(InputEventReceiver.java:185)
+                  at android.view.InputEventReceiver.nativeConsumeBatchedInputEvents(Native Method)
+                  at android.view.InputEventReceiver.consumeBatchedInputEvents(InputEventReceiver.java:176)
+                  at android.view.ViewRootImpl.doConsumeBatchedInput(ViewRootImpl.java:6358)
+                  at android.view.ViewRootImpl$ConsumeBatchedInputRunnable.run(ViewRootImpl.java:6410)
+                  at android.view.Choreographer$CallbackRecord.run(Choreographer.java:874)
+                  at android.view.Choreographer.doCallbacks(Choreographer.java:686)
+                  at android.view.Choreographer.doFrame(Choreographer.java:615)
+                  at android.view.Choreographer$FrameDisplayEventReceiver.run(Choreographer.java:860)
+                  at android.os.Handler.handleCallback(Handler.java:751)
+             */
+            return false;
+        }
+    }
+
+    @Override
     public boolean onTouchEvent(MotionEvent event) {
         try {
             return super.onTouchEvent(event);
@@ -166,6 +238,100 @@ public class FixedTextView extends AppCompatTextView {
                     at android.widget.TextView.performLongClick(Unknown:24)
 */
             Log.w(ex);
+            return false;
+        }
+    }
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        try {
+            return super.onKeyDown(keyCode, event);
+        } catch (Throwable ex) {
+            /*
+                java.lang.IllegalArgumentException
+                  at com.android.internal.util.Preconditions.checkArgument(Preconditions.java:33)
+                  at android.widget.SelectionActionModeHelper$TextClassificationHelper.init(SelectionActionModeHelper.java:641)
+                  at android.widget.SelectionActionModeHelper.resetTextClassificationHelper(SelectionActionModeHelper.java:204)
+                  at android.widget.SelectionActionModeHelper.startActionModeAsync(SelectionActionModeHelper.java:88)
+                  at android.widget.Editor.startSelectionActionModeAsync(Editor.java:2021)
+                  at android.widget.Editor.refreshTextActionMode(Editor.java:1966)
+                  at android.widget.TextView.spanChange(TextView.java:9525)
+                  at android.widget.TextView$ChangeWatcher.onSpanChanged(TextView.java:11973)
+                  at android.text.SpannableStringBuilder.sendSpanChanged(SpannableStringBuilder.java:1292)
+                  at android.text.SpannableStringBuilder.setSpan(SpannableStringBuilder.java:748)
+                  at android.text.SpannableStringBuilder.setSpan(SpannableStringBuilder.java:672)
+                  at android.text.Selection.extendSelection(Selection.java:102)
+                  at android.text.Selection.extendLeft(Selection.java:324)
+                  at android.text.method.ArrowKeyMovementMethod.left(ArrowKeyMovementMethod.java:72)
+                  at android.text.method.BaseMovementMethod.handleMovementKey(BaseMovementMethod.java:165)
+                  at android.text.method.ArrowKeyMovementMethod.handleMovementKey(ArrowKeyMovementMethod.java:65)
+                  at android.text.method.BaseMovementMethod.onKeyDown(BaseMovementMethod.java:42)
+                  at android.widget.TextView.doKeyDown(TextView.java:7367)
+                  at android.widget.TextView.onKeyDown(TextView.java:7117)
+                  at android.view.KeyEvent.dispatch(KeyEvent.java:2707)
+             */
+            Log.w(ex);
+            return false;
+        }
+    }
+
+    @Override
+    public void setText(CharSequence text, BufferType type) {
+        try {
+            super.setText(text, type);
+        } catch (Throwable ex) {
+            Log.w(ex);
+            /*
+                java.lang.IndexOutOfBoundsException:
+                  at android.text.PackedIntVector.getValue (PackedIntVector.java:71)
+                  at android.text.DynamicLayout.getLineTop (DynamicLayout.java:602)
+                  at android.text.Layout.getLineBottom (Layout.java:1260)
+                  at android.widget.TextView.invalidateRegion (TextView.java:5379)
+                  at android.widget.TextView.invalidateCursor (TextView.java:5348)
+                  at android.widget.TextView.spanChange (TextView.java:8351)
+                  at android.widget.TextView$ChangeWatcher.onSpanAdded (TextView.java:10550)
+                  at android.text.SpannableStringInternal.sendSpanAdded (SpannableStringInternal.java:315)
+                  at android.text.SpannableStringInternal.setSpan (SpannableStringInternal.java:138)
+                  at android.text.SpannableString.setSpan (SpannableString.java:46)
+                  at android.text.Selection.setSelection (Selection.java:76)
+                  at android.text.Selection.setSelection (Selection.java:87)
+                  at android.text.method.ArrowKeyMovementMethod.initialize (ArrowKeyMovementMethod.java:336)
+                  at android.widget.TextView.setText (TextView.java:4555)
+                  at android.widget.TextView.setText (TextView.java:4424)
+                  at android.widget.TextView.setText (TextView.java:4379)
+             */
+        }
+    }
+
+    @Override
+    public boolean onTextContextMenuItem(int id) {
+        try {
+            if (id == android.R.id.copy) {
+                int start = getSelectionStart();
+                int end = getSelectionEnd();
+                if (start > end) {
+                    int s = start;
+                    start = end;
+                    end = s;
+                }
+
+                Context context = getContext();
+                ClipboardManager cbm = (ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
+                if (start != end && cbm != null) {
+                    CharSequence selected = getText().subSequence(start, end);
+                    if (selected instanceof Spanned) {
+                        String html = HtmlHelper.toHtml((Spanned) selected, context);
+                        cbm.setPrimaryClip(ClipData.newHtmlText(context.getString(R.string.app_name), selected, html));
+                        if (getText() instanceof Spannable)
+                            Selection.removeSelection((Spannable) getText());
+                        return false;
+                    }
+                }
+            }
+
+            return super.onTextContextMenuItem(id);
+        } catch (Throwable ex) {
+            Log.e(ex);
             return false;
         }
     }

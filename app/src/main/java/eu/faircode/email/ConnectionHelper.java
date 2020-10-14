@@ -43,6 +43,10 @@ import java.util.Locale;
 import java.util.Objects;
 
 public class ConnectionHelper {
+    static final List<String> PREF_NETWORK = Collections.unmodifiableList(Arrays.asList(
+            "metered", "roaming", "rlah" // update network state
+    ));
+
     // Roam like at home
     // https://en.wikipedia.org/wiki/European_Union_roaming_regulations
     private static final List<String> RLAH_COUNTRY_CODES = Collections.unmodifiableList(Arrays.asList(
@@ -183,8 +187,10 @@ public class ConnectionHelper {
 
     private static Boolean isMetered(Context context) {
         ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
-        if (cm == null)
+        if (cm == null) {
+            Log.i("isMetered: no connectivity manager");
             return null;
+        }
 
         Network active = null;
         if (Build.VERSION.SDK_INT > Build.VERSION_CODES.M)
@@ -192,16 +198,21 @@ public class ConnectionHelper {
         if (active == null) {
             NetworkInfo ani = cm.getActiveNetworkInfo();
             if (ani == null || !ani.isConnected()) {
-                Log.i("isMetered: no active network info=" + ani);
+                Log.i("isMetered: no/connected active network info=" + ani);
                 return null;
             }
-            return cm.isActiveNetworkMetered();
+            boolean metered = cm.isActiveNetworkMetered();
+            Log.i("isMetered: active network metered=" + metered);
+            return metered;
         }
 
         // onLost [... state: DISCONNECTED/DISCONNECTED ... available: true]
         NetworkInfo ani = cm.getNetworkInfo(active);
-        if (ani == null || !ani.isConnected())
+        if (ani == null || ani.getState() == NetworkInfo.State.DISCONNECTED) {
+            // State can incorrectly be SUSPENDED
+            Log.i("isMetered: no active info ani=" + ani);
             return null;
+        }
 
         NetworkCapabilities caps = cm.getNetworkCapabilities(active);
         if (caps == null) {
@@ -236,6 +247,11 @@ public class ConnectionHelper {
         }
 
         // VPN: evaluate underlying networks
+        Integer transport = null;
+        if (caps.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR))
+            transport = NetworkCapabilities.TRANSPORT_CELLULAR;
+        else if (caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI))
+            transport = NetworkCapabilities.TRANSPORT_WIFI;
 
         boolean underlying = false;
         Network[] networks = cm.getAllNetworks();
@@ -264,6 +280,14 @@ public class ConnectionHelper {
                 continue;
             }
 
+            if (!caps.hasTransport(NetworkCapabilities.TRANSPORT_VPN) &&
+                    (caps.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) ||
+                            caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) &&
+                    (transport != null && !caps.hasTransport(transport))) {
+                Log.i("isMetered: underlying other transport");
+                continue;
+            }
+
             if (caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_VPN)) {
                 underlying = true;
                 Log.i("isMetered: underlying is connected");
@@ -287,6 +311,31 @@ public class ConnectionHelper {
         return true;
     }
 
+    static Network getActiveNetwork(Context context) {
+        ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        if (cm == null)
+            return null;
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+            return cm.getActiveNetwork();
+
+        NetworkInfo ani = cm.getActiveNetworkInfo();
+        if (ani == null)
+            return null;
+
+        Network[] networks = cm.getAllNetworks();
+        for (Network network : networks) {
+            NetworkInfo ni = cm.getNetworkInfo(network);
+            if (ni == null)
+                continue;
+            if (ni.getType() == ani.getType() &&
+                    ni.getSubtype() == ani.getSubtype())
+                return network;
+        }
+
+        return null;
+    }
+
     static boolean isIoError(Throwable ex) {
         while (ex != null) {
             if (isMaxConnections(ex.getMessage()) ||
@@ -306,13 +355,18 @@ public class ConnectionHelper {
                         message.contains("Maximum number of connections") /* ... from user+IP exceeded */ /* Dovecot */ ||
                         message.contains("Too many concurrent connections") /* ... to this mailbox */ ||
                         message.contains("User is authenticated but not connected") /* Outlook */ ||
-                        message.contains("Account is temporarily unavailable") /* Arcor.de / TalkTalk.net */));
+                        message.contains("Account is temporarily unavailable") /* Arcor.de / TalkTalk.net */ ||
+                        message.contains("Connection dropped by server?")));
     }
 
     static Boolean isSyntacticallyInvalid(Throwable ex) {
         if (ex.getMessage() == null)
             return false;
-        return ex.getMessage().toLowerCase(Locale.ROOT).contains("syntactically invalid");
+        // 501 HELO requires valid address
+        // 501 Syntactically invalid HELO argument(s)
+        String message = ex.getMessage().toLowerCase(Locale.ROOT);
+        return message.contains("syntactically invalid") ||
+                message.contains("requires valid address");
     }
 
     static boolean vpnActive(Context context) {

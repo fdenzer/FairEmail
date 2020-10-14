@@ -53,6 +53,7 @@ import java.util.concurrent.Future;
 public class EmailProvider {
     public String id;
     public String name;
+    public boolean enabled;
     public List<String> domain;
     public int order;
     public String type;
@@ -81,7 +82,7 @@ public class EmailProvider {
             "tutanota.de",
             "tutamail.com", // tutanota
             "tuta.io", // tutanota
-            "keemailme" // tutanota
+            "keemail.me" // tutanota
     ));
     private static final ExecutorService executor =
             Helper.getBackgroundExecutor(0, "provider");
@@ -130,6 +131,7 @@ public class EmailProvider {
                         provider = new EmailProvider();
                         provider.id = xml.getAttributeValue(null, "id");
                         provider.name = xml.getAttributeValue(null, "name");
+                        provider.enabled = xml.getAttributeBooleanValue(null, "enabled", true);
                         String domain = xml.getAttributeValue(null, "domain");
                         if (domain != null)
                             provider.domain = Arrays.asList(domain.split(","));
@@ -159,6 +161,7 @@ public class EmailProvider {
                         provider.oauth.askAccount = xml.getAttributeBooleanValue(null, "askAccount", false);
                         provider.oauth.clientId = xml.getAttributeValue(null, "clientId");
                         provider.oauth.clientSecret = xml.getAttributeValue(null, "clientSecret");
+                        provider.oauth.pcke = xml.getAttributeBooleanValue(null, "pcke", false);
                         provider.oauth.scopes = xml.getAttributeValue(null, "scopes").split(",");
                         provider.oauth.authorizationEndpoint = xml.getAttributeValue(null, "authorizationEndpoint");
                         provider.oauth.tokenEndpoint = xml.getAttributeValue(null, "tokenEndpoint");
@@ -166,7 +169,7 @@ public class EmailProvider {
                     } else
                         throw new IllegalAccessException(name);
                 } else if (eventType == XmlPullParser.END_TAG) {
-                    if ("provider".equals(xml.getName())) {
+                    if ("provider".equals(xml.getName()) && provider.enabled) {
                         result.add(provider);
                         provider = null;
                     }
@@ -523,7 +526,7 @@ public class EmailProvider {
                 provider.imap.host = records[0].name;
                 provider.imap.port = records[0].port;
                 provider.imap.starttls = false;
-            } catch (UnknownHostException ex) {
+            } catch (UnknownHostException ignored) {
                 // Identifies an IMAP server that MAY ... require the MUA to use the "STARTTLS" command
                 DnsHelper.DnsRecord[] records = DnsHelper.lookup(context, "_imap._tcp." + domain, "srv");
                 if (records.length == 0)
@@ -534,15 +537,24 @@ public class EmailProvider {
             }
         }
 
-        if (discover == Discover.ALL || discover == Discover.SMTP) {
-            // Note that this covers connections both with and without Transport Layer Security (TLS)
-            DnsHelper.DnsRecord[] records = DnsHelper.lookup(context, "_submission._tcp." + domain, "srv");
-            if (records.length == 0)
-                throw new UnknownHostException(domain);
-            provider.smtp.host = records[0].name;
-            provider.smtp.port = records[0].port;
-            provider.smtp.starttls = (provider.smtp.port == 587);
-        }
+        if (discover == Discover.ALL || discover == Discover.SMTP)
+            try {
+                // Note that this covers connections both with and without Transport Layer Security (TLS)
+                DnsHelper.DnsRecord[] records = DnsHelper.lookup(context, "_submission._tcp." + domain, "srv");
+                if (records.length == 0)
+                    throw new UnknownHostException(domain);
+                provider.smtp.host = records[0].name;
+                provider.smtp.port = records[0].port;
+                provider.smtp.starttls = (provider.smtp.port == 587);
+            } catch (UnknownHostException ignored) {
+                // https://tools.ietf.org/html/rfc8314
+                DnsHelper.DnsRecord[] records = DnsHelper.lookup(context, "_submissions._tcp." + domain, "srv");
+                if (records.length == 0)
+                    throw new UnknownHostException(domain);
+                provider.smtp.host = records[0].name;
+                provider.smtp.port = records[0].port;
+                provider.smtp.starttls = false;
+            }
 
         provider.validate();
 
@@ -687,6 +699,7 @@ public class EmailProvider {
         boolean askAccount;
         String clientId;
         String clientSecret;
+        boolean pcke;
         String[] scopes;
         String authorizationEndpoint;
         String tokenEndpoint;

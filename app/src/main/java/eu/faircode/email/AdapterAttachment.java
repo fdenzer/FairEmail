@@ -19,16 +19,11 @@ package eu.faircode.email;
     Copyright 2018-2020 by Marcel Bokhorst (M66B)
 */
 
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
-import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
-import android.text.TextUtils;
-import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -36,7 +31,6 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.core.content.FileProvider;
@@ -57,6 +51,8 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
+import javax.mail.Part;
+
 public class AdapterAttachment extends RecyclerView.Adapter<AdapterAttachment.ViewHolder> {
     private Fragment parentFragment;
 
@@ -66,6 +62,7 @@ public class AdapterAttachment extends RecyclerView.Adapter<AdapterAttachment.Vi
 
     private boolean readonly;
     private boolean debug;
+    private int dp12;
 
     private List<EntityAttachment> items = new ArrayList<>();
 
@@ -73,6 +70,7 @@ public class AdapterAttachment extends RecyclerView.Adapter<AdapterAttachment.Vi
         private View view;
         private ImageButton ibDelete;
         private ImageView ivType;
+        private ImageView ivDisposition;
         private TextView tvName;
         private TextView tvSize;
         private ImageView ivStatus;
@@ -92,42 +90,61 @@ public class AdapterAttachment extends RecyclerView.Adapter<AdapterAttachment.Vi
             ivStatus = itemView.findViewById(R.id.ivStatus);
             ibSave = itemView.findViewById(R.id.ibSave);
             tvType = itemView.findViewById(R.id.tvType);
+            ivDisposition = itemView.findViewById(R.id.ivDisposition);
             tvError = itemView.findViewById(R.id.tvError);
             progressbar = itemView.findViewById(R.id.progressbar);
         }
 
         private void wire() {
             view.setOnClickListener(this);
-            view.setOnLongClickListener(this);
             ibDelete.setOnClickListener(this);
             ibSave.setOnClickListener(this);
+            view.setOnLongClickListener(this);
         }
 
         private void unwire() {
             view.setOnClickListener(null);
-            view.setOnLongClickListener(null);
             ibDelete.setOnClickListener(null);
             ibSave.setOnClickListener(null);
+            view.setOnLongClickListener(null);
         }
 
         private void bindTo(EntityAttachment attachment) {
             view.setAlpha(!attachment.isAttachment() ? Helper.LOW_LIGHT : 1.0f);
 
-            ibDelete.setVisibility(readonly ? View.GONE :
-                    attachment.isInline() && attachment.error == null ? View.INVISIBLE : View.VISIBLE);
-            ivType.setImageDrawable(null);
+            ViewGroup.MarginLayoutParams lparam = (ViewGroup.MarginLayoutParams) view.getLayoutParams();
+            lparam.setMarginStart(attachment.subsequence == null ? 0 : dp12);
+            view.setLayoutParams(lparam);
+
+            ibDelete.setVisibility(readonly ? View.GONE : View.VISIBLE);
+
+            int resid = 0;
+            String extension = Helper.guessExtension(attachment.getMimeType());
+            if (extension != null)
+                resid = context.getResources().getIdentifier("file_" + extension, "drawable", context.getPackageName());
+            if (resid == 0)
+                ivType.setImageDrawable(null);
+            else
+                ivType.setImageResource(resid);
+
+            ivDisposition.setImageLevel(Part.INLINE.equals(attachment.disposition) ? 1 : 0);
+            ivDisposition.setVisibility(
+                    Part.ATTACHMENT.equals(attachment.disposition) ||
+                            Part.INLINE.equals(attachment.disposition)
+                            ? View.VISIBLE : View.INVISIBLE);
+
             tvName.setText(attachment.name);
 
             if (attachment.size != null)
-                tvSize.setText(Helper.humanReadableByteCount(attachment.size, true));
+                tvSize.setText(Helper.humanReadableByteCount(attachment.size));
             tvSize.setVisibility(attachment.size == null ? View.GONE : View.VISIBLE);
 
             if (attachment.available) {
-                ivStatus.setImageResource(R.drawable.baseline_visibility_24);
+                ivStatus.setImageResource(R.drawable.twotone_visibility_24);
                 ivStatus.setVisibility(View.VISIBLE);
             } else {
                 if (attachment.progress == null) {
-                    ivStatus.setImageResource(R.drawable.baseline_cloud_download_24);
+                    ivStatus.setImageResource(R.drawable.twotone_cloud_download_24);
                     ivStatus.setVisibility(View.VISIBLE);
                 } else
                     ivStatus.setVisibility(View.GONE);
@@ -142,8 +159,6 @@ public class AdapterAttachment extends RecyclerView.Adapter<AdapterAttachment.Vi
 
             StringBuilder sb = new StringBuilder();
             sb.append(attachment.type);
-            if (attachment.disposition != null)
-                sb.append(' ').append(attachment.disposition);
             if (debug || BuildConfig.DEBUG) {
                 if (attachment.cid != null)
                     sb.append(' ').append(attachment.cid);
@@ -154,55 +169,6 @@ public class AdapterAttachment extends RecyclerView.Adapter<AdapterAttachment.Vi
 
             tvError.setText(attachment.error);
             tvError.setVisibility(attachment.error == null ? View.GONE : View.VISIBLE);
-
-            Bundle args = new Bundle();
-            args.putLong("id", attachment.id);
-            args.putSerializable("file", attachment.getFile(context));
-            args.putString("type", attachment.getMimeType());
-
-            new SimpleTask<Drawable>() {
-                @Override
-                protected Drawable onExecute(Context context, Bundle args) throws Throwable {
-                    File file = (File) args.getSerializable("file");
-                    String type = args.getString("type");
-
-                    Uri uri = FileProvider.getUriForFile(context, BuildConfig.APPLICATION_ID, file);
-
-                    Intent intent = new Intent(Intent.ACTION_VIEW);
-                    intent.setDataAndTypeAndNormalize(uri, type);
-
-                    PackageManager pm = context.getPackageManager();
-
-                    ComponentName component = intent.resolveActivity(pm);
-                    if (component == null)
-                        return null;
-
-                    return pm.getApplicationIcon(component.getPackageName());
-                }
-
-                @Override
-                protected void onExecuted(Bundle args, Drawable icon) {
-                    long id = args.getLong("id");
-
-                    int pos = getAdapterPosition();
-                    if (pos == RecyclerView.NO_POSITION)
-                        return;
-
-                    EntityAttachment attachment = items.get(pos);
-                    if (attachment == null || !attachment.id.equals(id))
-                        return;
-
-                    if (icon == null)
-                        ivType.setImageResource(R.drawable.baseline_attachment_24);
-                    else
-                        ivType.setImageDrawable(icon);
-                }
-
-                @Override
-                protected void onException(Bundle args, Throwable ex) {
-                    Log.unexpectedError(parentFragment.getParentFragmentManager(), ex);
-                }
-            }.execute(context, owner, args, "attachment:icon");
         }
 
         @Override
@@ -230,21 +196,25 @@ public class AdapterAttachment extends RecyclerView.Adapter<AdapterAttachment.Vi
         }
 
         @Override
-        public boolean onLongClick(View v) {
+        public boolean onLongClick(View view) {
             int pos = getAdapterPosition();
             if (pos == RecyclerView.NO_POSITION)
                 return false;
 
             EntityAttachment attachment = items.get(pos);
-            if (attachment == null)
+            if (attachment == null || !attachment.available)
                 return false;
 
-            if (TextUtils.isEmpty(attachment.name))
-                return false;
+            File file = attachment.getFile(context);
+            Uri uri = FileProvider.getUriForFile(context, BuildConfig.APPLICATION_ID, file);
 
-            Toast toast = ToastEx.makeText(context, attachment.name, Toast.LENGTH_LONG);
-            toast.setGravity(Gravity.CENTER, 0, 0);
-            toast.show();
+            Intent send = new Intent();
+            send.setAction(Intent.ACTION_SEND);
+            send.putExtra(Intent.EXTRA_STREAM, uri);
+            send.setType(attachment.getMimeType());
+            send.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            context.startActivity(Intent.createChooser(send, context.getString(R.string.title_select_app)));
+
             return true;
         }
 
@@ -351,6 +321,7 @@ public class AdapterAttachment extends RecyclerView.Adapter<AdapterAttachment.Vi
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
         this.debug = prefs.getBoolean("debug", false);
+        this.dp12 = Helper.dp2pixels(context, 12);
 
         setHasStableIds(true);
 

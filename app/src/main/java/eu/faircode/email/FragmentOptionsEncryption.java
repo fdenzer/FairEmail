@@ -25,6 +25,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.security.KeyChain;
@@ -39,6 +40,7 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CompoundButton;
+import android.widget.ImageButton;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -66,14 +68,17 @@ import java.util.Enumeration;
 import java.util.List;
 
 public class FragmentOptionsEncryption extends FragmentBase implements SharedPreferences.OnSharedPreferenceChangeListener {
+    private ImageButton ibInfo;
     private SwitchCompat swSign;
     private SwitchCompat swEncrypt;
     private SwitchCompat swAutoDecrypt;
 
     private Spinner spOpenPgp;
+    private TextView tvOpenPgpStatus;
     private SwitchCompat swAutocrypt;
     private SwitchCompat swAutocryptMutual;
 
+    private SwitchCompat swCheckCertificate;
     private Button btnManageCertificates;
     private Button btnImportKey;
     private Button btnManageKeys;
@@ -85,7 +90,8 @@ public class FragmentOptionsEncryption extends FragmentBase implements SharedPre
 
     private final static String[] RESET_OPTIONS = new String[]{
             "sign_default", "encrypt_default", "auto_decrypt",
-            "openpgp_provider", "autocrypt", "autocrypt_mutual"
+            "openpgp_provider", "autocrypt", "autocrypt_mutual",
+            "check_certificate"
     };
 
     @Override
@@ -98,15 +104,17 @@ public class FragmentOptionsEncryption extends FragmentBase implements SharedPre
         View view = inflater.inflate(R.layout.fragment_options_encryption, container, false);
 
         // Get controls
-
+        ibInfo = view.findViewById(R.id.ibInfo);
         swSign = view.findViewById(R.id.swSign);
         swEncrypt = view.findViewById(R.id.swEncrypt);
         swAutoDecrypt = view.findViewById(R.id.swAutoDecrypt);
 
         spOpenPgp = view.findViewById(R.id.spOpenPgp);
+        tvOpenPgpStatus = view.findViewById(R.id.tvOpenPgpStatus);
         swAutocrypt = view.findViewById(R.id.swAutocrypt);
         swAutocryptMutual = view.findViewById(R.id.swAutocryptMutual);
 
+        swCheckCertificate = view.findViewById(R.id.swCheckCertificate);
         btnManageCertificates = view.findViewById(R.id.btnManageCertificates);
         btnImportKey = view.findViewById(R.id.btnImportKey);
         btnManageKeys = view.findViewById(R.id.btnManageKeys);
@@ -114,10 +122,11 @@ public class FragmentOptionsEncryption extends FragmentBase implements SharedPre
         tvKeySize = view.findViewById(R.id.tvKeySize);
 
         Intent intent = new Intent(OpenPgpApi.SERVICE_INTENT_2);
-        List<ResolveInfo> ris = pm.queryIntentServices(intent, 0);
-        for (ResolveInfo ri : ris)
-            if (ri.serviceInfo != null)
-                openPgpProvider.add(ri.serviceInfo.packageName);
+        List<ResolveInfo> ris = pm.queryIntentServices(intent, 0); // package whitelisted
+        if (ris != null)
+            for (ResolveInfo ri : ris)
+                if (ri.serviceInfo != null)
+                    openPgpProvider.add(ri.serviceInfo.packageName);
 
         ArrayAdapter<String> adapter = new ArrayAdapter<>(getContext(), android.R.layout.simple_spinner_item, android.R.id.text1);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
@@ -129,6 +138,13 @@ public class FragmentOptionsEncryption extends FragmentBase implements SharedPre
         // Wire controls
 
         final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
+
+        ibInfo.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Helper.viewFAQ(getContext(), 12);
+            }
+        });
 
         swSign.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
@@ -190,6 +206,13 @@ public class FragmentOptionsEncryption extends FragmentBase implements SharedPre
 
         // S/MIME
 
+        swCheckCertificate.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean checked) {
+                prefs.edit().putBoolean("check_certificate", checked).apply();
+            }
+        });
+
         btnManageCertificates.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -199,7 +222,8 @@ public class FragmentOptionsEncryption extends FragmentBase implements SharedPre
         });
 
         final Intent importKey = KeyChain.createInstallIntent();
-        btnImportKey.setEnabled(importKey.resolveActivity(pm) != null);
+        btnImportKey.setEnabled(importKey.resolveActivity(pm) != null); // system whitelisted
+        btnImportKey.setVisibility(Build.VERSION.SDK_INT < Build.VERSION_CODES.R ? View.VISIBLE : View.GONE);
         btnImportKey.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -208,7 +232,7 @@ public class FragmentOptionsEncryption extends FragmentBase implements SharedPre
         });
 
         final Intent security = new Intent(Settings.ACTION_SECURITY_SETTINGS);
-        btnImportKey.setEnabled(security.resolveActivity(pm) != null);
+        btnImportKey.setEnabled(security.resolveActivity(pm) != null); // system whitelisted
         btnManageKeys.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -343,25 +367,27 @@ public class FragmentOptionsEncryption extends FragmentBase implements SharedPre
         swAutocrypt.setChecked(prefs.getBoolean("autocrypt", true));
         swAutocryptMutual.setChecked(prefs.getBoolean("autocrypt_mutual", true));
         swAutocryptMutual.setEnabled(swAutocrypt.isChecked());
+
+        swCheckCertificate.setChecked(prefs.getBoolean("check_certificate", true));
     }
 
     private void testOpenPgp(String pkg) {
         if (pgpService != null && pgpService.isBound())
             pgpService.unbindFromService();
 
-        Log.i("PGP binding to " + pkg);
+        tvOpenPgpStatus.setText("PGP binding to " + pkg);
         pgpService = new OpenPgpServiceConnection(getContext(), pkg, new OpenPgpServiceConnection.OnBound() {
             @Override
             public void onBound(IOpenPgpService2 service) {
-                Log.i("PGP bound to " + pkg);
+                tvOpenPgpStatus.setText("PGP bound to " + pkg);
             }
 
             @Override
             public void onError(Exception ex) {
                 if ("bindService() returned false!".equals(ex.getMessage()))
-                    Log.i(ex.getMessage());
+                    tvOpenPgpStatus.setText(ex.getMessage());
                 else
-                    Log.e("PGP", ex);
+                    tvOpenPgpStatus.setText(ex.toString());
             }
         });
         pgpService.bindToService();

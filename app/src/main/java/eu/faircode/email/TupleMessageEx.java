@@ -42,6 +42,7 @@ public class TupleMessageEx extends EntityMessage {
     public Integer folderColor;
     public String folderDisplay;
     public String folderType;
+    public boolean folderUnified;
     public boolean folderReadOnly;
     public String identityName;
     public String identityEmail;
@@ -55,6 +56,7 @@ public class TupleMessageEx extends EntityMessage {
     public int signed;
     public int encrypted;
     public int visible;
+    public int visible_unseen;
     public Long totalSize;
     public Integer ui_priority;
     public Integer ui_importance;
@@ -67,7 +69,7 @@ public class TupleMessageEx extends EntityMessage {
 
     String getFolderName(Context context) {
         return (folderDisplay == null
-                ? Helper.localizeFolderName(context, folderName)
+                ? EntityFolder.localizeName(context, folderName)
                 : folderDisplay);
     }
 
@@ -100,6 +102,7 @@ public class TupleMessageEx extends EntityMessage {
                     this.folderName.equals(other.folderName) &&
                     Objects.equals(this.folderDisplay, other.folderDisplay) &&
                     this.folderType.equals(other.folderType) &&
+                    this.folderUnified == other.folderUnified &&
                     this.folderReadOnly == other.folderReadOnly &&
                     Objects.equals(this.identityName, other.identityName) &&
                     Objects.equals(this.identityEmail, other.identityEmail) &&
@@ -113,6 +116,7 @@ public class TupleMessageEx extends EntityMessage {
                     this.signed == other.signed &&
                     this.encrypted == other.encrypted &&
                     this.visible == other.visible &&
+                    this.visible_unseen == other.visible_unseen &&
                     Objects.equals(this.totalSize, other.totalSize) &&
                     Objects.equals(this.ui_priority, other.ui_priority) &&
                     Objects.equals(this.ui_importance, other.ui_importance) &&

@@ -20,14 +20,13 @@ package eu.faircode.email;
 */
 
 import android.app.Dialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
 import android.text.TextUtils;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -42,6 +41,7 @@ import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -54,6 +54,10 @@ import androidx.constraintlayout.widget.Group;
 import androidx.lifecycle.Lifecycle;
 import androidx.preference.PreferenceManager;
 
+import java.io.IOException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+
 public class FragmentOptionsPrivacy extends FragmentBase implements SharedPreferences.OnSharedPreferenceChangeListener {
     private SwitchCompat swConfirmLinks;
     private SwitchCompat swBrowseLinks;
@@ -61,21 +65,27 @@ public class FragmentOptionsPrivacy extends FragmentBase implements SharedPrefer
     private SwitchCompat swConfirmHtml;
     private SwitchCompat swDisableTracking;
     private SwitchCompat swHideTimeZone;
-    private Button btnBiometrics;
     private Button btnPin;
+    private Button btnBiometrics;
     private Spinner spBiometricsTimeout;
     private SwitchCompat swDisplayHidden;
     private SwitchCompat swSecure;
     private SwitchCompat swSafeBrowsing;
-    private Button btnSafeBrowsing;
+    private ImageButton ibSafeBrowsing;
+    private ImageButton ibDisconnectBlacklist;
+    private Button btnDisconnectBlacklist;
+    private TextView tvDisconnectBlacklistTime;
+    private SwitchCompat swDisconnectLinks;
+    private SwitchCompat swDisconnectImages;
 
     private Group grpSafeBrowsing;
 
     private final static String[] RESET_OPTIONS = new String[]{
             "confirm_links", "browse_links", "confirm_images", "confirm_html",
             "disable_tracking", "hide_timezone",
-            "biometrics", "pin", "biometrics_timeout",
-            "display_hidden", "secure", "safe_browsing"
+            "pin", "biometrics", "biometrics_timeout",
+            "display_hidden", "secure", "safe_browsing",
+            "disconnect_links", "disconnect_images"
     };
 
     @Override
@@ -84,7 +94,6 @@ public class FragmentOptionsPrivacy extends FragmentBase implements SharedPrefer
         setSubtitle(R.string.title_setup);
         setHasOptionsMenu(true);
 
-        PackageManager pm = getContext().getPackageManager();
         View view = inflater.inflate(R.layout.fragment_options_privacy, container, false);
 
         // Get controls
@@ -95,13 +104,18 @@ public class FragmentOptionsPrivacy extends FragmentBase implements SharedPrefer
         swConfirmHtml = view.findViewById(R.id.swConfirmHtml);
         swDisableTracking = view.findViewById(R.id.swDisableTracking);
         swHideTimeZone = view.findViewById(R.id.swHideTimeZone);
-        btnBiometrics = view.findViewById(R.id.btnBiometrics);
         btnPin = view.findViewById(R.id.btnPin);
+        btnBiometrics = view.findViewById(R.id.btnBiometrics);
         spBiometricsTimeout = view.findViewById(R.id.spBiometricsTimeout);
         swDisplayHidden = view.findViewById(R.id.swDisplayHidden);
         swSecure = view.findViewById(R.id.swSecure);
         swSafeBrowsing = view.findViewById(R.id.swSafeBrowsing);
-        btnSafeBrowsing = view.findViewById(R.id.btnSafeBrowsing);
+        ibSafeBrowsing = view.findViewById(R.id.ibSafeBrowsing);
+        ibDisconnectBlacklist = view.findViewById(R.id.ibDisconnectBlacklist);
+        btnDisconnectBlacklist = view.findViewById(R.id.btnDisconnectBlacklist);
+        tvDisconnectBlacklistTime = view.findViewById(R.id.tvDisconnectBlacklistTime);
+        swDisconnectLinks = view.findViewById(R.id.swDisconnectLinks);
+        swDisconnectImages = view.findViewById(R.id.swDisconnectImages);
 
         grpSafeBrowsing = view.findViewById(R.id.grpSafeBrowsing);
 
@@ -154,12 +168,20 @@ public class FragmentOptionsPrivacy extends FragmentBase implements SharedPrefer
             }
         });
 
+        btnPin.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                FragmentDialogPin fragment = new FragmentDialogPin();
+                fragment.show(getParentFragmentManager(), "pin");
+            }
+        });
+
         btnBiometrics.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 final boolean biometrics = prefs.getBoolean("biometrics", false);
 
-                Helper.authenticate(getActivity(), biometrics, new Runnable() {
+                Helper.authenticate(getActivity(), getViewLifecycleOwner(), biometrics, new Runnable() {
                     @Override
                     public void run() {
                         try {
@@ -181,14 +203,6 @@ public class FragmentOptionsPrivacy extends FragmentBase implements SharedPrefer
                         // Do nothing
                     }
                 });
-            }
-        });
-
-        btnPin.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                FragmentDialogPin fragment = new FragmentDialogPin();
-                fragment.show(getParentFragmentManager(), "pin");
             }
         });
 
@@ -216,7 +230,6 @@ public class FragmentOptionsPrivacy extends FragmentBase implements SharedPrefer
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean checked) {
                 prefs.edit().putBoolean("secure", checked).commit(); // apply won't work here
-                restart();
             }
         });
 
@@ -227,7 +240,7 @@ public class FragmentOptionsPrivacy extends FragmentBase implements SharedPrefer
             }
         });
 
-        btnSafeBrowsing.setOnClickListener(new View.OnClickListener() {
+        ibSafeBrowsing.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Helper.view(getContext(), Uri.parse("https://developers.google.com/safe-browsing"), true);
@@ -235,6 +248,60 @@ public class FragmentOptionsPrivacy extends FragmentBase implements SharedPrefer
         });
 
         grpSafeBrowsing.setVisibility(Build.VERSION.SDK_INT < Build.VERSION_CODES.O ? View.GONE : View.VISIBLE);
+
+        ibDisconnectBlacklist.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Helper.viewFAQ(getContext(), 159);
+            }
+        });
+
+        btnDisconnectBlacklist.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                new SimpleTask<Void>() {
+                    @Override
+                    protected void onPreExecute(Bundle args) {
+                        btnDisconnectBlacklist.setEnabled(false);
+                    }
+
+                    @Override
+                    protected void onPostExecute(Bundle args) {
+                        btnDisconnectBlacklist.setEnabled(true);
+                    }
+
+                    @Override
+                    protected Void onExecute(Context context, Bundle args) throws Throwable {
+                        DisconnectBlacklist.download(context);
+                        return null;
+                    }
+
+                    @Override
+                    protected void onExecuted(Bundle args, Void data) {
+                        setOptions();
+                    }
+
+                    @Override
+                    protected void onException(Bundle args, Throwable ex) {
+                        Log.unexpectedError(getParentFragmentManager(), ex, !(ex instanceof IOException));
+                    }
+                }.execute(FragmentOptionsPrivacy.this, new Bundle(), "disconnect");
+            }
+        });
+
+        swDisconnectLinks.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean checked) {
+                prefs.edit().putBoolean("disconnect_links", checked).apply();
+            }
+        });
+
+        swDisconnectImages.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean checked) {
+                prefs.edit().putBoolean("disconnect_images", checked).apply();
+            }
+        });
 
         PreferenceManager.getDefaultSharedPreferences(getContext()).registerOnSharedPreferenceChangeListener(this);
 
@@ -307,6 +374,14 @@ public class FragmentOptionsPrivacy extends FragmentBase implements SharedPrefer
         swDisplayHidden.setChecked(prefs.getBoolean("display_hidden", false));
         swSecure.setChecked(prefs.getBoolean("secure", false));
         swSafeBrowsing.setChecked(prefs.getBoolean("safe_browsing", false));
+
+        long time = prefs.getLong("disconnect_last", -1);
+        DateFormat DF = SimpleDateFormat.getDateTimeInstance();
+        tvDisconnectBlacklistTime.setText(time < 0 ? null : DF.format(time));
+        tvDisconnectBlacklistTime.setVisibility(time < 0 ? View.GONE : View.VISIBLE);
+
+        swDisconnectLinks.setChecked(prefs.getBoolean("disconnect_links", true));
+        swDisconnectImages.setChecked(prefs.getBoolean("disconnect_images", false));
     }
 
     public static class FragmentDialogPin extends FragmentDialogBase {
@@ -368,14 +443,7 @@ public class FragmentOptionsPrivacy extends FragmentBase implements SharedPrefer
                 }
             });
 
-            new Handler().post(new Runnable() {
-                @Override
-                public void run() {
-                    etPin.requestFocus();
-                }
-            });
-
-            new Handler().post(new Runnable() {
+            ApplicationEx.getMainHandler().post(new Runnable() {
                 @Override
                 public void run() {
                     etPin.requestFocus();

@@ -23,16 +23,24 @@ import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Build;
+import android.text.TextUtils;
 
 import androidx.annotation.NonNull;
+import androidx.preference.PreferenceManager;
 import androidx.room.Entity;
 import androidx.room.ForeignKey;
 import androidx.room.Index;
 import androidx.room.PrimaryKey;
 
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+
 import java.io.File;
 import java.io.Serializable;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -91,6 +99,15 @@ public class EntityMessage implements Serializable {
     static final Integer PRIORITIY_NORMAL = 1;
     static final Integer PRIORITIY_HIGH = 2;
 
+    static final Long SWIPE_ACTION_ASK = -1L;
+    static final Long SWIPE_ACTION_SEEN = -2L;
+    static final Long SWIPE_ACTION_SNOOZE = -3L;
+    static final Long SWIPE_ACTION_HIDE = -4L;
+    static final Long SWIPE_ACTION_MOVE = -5L;
+    static final Long SWIPE_ACTION_FLAG = -6L;
+    static final Long SWIPE_ACTION_DELETE = -7L;
+    static final Long SWIPE_ACTION_JUNK = -8L;
+
     @PrimaryKey(autoGenerate = true)
     public Long id;
     @NonNull
@@ -112,6 +129,7 @@ public class EntityMessage implements Serializable {
     public String thread; // compose = null
     public Integer priority;
     public Integer importance;
+    public Boolean auto_submitted;
     public Boolean receipt; // is receipt
     public Boolean receipt_request;
     public Address[] receipt_to;
@@ -143,6 +161,8 @@ public class EntityMessage implements Serializable {
     public Boolean plain_only = null;
     public Integer encrypt = null;
     public Integer ui_encrypt = null;
+    @NonNull
+    public Boolean verified = false;
     public String preview;
     @NonNull
     public Boolean signature = true;
@@ -159,6 +179,7 @@ public class EntityMessage implements Serializable {
     public Boolean flagged = false;
     public String flags; // system flags
     public String[] keywords; // user flags
+    public String[] labels; // Gmail
     @NonNull
     public Integer notifying = 0;
     @NonNull
@@ -193,6 +214,8 @@ public class EntityMessage implements Serializable {
     }
 
     static String generateMessageId(String domain) {
+        // https://www.jwz.org/doc/mid.html
+        // https://tools.ietf.org/html/rfc2822.html#section-3.6.4
         return "<" + UUID.randomUUID() + "@" + domain + '>';
     }
 
@@ -201,7 +224,9 @@ public class EntityMessage implements Serializable {
         if (identities != null && senders != null)
             for (Address sender : senders)
                 for (TupleIdentityEx identity : identities)
-                    if (identity.account == account && identity.similarAddress(sender))
+                    if (identity.account == account &&
+                            identity.self &&
+                            identity.similarAddress(sender))
                         return true;
 
         return false;
@@ -210,8 +235,10 @@ public class EntityMessage implements Serializable {
     Address[] getAllRecipients(List<TupleIdentityEx> identities, long account) {
         List<Address> addresses = new ArrayList<>();
 
-        if (to != null && !replySelf(identities, account))
-            addresses.addAll(Arrays.asList(to));
+        if (!replySelf(identities, account)) {
+            if (to != null)
+                addresses.addAll(Arrays.asList(to));
+        }
 
         if (cc != null)
             addresses.addAll(Arrays.asList(cc));
@@ -220,7 +247,9 @@ public class EntityMessage implements Serializable {
         if (identities != null)
             for (Address address : new ArrayList<>(addresses))
                 for (TupleIdentityEx identity : identities)
-                    if (identity.account == account && identity.similarAddress(address))
+                    if (identity.account == account &&
+                            identity.self &&
+                            identity.similarAddress(address))
                         addresses.remove(address);
 
         return addresses.toArray(new Address[0]);
@@ -234,11 +263,96 @@ public class EntityMessage implements Serializable {
         return false;
     }
 
+    Element getReplyHeader(Context context, Document document, boolean separate, boolean extended) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        boolean language_detection = prefs.getBoolean("language_detection", false);
+        String l = (language_detection ? language : null);
+
+        DateFormat DF;
+        if (l == null)
+            DF = Helper.getDateTimeInstance(context);
+        else
+            DF = SimpleDateFormat.getDateTimeInstance(
+                    SimpleDateFormat.MEDIUM, SimpleDateFormat.MEDIUM, new Locale(l));
+
+        Element p = document.createElement("p");
+        if (extended) {
+            if (from != null && from.length > 0) {
+                Element strong = document.createElement("strong");
+                strong.text(Helper.getString(context, l, R.string.title_from) + " ");
+                p.appendChild(strong);
+                p.appendText(MessageHelper.formatAddresses(from));
+                p.appendElement("br");
+            }
+            if (to != null && to.length > 0) {
+                Element strong = document.createElement("strong");
+                strong.text(Helper.getString(context, l, R.string.title_to) + " ");
+                p.appendChild(strong);
+                p.appendText(MessageHelper.formatAddresses(to));
+                p.appendElement("br");
+            }
+            if (cc != null && cc.length > 0) {
+                Element strong = document.createElement("strong");
+                strong.text(Helper.getString(context, l, R.string.title_cc) + " ");
+                p.appendChild(strong);
+                p.appendText(MessageHelper.formatAddresses(cc));
+                p.appendElement("br");
+            }
+            if (received != null) { // embedded messages
+                Element strong = document.createElement("strong");
+                strong.text(Helper.getString(context, l, R.string.title_received) + " ");
+                p.appendChild(strong);
+                p.appendText(DF.format(received));
+                p.appendElement("br");
+            }
+            if (!TextUtils.isEmpty(subject)) {
+                Element strong = document.createElement("strong");
+                strong.text(Helper.getString(context, l, R.string.title_subject) + " ");
+                p.appendChild(strong);
+                p.appendText(subject);
+                p.appendElement("br");
+            }
+        } else
+            p.text(DF.format(new Date(received)) + " " + MessageHelper.formatAddresses(from) + ":");
+
+        if (separate) {
+            Element div = document.createElement("div");
+            div.appendElement("hr");
+            div.appendChild(p);
+            return div;
+        } else
+            return p;
+    }
+
     String getNotificationChannelId() {
         if (from == null || from.length == 0)
             return null;
         InternetAddress sender = (InternetAddress) from[0];
         return "notification." + sender.getAddress().toLowerCase(Locale.ROOT);
+    }
+
+    boolean setLabel(String label, boolean set) {
+        List<String> list = new ArrayList<>();
+        if (labels != null)
+            list.addAll(Arrays.asList(labels));
+
+        boolean changed = false;
+        if (set) {
+            if (!list.contains(label)) {
+                changed = true;
+                list.add(label);
+            }
+        } else {
+            if (list.contains(label)) {
+                changed = true;
+                list.remove(label);
+            }
+        }
+
+        if (changed)
+            labels = list.toArray(new String[0]);
+
+        return changed;
     }
 
     static File getFile(Context context, Long id) {
@@ -352,6 +466,7 @@ public class EntityMessage implements Serializable {
                     Objects.equals(this.plain_only, other.plain_only) &&
                     Objects.equals(this.encrypt, other.encrypt) &&
                     Objects.equals(this.ui_encrypt, other.ui_encrypt) &&
+                    this.verified == other.verified &&
                     Objects.equals(this.preview, other.preview) &&
                     this.signature.equals(other.signature) &&
                     Objects.equals(this.sent, other.sent) &&

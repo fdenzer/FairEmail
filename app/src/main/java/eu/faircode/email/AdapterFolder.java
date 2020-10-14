@@ -22,6 +22,7 @@ package eu.faircode.email;
 import android.app.Dialog;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -31,7 +32,6 @@ import android.graphics.Color;
 import android.graphics.Typeface;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
 import android.provider.Settings;
 import android.text.SpannableString;
 import android.text.TextUtils;
@@ -48,6 +48,7 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -220,34 +221,34 @@ public class AdapterFolder extends RecyclerView.Adapter<AdapterFolder.ViewHolder
 
                 if (folder.sync_state == null || "requested".equals(folder.sync_state)) {
                     if (folder.executing > 0) {
-                        ivState.setImageResource(R.drawable.baseline_dns_24);
+                        ivState.setImageResource(R.drawable.twotone_dns_24);
                         ivState.setContentDescription(context.getString(R.string.title_legend_executing));
                     } else if ("waiting".equals(folder.state)) {
-                        ivState.setImageResource(R.drawable.baseline_hourglass_empty_24);
+                        ivState.setImageResource(R.drawable.twotone_hourglass_top_24);
                         ivState.setContentDescription(context.getString(R.string.title_legend_waiting));
                     } else if ("connected".equals(folder.state)) {
-                        ivState.setImageResource(R.drawable.baseline_cloud_24);
+                        ivState.setImageResource(R.drawable.twotone_cloud_done_24);
                         ivState.setContentDescription(context.getString(R.string.title_legend_connected));
                     } else if ("connecting".equals(folder.state)) {
-                        ivState.setImageResource(R.drawable.baseline_cloud_queue_24);
+                        ivState.setImageResource(R.drawable.twotone_cloud_queue_24);
                         ivState.setContentDescription(context.getString(R.string.title_legend_connecting));
                     } else if ("closing".equals(folder.state)) {
-                        ivState.setImageResource(R.drawable.baseline_close_24);
+                        ivState.setImageResource(R.drawable.twotone_cancel_24);
                         ivState.setContentDescription(context.getString(R.string.title_legend_closing));
                     } else if (folder.state == null) {
-                        ivState.setImageResource(R.drawable.baseline_cloud_off_24);
+                        ivState.setImageResource(R.drawable.twotone_cloud_off_24);
                         ivState.setContentDescription(context.getString(R.string.title_legend_disconnected));
                     } else
-                        ivState.setImageResource(R.drawable.baseline_warning_24);
+                        ivState.setImageResource(R.drawable.twotone_warning_24);
                 } else {
                     if ("syncing".equals(folder.sync_state)) {
-                        ivState.setImageResource(R.drawable.baseline_compare_arrows_24);
+                        ivState.setImageResource(R.drawable.twotone_compare_arrows_24);
                         ivState.setContentDescription(context.getString(R.string.title_legend_synchronizing));
                     } else if ("downloading".equals(folder.sync_state)) {
-                        ivState.setImageResource(R.drawable.baseline_cloud_download_24);
+                        ivState.setImageResource(R.drawable.twotone_cloud_download_24);
                         ivState.setContentDescription(context.getString(R.string.title_legend_downloading));
                     } else
-                        ivState.setImageResource(R.drawable.baseline_warning_24);
+                        ivState.setImageResource(R.drawable.twotone_warning_24);
                 }
                 ivState.setVisibility(
                         folder.synchronize || folder.state != null || folder.sync_state != null
@@ -299,7 +300,7 @@ public class AdapterFolder extends RecyclerView.Adapter<AdapterFolder.ViewHolder
                 tvMessages.setText(sb.toString());
 
                 ivMessages.setImageResource(folder.download || EntityFolder.OUTBOX.equals(folder.type)
-                        ? R.drawable.baseline_mail_24 : R.drawable.baseline_mail_outline_24);
+                        ? R.drawable.twotone_mail_24 : R.drawable.twotone_mail_outline_24);
             }
 
             if (folder.selectable)
@@ -312,13 +313,13 @@ public class AdapterFolder extends RecyclerView.Adapter<AdapterFolder.ViewHolder
                 if (account < 0 && !primary)
                     tvType.setText(folder.accountName);
                 else
-                    tvType.setText(Helper.localizeFolderType(context, folder.type));
+                    tvType.setText(EntityFolder.localizeType(context, folder.type));
 
                 tvTotal.setText(folder.total == null ? "" : NF.format(folder.total));
 
                 if (folder.account == null) {
                     tvAfter.setText(null);
-                    ivSync.setImageResource(R.drawable.baseline_sync_24);
+                    ivSync.setImageResource(R.drawable.twotone_sync_24);
                     ivSync.setContentDescription(context.getString(R.string.title_legend_synchronize_on));
                 } else {
                     StringBuilder a = new StringBuilder();
@@ -336,7 +337,7 @@ public class AdapterFolder extends RecyclerView.Adapter<AdapterFolder.ViewHolder
                         a.append(NF.format(folder.keep_days));
 
                     tvAfter.setText(a.toString());
-                    ivSync.setImageResource(folder.synchronize ? R.drawable.baseline_sync_24 : R.drawable.baseline_sync_disabled_24);
+                    ivSync.setImageResource(folder.synchronize ? R.drawable.twotone_sync_24 : R.drawable.twotone_sync_disabled_24);
                     ivSync.setContentDescription(context.getString(folder.synchronize ? R.string.title_legend_synchronize_on : R.string.title_legend_synchronize_off));
                 }
                 ivSync.setImageTintList(ColorStateList.valueOf(
@@ -348,7 +349,7 @@ public class AdapterFolder extends RecyclerView.Adapter<AdapterFolder.ViewHolder
 
                 tvFlagged.setText(NF.format(folder.flagged));
                 ibFlagged.setImageResource(folder.flagged == 0
-                        ? R.drawable.baseline_star_border_24 : R.drawable.baseline_star_24);
+                        ? R.drawable.twotone_star_border_24 : R.drawable.twotone_star_24);
                 tvFlagged.setEnabled(folder.flagged > 0);
                 ibFlagged.setEnabled(folder.flagged > 0);
 
@@ -385,6 +386,9 @@ public class AdapterFolder extends RecyclerView.Adapter<AdapterFolder.ViewHolder
                         break;
                     default:
                         if (listener == null) {
+                            if (!folder.selectable)
+                                return;
+
                             LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(context);
                             lbm.sendBroadcast(
                                     new Intent(ActivityView.ACTION_VIEW_MESSAGES)
@@ -458,6 +462,7 @@ public class AdapterFolder extends RecyclerView.Adapter<AdapterFolder.ViewHolder
             SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
             boolean debug = prefs.getBoolean("debug", false);
 
+            int order = 1;
             PopupMenuLifecycle popupMenu = new PopupMenuLifecycle(context, powner, view);
 
             if (folder.selectable) {
@@ -466,57 +471,70 @@ public class AdapterFolder extends RecyclerView.Adapter<AdapterFolder.ViewHolder
                 ss.setSpan(new RelativeSizeSpan(0.9f), 0, ss.length(), 0);
                 popupMenu.getMenu().add(Menu.NONE, 0, 0, ss).setEnabled(false);
 
-                popupMenu.getMenu().add(Menu.NONE, R.string.title_synchronize_now, 1, R.string.title_synchronize_now);
+                popupMenu.getMenu().add(Menu.NONE, R.string.title_synchronize_now, order++, R.string.title_synchronize_now);
+            }
 
+            int childs = 0;
+            if (folder.child_refs != null)
+                for (TupleFolderEx child : folder.child_refs)
+                    if (child.selectable)
+                        childs++;
+            if (childs > 0)
+                popupMenu.getMenu().add(Menu.NONE, R.string.title_synchronize_childs, order++, R.string.title_synchronize_childs);
+
+            if (folder.selectable) {
                 if (folder.account != null && folder.accountProtocol == EntityAccount.TYPE_IMAP) {
-                    popupMenu.getMenu().add(Menu.NONE, R.string.title_synchronize_more, 2, R.string.title_synchronize_more);
+                    popupMenu.getMenu().add(Menu.NONE, R.string.title_synchronize_more, order++, R.string.title_synchronize_more);
 
-                    popupMenu.getMenu().add(Menu.NONE, R.string.title_delete_local, 3, R.string.title_delete_local);
-                    popupMenu.getMenu().add(Menu.NONE, R.string.title_delete_browsed, 4, R.string.title_delete_browsed);
-
-                    if (EntityFolder.TRASH.equals(folder.type))
-                        popupMenu.getMenu().add(Menu.NONE, R.string.title_empty_trash, 5, R.string.title_empty_trash);
-                    else if (EntityFolder.JUNK.equals(folder.type))
-                        popupMenu.getMenu().add(Menu.NONE, R.string.title_empty_spam, 5, R.string.title_empty_spam);
+                    popupMenu.getMenu().add(Menu.NONE, R.string.title_delete_local, order++, R.string.title_delete_local);
+                    popupMenu.getMenu().add(Menu.NONE, R.string.title_delete_browsed, order++, R.string.title_delete_browsed);
                 }
 
+                if (EntityFolder.TRASH.equals(folder.type))
+                    popupMenu.getMenu().add(Menu.NONE, R.string.title_empty_trash, order++, R.string.title_empty_trash);
+                else if (EntityFolder.JUNK.equals(folder.type))
+                    popupMenu.getMenu().add(Menu.NONE, R.string.title_empty_spam, order++, R.string.title_empty_spam);
+
                 if (folder.account != null) {
-                    popupMenu.getMenu().add(Menu.NONE, R.string.title_unified_folder, 6, R.string.title_unified_folder)
+                    popupMenu.getMenu().add(Menu.NONE, R.string.title_unified_folder, order++, R.string.title_unified_folder)
                             .setCheckable(true).setChecked(folder.unified);
 
-                    popupMenu.getMenu().add(Menu.NONE, R.string.title_navigation_folder, 7, R.string.title_navigation_folder)
+                    popupMenu.getMenu().add(Menu.NONE, R.string.title_navigation_folder, order++, R.string.title_navigation_folder)
                             .setCheckable(true).setChecked(folder.navigation);
 
-                    popupMenu.getMenu().add(Menu.NONE, R.string.title_notify_folder, 8, R.string.title_notify_folder)
+                    popupMenu.getMenu().add(Menu.NONE, R.string.title_notify_folder, order++, R.string.title_notify_folder)
                             .setCheckable(true).setChecked(folder.notify);
                 }
 
                 if (folder.account != null && folder.accountProtocol == EntityAccount.TYPE_IMAP) {
                     boolean subscriptions = prefs.getBoolean("subscriptions", false);
                     if (subscriptions && !folder.read_only)
-                        popupMenu.getMenu().add(Menu.NONE, R.string.title_subscribe, 9, R.string.title_subscribe)
+                        popupMenu.getMenu().add(Menu.NONE, R.string.title_subscribe, order++, R.string.title_subscribe)
                                 .setCheckable(true).setChecked(folder.subscribed != null && folder.subscribed);
 
-                    popupMenu.getMenu().add(Menu.NONE, R.string.title_synchronize_enabled, 10, R.string.title_synchronize_enabled)
+                    popupMenu.getMenu().add(Menu.NONE, R.string.title_synchronize_enabled, order++, R.string.title_synchronize_enabled)
                             .setCheckable(true).setChecked(folder.synchronize);
 
                     if (!folder.read_only)
-                        popupMenu.getMenu().add(Menu.NONE, R.string.title_edit_rules, 11, R.string.title_edit_rules);
-                    popupMenu.getMenu().add(Menu.NONE, R.string.title_edit_properties, 12, R.string.title_edit_properties);
+                        popupMenu.getMenu().add(Menu.NONE, R.string.title_edit_rules, order++, R.string.title_edit_rules);
+                    popupMenu.getMenu().add(Menu.NONE, R.string.title_edit_properties, order++, R.string.title_edit_properties);
 
                     if (folder.notify && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                         String channelId = EntityFolder.getNotificationChannelId(folder.id);
                         NotificationManager nm = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
                         NotificationChannel channel = nm.getNotificationChannel(channelId);
                         if (channel == null)
-                            popupMenu.getMenu().add(Menu.NONE, R.string.title_create_channel, 13, R.string.title_create_channel);
+                            popupMenu.getMenu().add(Menu.NONE, R.string.title_create_channel, order++, R.string.title_create_channel);
                         else {
-                            popupMenu.getMenu().add(Menu.NONE, R.string.title_edit_channel, 14, R.string.title_edit_channel);
-                            popupMenu.getMenu().add(Menu.NONE, R.string.title_delete_channel, 15, R.string.title_delete_channel);
+                            popupMenu.getMenu().add(Menu.NONE, R.string.title_edit_channel, order++, R.string.title_edit_channel);
+                            popupMenu.getMenu().add(Menu.NONE, R.string.title_delete_channel, order++, R.string.title_delete_channel);
                         }
                     }
                 }
             }
+
+            if (EntityFolder.INBOX.equals(folder.type) && folder.accountProtocol == EntityAccount.TYPE_POP)
+                popupMenu.getMenu().add(Menu.NONE, R.string.title_edit_rules, 11, R.string.title_edit_rules);
 
             if (folder.account != null && folder.accountProtocol == EntityAccount.TYPE_IMAP)
                 popupMenu.getMenu().add(Menu.NONE, R.string.title_create_sub_folder, 16, R.string.title_create_sub_folder)
@@ -531,7 +549,10 @@ public class AdapterFolder extends RecyclerView.Adapter<AdapterFolder.ViewHolder
                 public boolean onMenuItemClick(MenuItem item) {
                     switch (item.getItemId()) {
                         case R.string.title_synchronize_now:
-                            onActionSync();
+                            onActionSync(false);
+                            return true;
+                        case R.string.title_synchronize_childs:
+                            onActionSync(true);
                             return true;
 
                         case R.string.title_synchronize_more:
@@ -601,10 +622,12 @@ public class AdapterFolder extends RecyclerView.Adapter<AdapterFolder.ViewHolder
                     }
                 }
 
-                private void onActionSync() {
+                private void onActionSync(boolean childs) {
                     Bundle args = new Bundle();
                     args.putLong("folder", folder.id);
                     args.putInt("months", -1);
+                    args.putBoolean("childs", childs);
+
                     Intent data = new Intent();
                     data.putExtra("args", args);
                     parentFragment.onActivityResult(FragmentFolders.REQUEST_SYNC, RESULT_OK, data);
@@ -709,6 +732,7 @@ public class AdapterFolder extends RecyclerView.Adapter<AdapterFolder.ViewHolder
                         aargs.putString("question", context.getString(R.string.title_empty_spam_ask));
                     else
                         throw new IllegalArgumentException("Invalid folder type=" + type);
+                    aargs.putString("remark", context.getString(R.string.title_empty_all));
                     aargs.putLong("folder", folder.id);
                     aargs.putString("type", type);
 
@@ -723,7 +747,9 @@ public class AdapterFolder extends RecyclerView.Adapter<AdapterFolder.ViewHolder
                     lbm.sendBroadcast(
                             new Intent(ActivityView.ACTION_EDIT_RULES)
                                     .putExtra("account", folder.account)
-                                    .putExtra("folder", folder.id));
+                                    .putExtra("protocol", folder.accountProtocol)
+                                    .putExtra("folder", folder.id)
+                                    .putExtra("type", folder.type));
                 }
 
                 private void onActionEditProperties() {
@@ -749,7 +775,12 @@ public class AdapterFolder extends RecyclerView.Adapter<AdapterFolder.ViewHolder
                     Intent intent = new Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS)
                             .putExtra(Settings.EXTRA_APP_PACKAGE, context.getPackageName())
                             .putExtra(Settings.EXTRA_CHANNEL_ID, EntityFolder.getNotificationChannelId(folder.id));
-                    context.startActivity(intent);
+                    try {
+                        context.startActivity(intent);
+                    } catch (ActivityNotFoundException ex) {
+                        Log.w(ex);
+                        ToastEx.makeText(context, context.getString(R.string.title_no_viewer, intent), Toast.LENGTH_LONG).show();
+                    }
                 }
 
                 @RequiresApi(api = Build.VERSION_CODES.O)
@@ -815,7 +846,8 @@ public class AdapterFolder extends RecyclerView.Adapter<AdapterFolder.ViewHolder
         this.textColorSecondary = Helper.resolveColor(context, android.R.attr.textColorSecondary);
 
         boolean highlight_unread = prefs.getBoolean("highlight_unread", true);
-        this.colorUnread = Helper.resolveColor(context, highlight_unread ? R.attr.colorUnreadHighlight : android.R.attr.textColorPrimary);
+        int colorHighlight = prefs.getInt("highlight_color", Helper.resolveColor(context, R.attr.colorUnreadHighlight));
+        this.colorUnread = (highlight_unread ? colorHighlight : Helper.resolveColor(context, R.attr.colorUnread));
 
         setHasStableIds(true);
 
@@ -960,7 +992,7 @@ public class AdapterFolder extends RecyclerView.Adapter<AdapterFolder.ViewHolder
         set(all);
 
         // Delay search until after expanding
-        new Handler().post(new Runnable() {
+        ApplicationEx.getMainHandler().post(new Runnable() {
             @Override
             public void run() {
                 int pos = -1;
@@ -996,17 +1028,24 @@ public class AdapterFolder extends RecyclerView.Adapter<AdapterFolder.ViewHolder
         if (parents.size() > 0)
             Collections.sort(parents, parents.get(0).getComparator(context));
 
-        for (TupleFolderEx parent : parents)
-            if ((show_hidden || !parent.hide) &&
-                    (!subscribed_only ||
-                            parent.accountProtocol != EntityAccount.TYPE_IMAP ||
-                            (parent.subscribed != null && parent.subscribed))) {
+        for (TupleFolderEx parent : parents) {
+            if (parent.hide && !show_hidden)
+                continue;
+
+            List<TupleFolderEx> childs = null;
+            if (parent.child_refs != null)
+                childs = getHierarchical(parent.child_refs, indentation + 1);
+
+            if (!subscribed_only ||
+                    parent.accountProtocol != EntityAccount.TYPE_IMAP ||
+                    (parent.subscribed != null && parent.subscribed) ||
+                    (childs != null && childs.size() > 0)) {
                 parent.indentation = indentation;
                 result.add(parent);
-
-                if (!parent.collapsed && parent.child_refs != null)
-                    result.addAll(getHierarchical(parent.child_refs, indentation + 1));
+                if (!parent.collapsed && childs != null)
+                    result.addAll(childs);
             }
+        }
 
         return result;
     }

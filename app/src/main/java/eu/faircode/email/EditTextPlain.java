@@ -45,17 +45,18 @@ public class EditTextPlain extends FixedEditText {
                 ClipboardManager cbm = (ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
                 if (cbm != null && cbm.hasPrimaryClip()) {
                     ClipData data = cbm.getPrimaryClip();
-                    ClipData.Item item = data.getItemAt(0);
-
-                    CharSequence text = item.coerceToText(context);
-                    data = ClipData.newPlainText("coerced_plain_text", text);
-                    cbm.setPrimaryClip(data);
+                    ClipData.Item item = (data == null ? null : data.getItemAt(0));
+                    CharSequence text = (item == null ? null : item.coerceToText(context));
+                    if (text != null) {
+                        data = ClipData.newPlainText("coerced_plain_text", text.toString());
+                        cbm.setPrimaryClip(data);
+                    }
                 }
             }
 
             return super.onTextContextMenuItem(id);
         } catch (Throwable ex) {
-            Log.w(ex);
+            Log.e(ex);
             return false;
         }
     }

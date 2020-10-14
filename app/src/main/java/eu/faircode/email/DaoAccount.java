@@ -63,7 +63,7 @@ public interface DaoAccount {
             "    FROM identity" +
             "    WHERE identity.account = account.id" +
             "    AND identity.synchronize) AS identities" +
-            ", CASE WHEN drafts.id IS NULL THEN 0 ELSE 1 END AS drafts" +
+            ", drafts.id AS drafts" +
             " FROM account" +
             " LEFT JOIN folder AS drafts ON drafts.account = account.id AND drafts.type = '" + EntityFolder.DRAFTS + "'" +
             " WHERE :all OR account.synchronize" +
@@ -162,6 +162,9 @@ public interface DaoAccount {
 
     @Query("UPDATE account SET partial_fetch = :partial_fetch WHERE id = :id")
     int setAccountPartialFetch(long id, boolean partial_fetch);
+
+    @Query("UPDATE account SET max_size = :max_size WHERE id = :id")
+    int setAccountMaxSize(long id, Long max_size);
 
     @Query("UPDATE account SET warning = :warning WHERE id = :id")
     int setAccountWarning(long id, String warning);

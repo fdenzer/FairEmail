@@ -1,5 +1,4 @@
 apply plugin: 'com.android.application'
-apply plugin: 'com.bugsnag.android.gradle'
 
 def keystorePropertiesFile = rootProject.file("keystore.properties")
 def keystoreProperties = new Properties()
@@ -7,18 +6,18 @@ def keystoreProperties = new Properties()
 keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
 
 android {
-    compileSdkVersion 29
+    compileSdkVersion 30
 
     defaultConfig {
         applicationId "eu.faircode.email"
         minSdkVersion 21
-        targetSdkVersion 29
-        versionCode 1182
-        versionName "1.1182"
+        targetSdkVersion 30
+        versionCode 1358
+        versionName "1.1358"
         archivesBaseName = "FairEmail-v$versionName"
 
         // https://en.wikipedia.org/wiki/List_of_dinosaur_genera
-        buildConfigField "String", "RELEASE_NAME", "\"Gryponyx\""
+        buildConfigField "String", "RELEASE_NAME", "\"Xiyunykus\""
 
         javaCompileOptions {
             annotationProcessorOptions {
@@ -31,7 +30,7 @@ android {
 
         //ndkVersion "21.0.6113669"
         ndk {
-            // Bugsnag
+            // Bugsnag, sqlite
             abiFilters "armeabi-v7a", "x86", "arm64-v8a", "x86_64"
         }
     }
@@ -47,6 +46,19 @@ android {
                 resValues = false
                 shaders = false
             }
+        }
+
+        sourceSets {
+            github {
+                java.srcDirs = ['src/main/java', 'src/play/java']
+            }
+            fdroid {
+                java.srcDirs = ['src/main/java', 'src/fdroid/java']
+            }
+            play {
+                java.srcDirs = ['src/main/java', 'src/play/java']
+            }
+            main.res.srcDirs += 'src/main/resExtra'
         }
     }
 
@@ -66,6 +78,7 @@ android {
     }
 
     packagingOptions {
+        exclude 'LICENSES'
         exclude 'META-INF/LICENSE.txt'
         exclude 'META-INF/README.md'
         exclude 'META-INF/CHANGES'
@@ -75,38 +88,25 @@ android {
         exclude 'META-INF/LICENSE.commercial.txt'
     }
 
+    // https://google.github.io/android-gradle-dsl/current/com.android.build.gradle.internal.dsl.SigningConfig.html
     signingConfigs {
-        play {
-            storeFile file(keystoreProperties['storeFile'])
-            storePassword keystoreProperties['storePassword']
-            keyAlias keystoreProperties['keyAlias']
-            keyPassword keystoreProperties['keyPassword']
-        }
-        github {
+        release {
             storeFile file(keystoreProperties['storeFile'])
             storePassword keystoreProperties['storePassword']
             keyAlias keystoreProperties['keyAlias']
             keyPassword keystoreProperties['keyPassword']
             v1SigningEnabled true
-            v2SigningEnabled false
-            v2SigningEnabled false
+            v2SigningEnabled true
         }
     }
 
     buildTypes {
-        play {
+        release {
             debuggable = false
             minifyEnabled = true
             useProguard = true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-            signingConfig signingConfigs.play
-        }
-        github {
-            debuggable = false
-            minifyEnabled = true
-            useProguard = true
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-            signingConfig signingConfigs.github
+            signingConfig signingConfigs.release
         }
         debug {
             applicationIdSuffix '.debug'
@@ -120,72 +120,43 @@ android {
     flavorDimensions "all"
 
     productFlavors {
-        full {
+        github {
             dimension "all"
             buildConfigField "boolean", "BETA_RELEASE", "true"
             buildConfigField "boolean", "PLAY_STORE_RELEASE", "false"
-            buildConfigField "String", "INVITE_URI", "\"https://email.faircode.eu/\""
             buildConfigField "String", "PRO_FEATURES_URI", "\"https://email.faircode.eu/donate/\""
             buildConfigField "String", "CHANGELOG", "\"https://github.com/M66B/FairEmail/releases/\""
-            buildConfigField "String", "GITHUB_LATEST_API", "\"https://api.github.com/repos/M66B/open-source-email/releases/latest\""
-            buildConfigField "String", "OPENKEYCHAIN_URI", "\"https://f-droid.org/en/packages/org.sufficientlysecure.keychain/\""
-            buildConfigField "String", "CAMERA_URI", "\"https://f-droid.org/en/packages/net.sourceforge.opencamera/\""
-            buildConfigField "String", "RECORDER_URI", "\"https://f-droid.org/packages/com.github.axet.audiorecorder/\""
-            buildConfigField "String", "APPS_URI", "\"https://github.com/M66B?tab=repositories/\""
+            buildConfigField "String", "GITHUB_LATEST_API", "\"https://api.github.com/repos/M66B/FairEmail/releases/latest\""
+            buildConfigField "String", "GITHUB_LATEST_URI", "\"https://github.com/M66B/FairEmail/releases\""
         }
-        play_beta {
+        fdroid {
+            dimension "all"
+            buildConfigField "boolean", "BETA_RELEASE", "true"
+            buildConfigField "boolean", "PLAY_STORE_RELEASE", "false"
+            buildConfigField "String", "PRO_FEATURES_URI", "\"https://email.faircode.eu/donate/\""
+            buildConfigField "String", "CHANGELOG", "\"https://github.com/M66B/FairEmail/releases/\""
+            buildConfigField "String", "GITHUB_LATEST_API", "\"https://api.github.com/repos/M66B/FairEmail/releases/latest\""
+            buildConfigField "String", "GITHUB_LATEST_URI", "\"https://github.com/M66B/FairEmail/releases\""
+        }
+        play {
             dimension "all"
             //minSdkVersion 23
             buildConfigField "boolean", "BETA_RELEASE", "true"
             buildConfigField "boolean", "PLAY_STORE_RELEASE", "true"
-            buildConfigField "String", "INVITE_URI", "\"https://play.google.com/store/apps/details?id=eu.faircode.email\""
             buildConfigField "String", "PRO_FEATURES_URI", "\"https://email.faircode.eu/#pro\""
             buildConfigField "String", "CHANGELOG", "\"\""
             buildConfigField "String", "GITHUB_LATEST_API", "\"\""
-            buildConfigField "String", "OPENKEYCHAIN_URI", "\"https://play.google.com/store/apps/details?id=org.sufficientlysecure.keychain\""
-            buildConfigField "String", "CAMERA_URI", "\"https://play.google.com/store/apps/details?id=net.sourceforge.opencamera\""
-            buildConfigField "String", "RECORDER_URI", "\"https://play.google.com/store/apps/details?id=com.github.axet.audiorecorder\""
-            buildConfigField "String", "APPS_URI", "\"https://play.google.com/store/apps/dev?id=8420080860664580239\""
-        }
-        play_release {
-            dimension "all"
-            //minSdkVersion 23
-            buildConfigField "boolean", "BETA_RELEASE", "false"
-            buildConfigField "boolean", "PLAY_STORE_RELEASE", "true"
-            buildConfigField "String", "INVITE_URI", "\"https://play.google.com/store/apps/details?id=eu.faircode.email\""
-            buildConfigField "String", "PRO_FEATURES_URI", "\"https://email.faircode.eu/#pro\""
-            buildConfigField "String", "CHANGELOG", "\"\""
-            buildConfigField "String", "GITHUB_LATEST_API", "\"\""
-            buildConfigField "String", "OPENKEYCHAIN_URI", "\"https://play.google.com/store/apps/details?id=org.sufficientlysecure.keychain\""
-            buildConfigField "String", "CAMERA_URI", "\"https://play.google.com/store/apps/details?id=net.sourceforge.opencamera\""
-            buildConfigField "String", "RECORDER_URI", "\"https://play.google.com/store/apps/details?id=com.github.axet.audiorecorder\""
-            buildConfigField "String", "APPS_URI", "\"https://play.google.com/store/apps/dev?id=8420080860664580239\""
+            buildConfigField "String", "GITHUB_LATEST_URI", "\"\""
         }
     }
 
     variantFilter { variant ->
         def flavors = variant.flavors*.name
-        // Builds: play, github, debug
-        // Flavors: full, play_beta, play_release
-        if (variant.buildType.name == "play" && flavors.contains("full")) {
+        // Builds: release, debug
+        // Flavors: github, fdroid, play
+        if (variant.buildType.name == "debug" &&
+                (flavors.contains("fdroid") || flavors.contains("play"))) {
             setIgnore(true)
-        }
-        if (variant.buildType.name == "github" && flavors.contains("play_beta")) {
-            setIgnore(true)
-        }
-        if (flavors.contains("play_release")) {
-            setIgnore(true)
-        }
-    }
-
-    bugsnag {
-        // https://docs.bugsnag.com/build-integrations/gradle/
-        apiKey "9d2d57476a0614974449a3ec33f2604a"
-        builderName "M66B"
-        autoUpload false
-        autoReportBuilds false
-        sourceControl {
-            repository "https://github.com/M66B/FairEmail/"
         }
     }
 }
@@ -198,26 +169,6 @@ task copyMarkdown(type: Copy) {
     include "ATTRIBUTION.md"
 }
 preBuild.dependsOn copyMarkdown
-
-task copySetup(type: Copy) {
-    from "src/main/res"
-    include '**/SETUP.md'
-    into "src/main/assets"
-    eachFile { file ->
-        file.relativePath = new RelativePath(true, "SETUP-${file.file.parentFile.name}.md")
-    }
-    includeEmptyDirs = false
-}
-preBuild.dependsOn copySetup
-
-task cleanCrowdin(type: Delete) {
-    delete fileTree("src/main/res").matching {
-        include "**/SETUP.md"
-        include "**/PLAYSTORE.txt"
-    }
-}
-preBuild.dependsOn cleanCrowdin
-cleanCrowdin.shouldRunAfter copySetup
 
 repositories {
     google()
@@ -238,49 +189,53 @@ configurations.all {
 
     // lifecycle-livedata: ComputableLiveData, MediatorLiveData, Transformations
     // lifecycle-livedata-core: LiveData, MutableLiveData, Observer
+    // paging-runtime: AsyncPagedListDiffer, LivePagedListBuilder, PagedListAdapter, PagedStorageDiffHelper
 }
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 
-    def core_version = "1.4.0-alpha01"
-    def appcompat_version = "1.3.0-alpha01"
-    def fragment_version = "1.3.0-alpha05"
-    def recyclerview_version = "1.2.0-alpha03"
+    def core_version = "1.5.0-alpha04"
+    def appcompat_version = "1.3.0-alpha02"
+    def activity_version = "1.2.0-beta01"
+    def fragment_version = "1.3.0-beta01"
+    def recyclerview_version = "1.2.0-alpha06"
     def coordinatorlayout_version = "1.1.0"
-    def constraintlayout_version = "2.0.0-beta3"
-    def material_version = "1.2.0-alpha06"
-    def browser_version = "1.3.0-alpha01"
+    def constraintlayout_version = "2.0.2"
+    def material_version = "1.3.0-alpha03"
+    def browser_version = "1.3.0-alpha06"
     def lbm_version = "1.0.0"
-    def swiperefresh_version = "1.1.0-rc01"
+    def swiperefresh_version = "1.2.0-alpha01"
     def documentfile_version = "1.0.1"
-    def lifecycle_version = "2.2.0" // 2.3.0-alpha03
+    def lifecycle_version = "2.3.0-beta01"
+    def lifecycle_extensions_version = "2.2.0"
     def sqlite_version = "2.1.0"
-    def room_version = "2.2.5"
-    def paging_version = "2.1.2"
+    def room_version = "2.2.5" // 2.3.0-alpha02
+    def paging_version = "2.1.2" // 3.0.0-alpha03
     def preference_version = "1.1.1"
-    def work_version = "2.4.0-beta01"
-    def exif_version = "1.3.0-alpha01"
-    def biometric_version = "1.0.1"
+    def work_version = "2.5.0-alpha02"
+    def exif_version = "1.3.0"
+    def biometric_version = "1.1.0-beta01"
     def textclassifier_version = "1.0.0-alpha03"
-    def billingclient_version = "2.2.1"
+    def billingclient_version = "3.0.1"
     def javamail_version = "1.6.5"
     def jsoup_version = "1.13.1"
-    def css_version = "0.9.27"
+    def css_version = "0.9.28"
     def jax_version = "2.3.0-jaxb-1.0.6"
     def dnsjava_version = "2.1.9"
     def openpgp_version = "12.0"
-    def requery_version = "3.31.0"
+    def requery_version = "3.32.2"
     def badge_version = "1.1.22"
-    def bugsnag_version = "5.0.0"
+    def bugsnag_version = "5.2.1"
     def biweekly_version = "0.6.3"
-    def photoview_version = "2.3.0"
     def relinker_version = "1.3.1"
-    def markwon_version = "4.3.1"
-    def bouncycastle_version = "1.65"
+    def markwon_version = "4.6.0"
+    def bouncycastle_version = "1.66"
     def colorpicker_version = "0.0.15"
+    def overscroll_version = "1.1.0"
     def appauth_version = "0.7.1"
     def jcharset_version = "2.1"
+    def jchardet_version = "2.3.2"
 
     // https://developer.android.com/jetpack/androidx/releases/
 
@@ -288,8 +243,10 @@ dependencies {
     implementation "androidx.core:core:$core_version"
 
     // https://mvnrepository.com/artifact/androidx.appcompat/appcompat
+    // https://mvnrepository.com/artifact/androidx.activity/activity
     // https://mvnrepository.com/artifact/androidx.fragment/fragment
     implementation "androidx.appcompat:appcompat:$appcompat_version"
+    implementation "androidx.activity:activity:$activity_version"
     implementation "androidx.fragment:fragment:$fragment_version"
 
     // https://mvnrepository.com/artifact/androidx.viewpager2/viewpager2
@@ -325,8 +282,14 @@ dependencies {
     // https://mvnrepository.com/artifact/androidx.lifecycle/lifecycle-runtime
     // https://mvnrepository.com/artifact/androidx.lifecycle/lifecycle-livedata
     // https://mvnrepository.com/artifact/androidx.lifecycle/lifecycle-livedata-core
-    implementation "androidx.lifecycle:lifecycle-extensions:$lifecycle_version"
+    // https://mvnrepository.com/artifact/androidx.lifecycle/lifecycle-compiler
+    implementation "androidx.lifecycle:lifecycle-runtime:$lifecycle_version"
+    implementation "androidx.lifecycle:lifecycle-livedata:$lifecycle_version"
+    implementation "androidx.lifecycle:lifecycle-livedata-core:$lifecycle_version"
     annotationProcessor "androidx.lifecycle:lifecycle-compiler:$lifecycle_version"
+
+    // https://mvnrepository.com/artifact/androidx.lifecycle/lifecycle-extensions
+    implementation "androidx.lifecycle:lifecycle-extensions:$lifecycle_extensions_version"
 
     // https://mvnrepository.com/artifact/androidx.room/room-runtime
     implementation "androidx.room:room-runtime:$room_version"
@@ -336,7 +299,8 @@ dependencies {
     annotationProcessor "androidx.room:room-compiler:$room_version"
 
     // https://mvnrepository.com/artifact/androidx.paging/paging-runtime
-    implementation "androidx.paging:paging-runtime:$paging_version"
+    // https://developer.android.com/jetpack/androidx/releases/paging
+    //implementation "androidx.paging:paging-runtime:$paging_version"
 
     // https://mvnrepository.com/artifact/androidx.preference/preference
     implementation "androidx.preference:preference:$preference_version"
@@ -356,15 +320,18 @@ dependencies {
     //implementation "androidx.textclassifier:textclassifier:$textclassifier_version"
 
     // https://developer.android.com/google/play/billing/billing_library_releases_notes
-    implementation "com.android.billingclient:billing:$billingclient_version"
+    // https://android-developers.googleblog.com/2020/06/meet-google-play-billing-library.html
+    githubImplementation "com.android.billingclient:billing:$billingclient_version"
+    playImplementation "com.android.billingclient:billing:$billingclient_version"
 
     // https://javaee.github.io/javamail/
     // https://projects.eclipse.org/projects/ee4j.javamail
     // https://mvnrepository.com/artifact/com.sun.mail
-    implementation "com.sun.mail:android-mail:$javamail_version"
-    implementation "com.sun.mail:android-activation:$javamail_version"
+    //implementation "com.sun.mail:android-mail:$javamail_version"
+    //implementation "com.sun.mail:android-activation:$javamail_version"
 
     // https://jsoup.org/news/
+    // https://mvnrepository.com/artifact/org.jsoup/jsoup
     implementation "org.jsoup:jsoup:$jsoup_version"
 
     // http://cssparser.sourceforge.net/
@@ -395,7 +362,7 @@ dependencies {
 
     // https://github.com/bugsnag/bugsnag-android
     implementation("com.bugsnag:bugsnag-android:$bugsnag_version") {
-        exclude group: "com.bugsnag", module: "bugsnag-plugin-android-anr"
+        //exclude group: "com.bugsnag", module: "bugsnag-plugin-android-anr"
         exclude group: "com.bugsnag", module: "bugsnag-plugin-android-ndk"
     }
 
@@ -414,6 +381,10 @@ dependencies {
     // // https://github.com/QuadFlask/colorpicker
     implementation "com.github.QuadFlask:colorpicker:$colorpicker_version"
 
+    // https://github.com/EverythingMe/overscroll-decor
+    // https://mvnrepository.com/artifact/me.everything/overscroll-decor-android?repo=jcenter
+    implementation "me.everything:overscroll-decor-android:$overscroll_version"
+
     // https://www.bouncycastle.org/latest_releases.html
     // https://mvnrepository.com/artifact/org.bouncycastle/bcpkix-jdk15on
     implementation "org.bouncycastle:bcpkix-jdk15to18:$bouncycastle_version"
@@ -425,4 +396,9 @@ dependencies {
     // http://www.freeutils.net/source/jcharset/
     // https://mvnrepository.com/artifact/net.freeutils/jcharset
     implementation "net.freeutils:jcharset:$jcharset_version"
+
+    // https://github.com/albfernandez/juniversalchardet
+    // https://www-archive.mozilla.org/projects/intl/chardet.html
+    // https://mvnrepository.com/artifact/com.github.albfernandez/juniversalchardet
+    implementation "com.github.albfernandez:juniversalchardet:$jchardet_version"
 }

@@ -3,7 +3,9 @@
     <string name="app_search">FairEmail axtarışı</string>
     <string name="app_changelog">Dəyişiklik jurnalı</string>
     <string name="app_welcome">FairEmail, gizlilik və təhlükəsizliyə fokuslanmış bir açıq mənbə e-poçt tətbiqidir. Buna görə də bəzi xüsusiyyətlər, istifadə etdiyinizdən fərqli şəkildə işləyə bilər.</string>
-    <string name="channel_service">Xidmət</string>
+    <string name="app_limitations">Məsələn, etibarsız elementləri çıxartmaq və oxunaqlılığı yaxşılaşdırmaq üçün mesajlar həmişə yenidən format ediləcək və açılan bağlantıların təhlükəsizlik məqsədilə təsdiqlənməsi lazım olacaq.</string>
+    <string name="app_crash">FairEmail, Android-in çökmə səbəbli xətalarına görə bu cihazda dəstəklənmir</string>
+    <string name="app_exit">Çıxmaq üçün yenidən \'geri\'yə basın</string>
     <string name="channel_send">Göndər</string>
     <string name="channel_notification">Bildirişlər</string>
     <string name="channel_update">Yenilənmələr</string>
@@ -42,10 +44,6 @@
         <item quantity="one">%1$d yeni</item>
         <item quantity="other">%1$d yeni</item>
     </plurals>
-    <plurals name="title_moving_messages">
-        <item quantity="one">%1$d mesaj %2$s qovluğuna köçürülsün?</item>
-        <item quantity="other">%1$d mesaj %2$s qovluğuna köçürülsün?</item>
-    </plurals>
     <plurals name="title_deleting_messages">
         <item quantity="one">%1$d mesaj birdəfəlik silinsin?</item>
         <item quantity="other">%1$d mesaj birdəfəlik silinsin?</item>
@@ -77,9 +75,7 @@
     <string name="menu_privacy">Gizlilik</string>
     <string name="menu_about">Haqqında</string>
     <string name="menu_pro">Pro xüsusiyyətlər</string>
-    <string name="menu_invite">Dəvət et</string>
     <string name="menu_rate">Bu tətbiqi qiymətləndir</string>
-    <string name="menu_other">Digər tətbiqlər</string>
     <string name="title_welcome">Xoş Gəldiniz</string>
     <string name="title_eula">Son istifadəçi lisenziya müqaviləsi</string>
     <string name="title_agree">Razıyam</string>
@@ -115,7 +111,6 @@
     <string name="title_setup_permissions">Verilən icazələr</string>
     <string name="title_setup_permissions_remark">Şəxs məlumatlarına müraciət (məcburi deyil)</string>
     <string name="title_setup_doze">Batereya optimizasiyalarını quraşdır</string>
-    <string name="title_setup_doze_remark">Davamlı olaraq e-poçt alma (istənilən)</string>
     <string name="title_setup_doze_instructions">Növbəti pəncərədə, Yuxarıdakı \"Bütün tətbiqlər\"i seçin, bu tətbiqi seçib \"Optimallaşdırmayın\"ı seçin</string>
     <string name="title_setup_doze_battery">Yüksək batereya istifadəsi?</string>
     <string name="title_setup_doze_stopped">Eyniləşdirmə dayandırılsın?</string>
@@ -134,10 +129,24 @@
     <string name="title_setup_password_invalid">Şifrə etibarsızdır</string>
     <string name="title_setup_exported">Tənzimləmələr ixrac edildi</string>
     <string name="title_setup_imported">Tənzimləmələr idxal edildi</string>
+    <string name="title_setup_import_invalid">Etibarsız tənzimləmələr faylı</string>
     <string name="title_setup_reorder_accounts">Hesabları sırala</string>
     <string name="title_setup_reorder_folders">Qovluqları sırala</string>
     <string name="title_reset_order">Sıralamanı sıfırla</string>
+    <string name="title_setup_authentication">Kimlik təsdiqləmə</string>
+    <string name="title_setup_biometrics">Biometrik kimlik təsdiqləməsi</string>
+    <string name="title_setup_biometrics_enable">Fəaldır</string>
+    <string name="title_setup_biometrics_disable">Sıradan çıxarılıb</string>
+    <string name="title_setup_biometrics_unlock">Kilidi aç</string>
     <string name="title_setup_theme">Tema seç</string>
+    <string name="title_setup_theme_blue_orange">Mavi/narıncı</string>
+    <string name="title_setup_theme_yellow_purple">Sarış/bənövşəyi</string>
+    <string name="title_setup_theme_red_green">Qırmızı/yaşıl</string>
+    <string name="title_setup_theme_grey">Boz</string>
+    <string name="title_setup_theme_black">Qara</string>
+    <string name="title_setup_theme_reverse">Rəngləri tərsinə çevir</string>
+    <string name="title_setup_theme_dark">Tünd</string>
+    <string name="title_setup_theme_black_background">Qara arxaplan</string>
     <string name="title_setup_advanced">Qabaqcıl</string>
     <string name="title_setup_options">Seçimlər</string>
     <string name="title_setup_defaults">İlkin vəziyyətinə qaytar</string>
@@ -175,7 +184,6 @@
     <string name="title_advanced_preview">Mesaj ilkin baxışını göstər</string>
     <string name="title_advanced_addresses">Ünvan təfsilatlarını ilkin olaraq göstər</string>
     <string name="title_advanced_attachments_alt">Mesaj mətnindən sonra qoşmaları göstər</string>
-    <string name="title_advanced_monospaced">Mesaj mətni üçün tək boşluqlu yazı növü istifadə et</string>
     <string name="title_advanced_pull_refresh">Təzələmək üçün aşağı çəkin</string>
     <string name="title_advanced_autoscroll">Yeni mesajları almaq üçün yuxarı sürüşdür</string>
     <string name="title_advanced_swipenav">Sonrakı/əvvəlki danışığa getmək üçün sola/sağa sürüşdürün</string>
@@ -220,7 +228,6 @@
     <string name="title_no_host">Host adı əskikdir</string>
     <string name="title_no_user">İstifadəçi adı əskikdir</string>
     <string name="title_no_password">Şifrə əskikdir</string>
-    <string name="title_no_primary_drafts">Üstünlük verilən hesab və ya qaralama qovluğu yoxdur</string>
     <string name="title_no_idle">Bu təchizatçı ani mesajları dəstəkləmir. Bu, yeni mesajların alınmasını gecikdirəcək və batareyanın istifadəsini artıracaq.</string>
     <string name="title_account_delete">Bu hesab birdəfəlik silinsin?</string>
     <string name="title_identity_delete">Bu kimlik birdəfəlik silinsin?</string>
@@ -276,13 +283,11 @@
     <string name="title_move">Köçürt</string>
     <string name="title_archive">Arxivlə</string>
     <string name="title_reply">Cavabla</string>
-    <string name="title_moving">%1$s köçürülür</string>
     <string name="title_open_with">Bununla aç</string>
     <string name="title_no_answers">Heç bir cavab şablonu təyin edilmədi</string>
     <string name="title_no_viewer">%1$s üçün heç bir görüntüləmə tətbiqi yoxdur</string>
     <string name="title_no_saf">Anbar müraciət çərçivəsi mövcud deyil</string>
     <string name="title_no_stream">Köhnə bir tətbiq, fayl axını əvəzinə fayl yolu göndərdi</string>
-    <string name="title_no_contacts">Şəxs seçici mövcud deyil</string>
     <string name="title_attachment_saved">Qoşma saxlanıldı</string>
     <string name="title_attachments_saved">Qoşma saxlanıldı</string>
     <string name="title_ask_delete">Mesaj birdəfəlik silinsin?</string>
@@ -346,8 +351,6 @@
     <string name="title_rule_regex">Müntəzəm ifadə</string>
     <string name="title_rule_and">VƏ</string>
     <string name="title_rule_action">Hərəkət</string>
-    <string name="title_legend_primary_connected">Hesab bağlantısı quruldu</string>
-    <string name="title_legend_primary_disconnected">Hesab bağlantısı kəsildi</string>
     <string name="title_legend_download_on">Mesaj məzmununu avtomatik endir</string>
     <string name="title_legend_download_off">Tələb olunan mesaj məzmununu endirin </string>
     <string name="title_legend_synchronize_on">Eyniləşdirmə açıq</string>
@@ -382,12 +385,10 @@
     <string name="title_report">Bildir</string>
     <string name="title_fix">Düzəlt</string>
     <string name="title_no_ask_again">Bunu bir də soruşma</string>
-    <string name="title_try">Android üçün açıq mənbəli, gizlilik dostu, e-poçt tətbiqi olan FairEmail-ı sınayın</string>
     <string name="title_pro_feature">Bu Pro xüsusiyyətidir</string>
     <string name="title_pro_list">Pro xüsusiyyətlərinin siyahısı</string>
     <string name="title_pro_purchase">Satın al</string>
     <string name="title_pro_hint">Pro xüsusiyyətlərinin alınması sizə, mövcud və gələcəkdəki pro xüsusiyyətləri istifadə etməyinizə icazə verəcək və tətbiqin uzunömürlü olması üçün bizə dəstək olacaq</string>
-    <string name="title_pro_price">Zəhmət olmasa pro xüsusiyyətlərin qiyməti haqqında <a href="https://github.com/M66B/open-source-email/blob/master/FAQ.md#user-content-faq19">bu TSS</a> səhifəsinə baxın</string>
     <string name="title_pro_activated">Bütün pro xüsusiyyətlər aktivləşdirildi</string>
     <string name="title_pro_valid">Bütün pro xüsusiyyətlər aktivləşdirildi</string>
     <string name="title_pro_invalid">Etibarsız cavab</string>

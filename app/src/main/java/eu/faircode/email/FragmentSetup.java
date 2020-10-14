@@ -62,15 +62,16 @@ public class FragmentSetup extends FragmentBase {
 
     private Button btnHelp;
     private Button btnQuick;
+    private TextView tvQuickNew;
     private TextView tvQuickRemark;
 
     private TextView tvAccountDone;
     private Button btnAccount;
-    private TextView tvNoPrimaryDrafts;
 
     private TextView tvIdentityDone;
     private Button btnIdentity;
-    private TextView tvNoIdentities;
+    private TextView tvIdentityWhat;
+    private TextView tvNoComposable;
 
     private TextView tvPermissionsDone;
     private Button btnPermissions;
@@ -98,7 +99,7 @@ public class FragmentSetup extends FragmentBase {
 
         textColorPrimary = Helper.resolveColor(getContext(), android.R.attr.textColorPrimary);
         colorWarning = Helper.resolveColor(getContext(), R.attr.colorWarning);
-        check = getResources().getDrawable(R.drawable.baseline_check_24, getContext().getTheme());
+        check = getResources().getDrawable(R.drawable.twotone_check_24, getContext().getTheme());
 
         view = (ViewGroup) inflater.inflate(R.layout.fragment_setup, container, false);
 
@@ -108,15 +109,16 @@ public class FragmentSetup extends FragmentBase {
 
         btnHelp = view.findViewById(R.id.btnHelp);
         btnQuick = view.findViewById(R.id.btnQuick);
+        tvQuickNew = view.findViewById(R.id.tvQuickNew);
         tvQuickRemark = view.findViewById(R.id.tvQuickRemark);
 
         tvAccountDone = view.findViewById(R.id.tvAccountDone);
         btnAccount = view.findViewById(R.id.btnAccount);
-        tvNoPrimaryDrafts = view.findViewById(R.id.tvNoPrimaryDrafts);
 
         tvIdentityDone = view.findViewById(R.id.tvIdentityDone);
         btnIdentity = view.findViewById(R.id.btnIdentity);
-        tvNoIdentities = view.findViewById(R.id.tvNoIdentities);
+        tvIdentityWhat = view.findViewById(R.id.tvIdentityWhat);
+        tvNoComposable = view.findViewById(R.id.tvNoComposable);
 
         tvPermissionsDone = view.findViewById(R.id.tvPermissionsDone);
         btnPermissions = view.findViewById(R.id.btnPermissions);
@@ -215,6 +217,14 @@ public class FragmentSetup extends FragmentBase {
             }
         });
 
+        tvQuickNew.setPaintFlags(tvQuickNew.getPaintFlags() | Paint.UNDERLINE_TEXT_FLAG);
+        tvQuickNew.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Helper.viewFAQ(getContext(), 112);
+            }
+        });
+
         btnAccount.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -228,6 +238,14 @@ public class FragmentSetup extends FragmentBase {
             public void onClick(View view) {
                 LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(getContext());
                 lbm.sendBroadcast(new Intent(ActivitySetup.ACTION_VIEW_IDENTITIES));
+            }
+        });
+
+        tvIdentityWhat.setPaintFlags(tvIdentityWhat.getPaintFlags() | Paint.UNDERLINE_TEXT_FLAG);
+        tvIdentityWhat.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Helper.viewFAQ(getContext(), 9);
             }
         });
 
@@ -274,7 +292,7 @@ public class FragmentSetup extends FragmentBase {
                     startActivity(settings);
                 }
             });
-            btnDataSaver.setEnabled(settings.resolveActivity(pm) != null);
+            btnDataSaver.setEnabled(settings.resolveActivity(pm) != null); // system whitelisted
         }
 
         btnInbox.setOnClickListener(new View.OnClickListener() {
@@ -289,12 +307,11 @@ public class FragmentSetup extends FragmentBase {
 
         tvAccountDone.setText(null);
         tvAccountDone.setCompoundDrawables(null, null, null, null);
-        tvNoPrimaryDrafts.setVisibility(View.GONE);
 
         tvIdentityDone.setText(null);
         tvIdentityDone.setCompoundDrawables(null, null, null, null);
         btnIdentity.setEnabled(false);
-        tvNoIdentities.setVisibility(View.GONE);
+        tvNoComposable.setVisibility(View.GONE);
 
         tvPermissionsDone.setText(null);
         tvPermissionsDone.setCompoundDrawables(null, null, null, null);
@@ -356,8 +373,6 @@ public class FragmentSetup extends FragmentBase {
             public void onChanged(@Nullable List<EntityAccount> accounts) {
                 done = (accounts != null && accounts.size() > 0);
 
-                getActivity().invalidateOptionsMenu();
-
                 tvQuickRemark.setVisibility(done ? View.VISIBLE : View.GONE);
 
                 tvAccountDone.setText(done ? R.string.title_setup_done : R.string.title_setup_to_do);
@@ -368,25 +383,6 @@ public class FragmentSetup extends FragmentBase {
                 btnInbox.setEnabled(done);
 
                 prefs.edit().putBoolean("has_accounts", done).apply();
-
-                if (done)
-                    new SimpleTask<EntityFolder>() {
-                        @Override
-                        protected EntityFolder onExecute(Context context, Bundle args) {
-                            DB db = DB.getInstance(context);
-                            return db.folder().getPrimaryDrafts();
-                        }
-
-                        @Override
-                        protected void onExecuted(Bundle args, EntityFolder drafts) {
-                            tvNoPrimaryDrafts.setVisibility(drafts == null ? View.VISIBLE : View.GONE);
-                        }
-
-                        @Override
-                        protected void onException(Bundle args, Throwable ex) {
-                            Log.unexpectedError(getParentFragmentManager(), ex);
-                        }
-                    }.execute(FragmentSetup.this, new Bundle(), "setup:drafts");
             }
         });
 
@@ -397,7 +393,7 @@ public class FragmentSetup extends FragmentBase {
                 tvIdentityDone.setText(done ? R.string.title_setup_done : R.string.title_setup_to_do);
                 tvIdentityDone.setTextColor(done ? textColorPrimary : colorWarning);
                 tvIdentityDone.setCompoundDrawablesWithIntrinsicBounds(done ? check : null, null, null, null);
-                tvNoIdentities.setVisibility(done ? View.GONE : View.VISIBLE);
+                tvNoComposable.setVisibility(done ? View.GONE : View.VISIBLE);
             }
         });
     }
@@ -410,7 +406,8 @@ public class FragmentSetup extends FragmentBase {
         Boolean ignoring = true;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             Intent intent = new Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS);
-            if (intent.resolveActivity(getContext().getPackageManager()) != null) {
+            PackageManager pm = getContext().getPackageManager();
+            if (intent.resolveActivity(pm) != null) { // system whitelisted
                 ignoring = Helper.isIgnoringOptimizations(getContext());
                 if (ignoring == null)
                     ignoring = true;

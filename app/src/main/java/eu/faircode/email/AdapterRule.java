@@ -56,6 +56,7 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.text.NumberFormat;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import javax.mail.MessagingException;
@@ -66,7 +67,10 @@ public class AdapterRule extends RecyclerView.Adapter<AdapterRule.ViewHolder> {
     private LifecycleOwner owner;
     private LayoutInflater inflater;
 
-    private List<TupleRuleEx> items = new ArrayList<>();
+    private int protocol = -1;
+    private String search = null;
+    private List<TupleRuleEx> all = new ArrayList<>();
+    private List<TupleRuleEx> selected = new ArrayList<>();
 
     public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener, View.OnLongClickListener {
         private View view;
@@ -166,6 +170,9 @@ public class AdapterRule extends RecyclerView.Adapter<AdapterRule.ViewHolder> {
                     case EntityRule.TYPE_ANSWER:
                         tvAction.setText(R.string.title_rule_answer);
                         break;
+                    case EntityRule.TYPE_TTS:
+                        tvAction.setText(R.string.title_rule_tts);
+                        break;
                     case EntityRule.TYPE_AUTOMATION:
                         tvAction.setText(R.string.title_rule_automation);
                         break;
@@ -185,14 +192,15 @@ public class AdapterRule extends RecyclerView.Adapter<AdapterRule.ViewHolder> {
             if (pos == RecyclerView.NO_POSITION)
                 return;
 
-            TupleRuleEx rule = items.get(pos);
+            TupleRuleEx rule = selected.get(pos);
 
             LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(context);
             lbm.sendBroadcast(
                     new Intent(ActivityView.ACTION_EDIT_RULE)
                             .putExtra("id", rule.id)
                             .putExtra("account", rule.account)
-                            .putExtra("folder", rule.folder));
+                            .putExtra("folder", rule.folder)
+                            .putExtra("protocol", protocol));
         }
 
         @Override
@@ -201,7 +209,7 @@ public class AdapterRule extends RecyclerView.Adapter<AdapterRule.ViewHolder> {
             if (pos == RecyclerView.NO_POSITION)
                 return false;
 
-            final TupleRuleEx rule = items.get(pos);
+            final TupleRuleEx rule = selected.get(pos);
 
             PopupMenuLifecycle popupMenu = new PopupMenuLifecycle(context, powner, view);
 
@@ -215,8 +223,10 @@ public class AdapterRule extends RecyclerView.Adapter<AdapterRule.ViewHolder> {
             popupMenu.getMenu().add(Menu.NONE, R.string.title_rule_execute, 2, R.string.title_rule_execute)
                     .setEnabled(ActivityBilling.isPro(context));
             popupMenu.getMenu().add(Menu.NONE, R.string.title_reset, 3, R.string.title_reset);
-            popupMenu.getMenu().add(Menu.NONE, R.string.title_move_to_folder, 4, R.string.title_move_to_folder);
-            popupMenu.getMenu().add(Menu.NONE, R.string.title_copy, 5, R.string.title_copy);
+            if (protocol == EntityAccount.TYPE_IMAP) {
+                popupMenu.getMenu().add(Menu.NONE, R.string.title_move_to_folder, 4, R.string.title_move_to_folder);
+                popupMenu.getMenu().add(Menu.NONE, R.string.title_copy, 5, R.string.title_copy);
+            }
 
             popupMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
                 @Override
@@ -325,13 +335,13 @@ public class AdapterRule extends RecyclerView.Adapter<AdapterRule.ViewHolder> {
 
                             Snackbar.make(
                                     parentFragment.getView(),
-                                    context.getString(R.string.title_rule_applied, applied),
-                                    Snackbar.LENGTH_LONG).show();
+                                    context.getString(R.string.title_rule_applied, applied), Snackbar.LENGTH_LONG)
+                                    .setGestureInsetBottomIgnored(true).show();
                         }
 
                         @Override
                         protected void onException(Bundle args, Throwable ex) {
-                            Log.unexpectedError(parentFragment.getParentFragmentManager(), ex);
+                            Log.unexpectedError(parentFragment.getParentFragmentManager(), ex, false);
                         }
                     }.execute(context, owner, args, "rule:execute");
                 }
@@ -378,6 +388,7 @@ public class AdapterRule extends RecyclerView.Adapter<AdapterRule.ViewHolder> {
                                     .putExtra("id", rule.id)
                                     .putExtra("account", rule.account)
                                     .putExtra("folder", rule.folder)
+                                    .putExtra("protocol", protocol)
                                     .putExtra("copy", true));
                 }
             });
@@ -405,12 +416,41 @@ public class AdapterRule extends RecyclerView.Adapter<AdapterRule.ViewHolder> {
         });
     }
 
-    public void set(@NonNull List<TupleRuleEx> rules) {
-        Log.i("Set rules=" + rules.size());
+    public void set(int protocol, @NonNull List<TupleRuleEx> rules) {
+        this.protocol = protocol;
+        Log.i("Set protocol=" + protocol + " rules=" + rules.size());
 
-        DiffUtil.DiffResult diff = DiffUtil.calculateDiff(new DiffCallback(items, rules), false);
+        all = rules;
 
-        items = rules;
+        List<TupleRuleEx> items;
+        if (TextUtils.isEmpty(search))
+            items = all;
+        else {
+            items = new ArrayList<>();
+            String query = search.toLowerCase().trim();
+            for (TupleRuleEx rule : rules) {
+                if (rule.name.toLowerCase().contains(query))
+                    items.add(rule);
+                else
+                    try {
+                        JSONObject jcondition = new JSONObject(rule.condition);
+                        Iterator<String> keys = jcondition.keys();
+                        while (keys.hasNext()) {
+                            String key = keys.next();
+                            if (jcondition.get(key).toString().toLowerCase().contains(query)) {
+                                items.add(rule);
+                                break;
+                            }
+                        }
+                    } catch (JSONException ex) {
+                        Log.e(ex);
+                    }
+            }
+        }
+
+        DiffUtil.DiffResult diff = DiffUtil.calculateDiff(new DiffCallback(selected, items), false);
+
+        selected = items;
 
         diff.dispatchUpdatesTo(new ListUpdateCallback() {
             @Override
@@ -434,6 +474,11 @@ public class AdapterRule extends RecyclerView.Adapter<AdapterRule.ViewHolder> {
             }
         });
         diff.dispatchUpdatesTo(this);
+    }
+
+    public void search(String query) {
+        search = query;
+        set(protocol, all);
     }
 
     private class DiffCallback extends DiffUtil.Callback {
@@ -472,12 +517,12 @@ public class AdapterRule extends RecyclerView.Adapter<AdapterRule.ViewHolder> {
 
     @Override
     public long getItemId(int position) {
-        return items.get(position).id;
+        return selected.get(position).id;
     }
 
     @Override
     public int getItemCount() {
-        return items.size();
+        return selected.size();
     }
 
     @Override
@@ -489,7 +534,7 @@ public class AdapterRule extends RecyclerView.Adapter<AdapterRule.ViewHolder> {
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         holder.unwire();
-        TupleRuleEx rule = items.get(position);
+        TupleRuleEx rule = selected.get(position);
         holder.bindTo(rule);
         holder.wire();
     }

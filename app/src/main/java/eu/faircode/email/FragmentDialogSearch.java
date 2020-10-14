@@ -15,6 +15,7 @@ import android.view.View;
 import android.view.WindowManager;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.AdapterView;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.CheckBox;
@@ -22,6 +23,7 @@ import android.widget.CompoundButton;
 import android.widget.DatePicker;
 import android.widget.FilterQueryProvider;
 import android.widget.ImageButton;
+import android.widget.Spinner;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -33,6 +35,7 @@ import androidx.preference.PreferenceManager;
 
 import java.text.DateFormat;
 import java.util.Calendar;
+import java.util.List;
 
 public class FragmentDialogSearch extends FragmentDialogBase {
     @NonNull
@@ -45,8 +48,6 @@ public class FragmentDialogSearch extends FragmentDialogBase {
 
         final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
         boolean fts = prefs.getBoolean("fts", false);
-        boolean filter_seen = prefs.getBoolean("filter_seen", false);
-        boolean filter_unflagged = prefs.getBoolean("filter_unflagged", false);
         boolean last_search_senders = prefs.getBoolean("last_search_senders", true);
         boolean last_search_recipients = prefs.getBoolean("last_search_recipients", true);
         boolean last_search_subject = prefs.getBoolean("last_search_subject", true);
@@ -57,6 +58,8 @@ public class FragmentDialogSearch extends FragmentDialogBase {
         View dview = LayoutInflater.from(getContext()).inflate(R.layout.dialog_search, null);
 
         final AutoCompleteTextView etQuery = dview.findViewById(R.id.etQuery);
+        final ImageButton ibAttachment = dview.findViewById(R.id.ibAttachment);
+        final ImageButton ibEvent = dview.findViewById(R.id.ibInvite);
         final ImageButton ibUnseen = dview.findViewById(R.id.ibUnseen);
         final ImageButton ibFlagged = dview.findViewById(R.id.ibFlagged);
         final ImageButton ibInfo = dview.findViewById(R.id.ibInfo);
@@ -73,6 +76,7 @@ public class FragmentDialogSearch extends FragmentDialogBase {
         final CheckBox cbHidden = dview.findViewById(R.id.cbHidden);
         final CheckBox cbEncrypted = dview.findViewById(R.id.cbEncrypted);
         final CheckBox cbAttachments = dview.findViewById(R.id.cbAttachments);
+        final Spinner spMessageSize = dview.findViewById(R.id.spMessageSize);
         final Button btnBefore = dview.findViewById(R.id.btnBefore);
         final Button btnAfter = dview.findViewById(R.id.btnAfter);
         final TextView tvBefore = dview.findViewById(R.id.tvBefore);
@@ -97,13 +101,12 @@ public class FragmentDialogSearch extends FragmentDialogBase {
                 new int[]{android.R.id.text1},
                 0);
 
-
         adapter.setFilterQueryProvider(new FilterQueryProvider() {
             public Cursor runQuery(CharSequence typed) {
                 Log.i("Search suggest=" + typed);
 
                 MatrixCursor cursor = new MatrixCursor(new String[]{"_id", "suggestion"});
-                if (TextUtils.isEmpty(typed))
+                if (TextUtils.isEmpty(typed) || cbSearchIndex.isChecked())
                     return cursor;
 
                 String query = "%" + typed + "%";
@@ -156,6 +159,7 @@ public class FragmentDialogSearch extends FragmentDialogBase {
                 cbHidden.setEnabled(!isChecked);
                 cbEncrypted.setEnabled(!isChecked);
                 cbAttachments.setEnabled(!isChecked);
+                spMessageSize.setEnabled(!isChecked);
             }
         });
 
@@ -194,6 +198,23 @@ public class FragmentDialogSearch extends FragmentDialogBase {
             }
         });
 
+        spMessageSize.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                parent.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        //parent.requestFocusFromTouch();
+                    }
+                });
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+                // Do nothing
+            }
+        });
+
         btnAfter.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -216,8 +237,6 @@ public class FragmentDialogSearch extends FragmentDialogBase {
         cbSubject.setChecked(last_search_subject);
         cbKeywords.setChecked(last_search_keywords);
         cbMessage.setChecked(last_search_message);
-        cbUnseen.setChecked(filter_seen);
-        cbFlagged.setChecked(filter_unflagged);
         tvAfter.setText(null);
         tvBefore.setText(null);
 
@@ -255,6 +274,12 @@ public class FragmentDialogSearch extends FragmentDialogBase {
                             criteria.with_hidden = cbHidden.isChecked();
                             criteria.with_encrypted = cbEncrypted.isChecked();
                             criteria.with_attachments = cbAttachments.isChecked();
+
+                            int pos = spMessageSize.getSelectedItemPosition();
+                            if (pos > 0) {
+                                int[] sizes = getResources().getIntArray(R.array.sizeValues);
+                                criteria.with_size = sizes[pos];
+                            }
                         }
 
                         Object after = tvAfter.getTag();
@@ -267,9 +292,52 @@ public class FragmentDialogSearch extends FragmentDialogBase {
 
                         imm.hideSoftInputFromWindow(etQuery.getWindowToken(), 0);
 
-                        FragmentMessages.search(
-                                getContext(), getViewLifecycleOwner(), getParentFragmentManager(),
-                                account, folder, false, criteria);
+                        if (criteria.query != null && criteria.query.startsWith("raw:"))
+                            new SimpleTask<EntityFolder>() {
+                                @Override
+                                protected EntityFolder onExecute(Context context, Bundle args) {
+                                    long aid = args.getLong("account", -1);
+
+                                    DB db = DB.getInstance(context);
+                                    EntityAccount account = null;
+                                    if (aid < 0) {
+                                        List<EntityAccount> accounts = db.account().getSynchronizingAccounts();
+                                        if (accounts == null)
+                                            return null;
+                                        for (EntityAccount a : accounts)
+                                            if (a.isGmail())
+                                                if (account == null)
+                                                    account = a;
+                                                else
+                                                    return null;
+                                    } else
+                                        account = db.account().getAccount(aid);
+
+                                    if (account == null || !account.isGmail())
+                                        return null;
+
+                                    return db.folder().getFolderByType(account.id, EntityFolder.ARCHIVE);
+                                }
+
+                                @Override
+                                protected void onExecuted(Bundle args, EntityFolder archive) {
+                                    FragmentMessages.search(
+                                            getContext(), getViewLifecycleOwner(), getParentFragmentManager(),
+                                            account,
+                                            archive == null ? folder : archive.id,
+                                            archive != null,
+                                            criteria);
+                                }
+
+                                @Override
+                                protected void onException(Bundle args, Throwable ex) {
+                                    Log.unexpectedError(getParentFragmentManager(), ex);
+                                }
+                            }.execute(getContext(), getViewLifecycleOwner(), getArguments(), "search:raw");
+                        else
+                            FragmentMessages.search(
+                                    getContext(), getViewLifecycleOwner(), getParentFragmentManager(),
+                                    account, folder, false, criteria);
                     }
                 })
                 .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
@@ -287,6 +355,13 @@ public class FragmentDialogSearch extends FragmentDialogBase {
 
                 BoundaryCallbackMessages.SearchCriteria criteria = new BoundaryCallbackMessages.SearchCriteria();
                 switch (v.getId()) {
+                    case R.id.ibAttachment:
+                        criteria.with_attachments = true;
+                        break;
+                    case R.id.ibInvite:
+                        criteria.with_attachments = true;
+                        criteria.with_types = new String[]{"text/calendar"};
+                        break;
                     case R.id.ibUnseen:
                         criteria.with_unseen = true;
                         break;
@@ -301,6 +376,8 @@ public class FragmentDialogSearch extends FragmentDialogBase {
             }
         };
 
+        ibAttachment.setOnClickListener(onClick);
+        ibEvent.setOnClickListener(onClick);
         ibUnseen.setOnClickListener(onClick);
         ibFlagged.setOnClickListener(onClick);
 

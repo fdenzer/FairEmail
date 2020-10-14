@@ -84,7 +84,7 @@ public class AdapterNavUnified extends RecyclerView.Adapter<AdapterNavUnified.Vi
 
         private void bindTo(TupleFolderUnified folder) {
             if (EntityFolder.INBOX.equals(folder.type))
-                ivItem.setImageResource(R.drawable.baseline_all_inbox_24);
+                ivItem.setImageResource(R.drawable.twotone_all_inbox_24);
             else
                 ivItem.setImageResource(EntityFolder.getIcon(folder.type));
 
@@ -95,10 +95,10 @@ public class AdapterNavUnified extends RecyclerView.Adapter<AdapterNavUnified.Vi
                 count = folder.unseen;
 
             if (count == 0)
-                tvItem.setText(Helper.localizeFolderType(context, folder.type));
+                tvItem.setText(EntityFolder.localizeType(context, folder.type));
             else
                 tvItem.setText(context.getString(R.string.title_name_count,
-                        Helper.localizeFolderType(context, folder.type), NF.format(count)));
+                        EntityFolder.localizeType(context, folder.type), NF.format(count)));
 
             tvItem.setTextColor(count == 0 ? textColorSecondary : colorUnread);
             tvItem.setTypeface(count == 0 ? Typeface.DEFAULT : Typeface.DEFAULT_BOLD);
@@ -132,7 +132,8 @@ public class AdapterNavUnified extends RecyclerView.Adapter<AdapterNavUnified.Vi
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
         boolean highlight_unread = prefs.getBoolean("highlight_unread", true);
-        this.colorUnread = Helper.resolveColor(context, highlight_unread ? R.attr.colorUnreadHighlight : android.R.attr.textColorPrimary);
+        int colorHighlight = prefs.getInt("highlight_color", Helper.resolveColor(context, R.attr.colorUnreadHighlight));
+        this.colorUnread = (highlight_unread ? colorHighlight : Helper.resolveColor(context, R.attr.colorUnread));
         this.textColorSecondary = Helper.resolveColor(context, android.R.attr.textColorSecondary);
     }
 

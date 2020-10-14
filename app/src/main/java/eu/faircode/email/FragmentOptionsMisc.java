@@ -27,16 +27,23 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.database.sqlite.SQLiteDatabaseCorruptException;
 import android.graphics.Paint;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Debug;
+import android.provider.Settings;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CompoundButton;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -55,6 +62,7 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.SortedMap;
 
 import javax.net.ssl.SSLSocket;
@@ -63,29 +71,37 @@ import javax.net.ssl.SSLSocketFactory;
 import io.requery.android.database.sqlite.SQLiteDatabase;
 
 public class FragmentOptionsMisc extends FragmentBase implements SharedPreferences.OnSharedPreferenceChangeListener {
+    private boolean resumed = false;
+
     private SwitchCompat swExternalSearch;
     private SwitchCompat swShortcuts;
     private SwitchCompat swFts;
     private TextView tvFtsIndexed;
     private TextView tvFtsPro;
-    private SwitchCompat swEnglish;
+    private Spinner spLanguage;
     private SwitchCompat swWatchdog;
-    private SwitchCompat swOptimize;
     private SwitchCompat swUpdates;
     private SwitchCompat swExperiments;
     private TextView tvExperimentsHint;
+    private SwitchCompat swQueries;
     private SwitchCompat swCrashReports;
     private TextView tvUuid;
-    private SwitchCompat swDebug;
     private Button btnReset;
     private SwitchCompat swCleanupAttachments;
     private Button btnCleanup;
     private TextView tvLastCleanup;
+    private Button btnApp;
     private Button btnMore;
 
+    private SwitchCompat swProtocol;
+    private SwitchCompat swDebug;
+    private SwitchCompat swAuthPlain;
+    private SwitchCompat swAuthLogin;
+    private SwitchCompat swAuthSasl;
     private TextView tvProcessors;
     private TextView tvMemoryClass;
-    private TextView tvStorageSpace;
+    private TextView tvMemoryUsage;
+    private TextView tvStorageUsage;
     private TextView tvFingerprint;
     private Button btnCharsets;
     private Button btnCiphers;
@@ -93,14 +109,15 @@ public class FragmentOptionsMisc extends FragmentBase implements SharedPreferenc
     private Group grpDebug;
 
     private final static String[] RESET_OPTIONS = new String[]{
-            "shortcuts", "fts", "english", "watchdog", "auto_optimize", "updates",
-            "experiments", "crash_reports", "debug", "cleanup_attachments"
+            "shortcuts", "fts", "language", "watchdog", "updates",
+            "experiments", "query_threads", "crash_reports", "cleanup_attachments",
+            "protocol", "debug", "auth_plain", "auth_login", "auth_sasl"
     };
 
     private final static String[] RESET_QUESTIONS = new String[]{
             "welcome", "first", "app_support", "notify_archive", "message_swipe", "message_select", "folder_actions", "folder_sync",
             "crash_reports_asked", "review_asked", "review_later", "why",
-            "reply_hint", "html_always_images", "print_html_confirmed",
+            "reply_hint", "html_always_images", "print_html_confirmed", "reformatted_hint",
             "selected_folders", "move_1_confirmed", "move_n_confirmed",
             "last_search_senders", "last_search_recipients", "last_search_subject", "last_search_keywords", "last_search_message", "last_search",
             "identities_asked", "cc_bcc", "inline_image_hint", "compose_reference", "send_dialog",
@@ -122,24 +139,30 @@ public class FragmentOptionsMisc extends FragmentBase implements SharedPreferenc
         swFts = view.findViewById(R.id.swFts);
         tvFtsIndexed = view.findViewById(R.id.tvFtsIndexed);
         tvFtsPro = view.findViewById(R.id.tvFtsPro);
-        swEnglish = view.findViewById(R.id.swEnglish);
+        spLanguage = view.findViewById(R.id.spLanguage);
         swWatchdog = view.findViewById(R.id.swWatchdog);
-        swOptimize = view.findViewById(R.id.swOptimize);
         swUpdates = view.findViewById(R.id.swUpdates);
         swExperiments = view.findViewById(R.id.swExperiments);
         tvExperimentsHint = view.findViewById(R.id.tvExperimentsHint);
+        swQueries = view.findViewById(R.id.swQueries);
         swCrashReports = view.findViewById(R.id.swCrashReports);
         tvUuid = view.findViewById(R.id.tvUuid);
-        swDebug = view.findViewById(R.id.swDebug);
         btnReset = view.findViewById(R.id.btnReset);
         swCleanupAttachments = view.findViewById(R.id.swCleanupAttachments);
         btnCleanup = view.findViewById(R.id.btnCleanup);
         tvLastCleanup = view.findViewById(R.id.tvLastCleanup);
+        btnApp = view.findViewById(R.id.btnApp);
         btnMore = view.findViewById(R.id.btnMore);
 
+        swProtocol = view.findViewById(R.id.swProtocol);
+        swDebug = view.findViewById(R.id.swDebug);
+        swAuthPlain = view.findViewById(R.id.swAuthPlain);
+        swAuthLogin = view.findViewById(R.id.swAuthLogin);
+        swAuthSasl = view.findViewById(R.id.swAuthSasl);
         tvProcessors = view.findViewById(R.id.tvProcessors);
         tvMemoryClass = view.findViewById(R.id.tvMemoryClass);
-        tvStorageSpace = view.findViewById(R.id.tvStorageSpace);
+        tvMemoryUsage = view.findViewById(R.id.tvMemoryUsage);
+        tvStorageUsage = view.findViewById(R.id.tvStorageUsage);
         tvFingerprint = view.findViewById(R.id.tvFingerprint);
         btnCharsets = view.findViewById(R.id.btnCharsets);
         btnCiphers = view.findViewById(R.id.btnCiphers);
@@ -155,13 +178,7 @@ public class FragmentOptionsMisc extends FragmentBase implements SharedPreferenc
         swExternalSearch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean checked) {
-                PackageManager pm = getContext().getPackageManager();
-                pm.setComponentEnabledSetting(
-                        new ComponentName(getContext(), ActivitySearch.class),
-                        checked
-                                ? PackageManager.COMPONENT_ENABLED_STATE_DEFAULT
-                                : PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
-                        PackageManager.DONT_KILL_APP);
+                Helper.enableComponent(getContext(), ActivitySearch.class, checked);
             }
         });
 
@@ -169,7 +186,6 @@ public class FragmentOptionsMisc extends FragmentBase implements SharedPreferenc
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean checked) {
                 prefs.edit().putBoolean("shortcuts", checked).commit(); // apply won't work here
-                restart();
             }
         });
 
@@ -186,9 +202,14 @@ public class FragmentOptionsMisc extends FragmentBase implements SharedPreferenc
                     new SimpleTask<Void>() {
                         @Override
                         protected Void onExecute(Context context, Bundle args) {
-                            SQLiteDatabase sdb = FtsDbHelper.getInstance(context);
-                            FtsDbHelper.delete(sdb);
-                            FtsDbHelper.optimize(sdb);
+                            try {
+                                SQLiteDatabase sdb = FtsDbHelper.getInstance(context);
+                                FtsDbHelper.delete(sdb);
+                                FtsDbHelper.optimize(sdb);
+                            } catch (SQLiteDatabaseCorruptException ex) {
+                                Log.e(ex);
+                                FtsDbHelper.delete(context);
+                            }
 
                             DB db = DB.getInstance(context);
                             db.message().resetFts();
@@ -207,11 +228,20 @@ public class FragmentOptionsMisc extends FragmentBase implements SharedPreferenc
 
         Helper.linkPro(tvFtsPro);
 
-        swEnglish.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+        spLanguage.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
-            public void onCheckedChanged(CompoundButton compoundButton, boolean checked) {
-                prefs.edit().putBoolean("english", checked).commit(); // apply won't work here
-                restart();
+            public void onItemSelected(AdapterView<?> adapterView, View view, int position, long id) {
+                if (position == 0)
+                    onNothingSelected(adapterView);
+                else {
+                    String tag = getResources().getAssets().getLocales()[position - 1];
+                    prefs.edit().putString("language", tag).commit(); // apply won't work here
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+                prefs.edit().remove("language").commit(); // apply won't work here
             }
         });
 
@@ -220,14 +250,6 @@ public class FragmentOptionsMisc extends FragmentBase implements SharedPreferenc
             public void onCheckedChanged(CompoundButton compoundButton, boolean checked) {
                 prefs.edit().putBoolean("watchdog", checked).apply();
                 WorkerWatchdog.init(getContext());
-            }
-        });
-
-        swOptimize.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton compoundButton, boolean checked) {
-                prefs.edit().putBoolean("auto_optimize", checked).apply();
-                ServiceSynchronize.reload(getContext(), null, false, "optimize");
             }
         });
 
@@ -257,6 +279,16 @@ public class FragmentOptionsMisc extends FragmentBase implements SharedPreferenc
             }
         });
 
+        swQueries.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean checked) {
+                if (checked)
+                    prefs.edit().putInt("query_threads", 2).commit(); // apply won't work here
+                else
+                    prefs.edit().remove("query_threads").commit(); // apply won't work here
+            }
+        });
+
         swCrashReports.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean checked) {
@@ -265,15 +297,6 @@ public class FragmentOptionsMisc extends FragmentBase implements SharedPreferenc
                         .putBoolean("crash_reports", checked)
                         .apply();
                 Log.setCrashReporting(checked);
-            }
-        });
-
-        swDebug.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton compoundButton, boolean checked) {
-                prefs.edit().putBoolean("debug", checked).apply();
-                Log.setDebug(checked);
-                grpDebug.setVisibility(checked || BuildConfig.DEBUG ? View.VISIBLE : View.GONE);
             }
         });
 
@@ -298,11 +321,65 @@ public class FragmentOptionsMisc extends FragmentBase implements SharedPreferenc
             }
         });
 
+        final Intent app = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+        app.setData(Uri.parse("package:" + getContext().getPackageName()));
+        btnApp.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                try {
+                    getContext().startActivity(app);
+                } catch (Throwable ex) {
+                    Log.w(ex);
+                    ToastEx.makeText(getContext(), getString(R.string.title_no_viewer, app), Toast.LENGTH_LONG).show();
+                }
+            }
+        });
+
         btnMore.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(getContext());
                 lbm.sendBroadcast(new Intent(ActivitySetup.ACTION_SETUP_MORE));
+            }
+        });
+
+        swDebug.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean checked) {
+                prefs.edit().putBoolean("debug", checked).apply();
+                Log.setDebug(checked);
+                grpDebug.setVisibility(checked || BuildConfig.DEBUG ? View.VISIBLE : View.GONE);
+            }
+        });
+
+        swProtocol.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean checked) {
+                prefs.edit().putBoolean("protocol", checked).apply();
+            }
+        });
+
+        swAuthPlain.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean checked) {
+                prefs.edit().putBoolean("auth_plain", checked).apply();
+                ServiceSynchronize.reload(getContext(), -1L, false, "auth_plain=" + checked);
+            }
+        });
+
+        swAuthLogin.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean checked) {
+                prefs.edit().putBoolean("auth_login", checked).apply();
+                ServiceSynchronize.reload(getContext(), -1L, false, "auth_login=" + checked);
+            }
+        });
+
+        swAuthSasl.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean checked) {
+                prefs.edit().putBoolean("auth_sasl", checked).apply();
+                ServiceSynchronize.reload(getContext(), -1L, false, "auth_sasl=" + checked);
             }
         });
 
@@ -405,7 +482,7 @@ public class FragmentOptionsMisc extends FragmentBase implements SharedPreferenc
                     tvFtsIndexed.setText(getString(R.string.title_advanced_fts_indexed,
                             stats.fts,
                             stats.total,
-                            Helper.humanReadableByteCount(FtsDbHelper.size(getContext()), true)));
+                            Helper.humanReadableByteCount(FtsDbHelper.size(getContext()))));
                 last = stats;
             }
         });
@@ -415,6 +492,27 @@ public class FragmentOptionsMisc extends FragmentBase implements SharedPreferenc
         PreferenceManager.getDefaultSharedPreferences(getContext()).registerOnSharedPreferenceChangeListener(this);
 
         return view;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        resumed = true;
+
+        View view = getView();
+        if (view != null)
+            view.post(new Runnable() {
+                @Override
+                public void run() {
+                    updateUsage();
+                }
+            });
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        resumed = false;
     }
 
     @Override
@@ -506,31 +604,90 @@ public class FragmentOptionsMisc extends FragmentBase implements SharedPreferenc
         swExternalSearch.setChecked(state != PackageManager.COMPONENT_ENABLED_STATE_DISABLED);
         swShortcuts.setChecked(prefs.getBoolean("shortcuts", true));
         swFts.setChecked(prefs.getBoolean("fts", false));
-        swEnglish.setChecked(prefs.getBoolean("english", false));
+
+        String language = prefs.getString("language", null);
+        String[] languages = getResources().getAssets().getLocales();
+
+        int selected = -1;
+        List<String> display = new ArrayList<>();
+        display.add(getString(R.string.title_advanced_language_system));
+        for (int pos = 0; pos < languages.length; pos++) {
+            String lang = languages[pos];
+            Locale loc = Locale.forLanguageTag(lang);
+            display.add(loc.getDisplayName() + " [" + lang + "]");
+            if (lang.equals(language))
+                selected = pos + 1;
+        }
+
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(getContext(), android.R.layout.simple_spinner_item, android.R.id.text1, display);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spLanguage.setAdapter(adapter);
+        if (selected >= 0)
+            spLanguage.setSelection(selected);
+
         swWatchdog.setChecked(prefs.getBoolean("watchdog", true));
-        swOptimize.setChecked(prefs.getBoolean("auto_optimize", false));
         swUpdates.setChecked(prefs.getBoolean("updates", true));
         swUpdates.setVisibility(
                 Helper.isPlayStoreInstall() || !Helper.hasValidFingerprint(getContext())
                         ? View.GONE : View.VISIBLE);
         swExperiments.setChecked(prefs.getBoolean("experiments", false));
+        swQueries.setChecked(prefs.getInt("query_threads", 4) < 4);
         swCrashReports.setChecked(prefs.getBoolean("crash_reports", false));
         tvUuid.setText(prefs.getString("uuid", null));
-        swDebug.setChecked(prefs.getBoolean("debug", false));
         swCleanupAttachments.setChecked(prefs.getBoolean("cleanup_attachments", false));
+
+        swProtocol.setChecked(prefs.getBoolean("protocol", false));
+        swDebug.setChecked(prefs.getBoolean("debug", false));
+        swAuthPlain.setChecked(prefs.getBoolean("auth_plain", true));
+        swAuthLogin.setChecked(prefs.getBoolean("auth_login", true));
+        swAuthSasl.setChecked(prefs.getBoolean("auth_sasl", true));
 
         tvProcessors.setText(getString(R.string.title_advanced_processors, Runtime.getRuntime().availableProcessors()));
 
         ActivityManager am = (ActivityManager) getContext().getSystemService(Context.ACTIVITY_SERVICE);
         int class_mb = am.getMemoryClass();
-        tvMemoryClass.setText(getString(R.string.title_advanced_memory_class, class_mb + " MB"));
+        int class_large_mb = am.getLargeMemoryClass();
+        ActivityManager.MemoryInfo mi = new ActivityManager.MemoryInfo();
+        am.getMemoryInfo(mi);
+        tvMemoryClass.setText(getString(R.string.title_advanced_memory_class,
+                class_mb + " MB",
+                class_large_mb + " MB",
+                Helper.humanReadableByteCount(mi.totalMem)));
 
-        tvStorageSpace.setText(getString(R.string.title_advanced_storage_space,
-                Helper.humanReadableByteCount(Helper.getAvailableStorageSpace(), true),
-                Helper.humanReadableByteCount(Helper.getTotalStorageSpace(), true)));
         tvFingerprint.setText(Helper.getFingerprint(getContext()));
 
         grpDebug.setVisibility(swDebug.isChecked() || BuildConfig.DEBUG ? View.VISIBLE : View.GONE);
+    }
+
+    private void updateUsage() {
+        if (!resumed)
+            return;
+
+        try {
+            Log.i("Update usage");
+
+            Runtime rt = Runtime.getRuntime();
+            long hused = rt.totalMemory() - rt.freeMemory();
+            long hmax = rt.maxMemory();
+            long nheap = Debug.getNativeHeapAllocatedSize();
+            tvMemoryUsage.setText(getString(R.string.title_advanced_memory_usage,
+                    Helper.humanReadableByteCount(hused),
+                    Helper.humanReadableByteCount(hmax),
+                    Helper.humanReadableByteCount(nheap)));
+
+            tvStorageUsage.setText(getString(R.string.title_advanced_storage_usage,
+                    Helper.humanReadableByteCount(Helper.getAvailableStorageSpace()),
+                    Helper.humanReadableByteCount(Helper.getTotalStorageSpace())));
+
+            getView().postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    updateUsage();
+                }
+            }, 2500);
+        } catch (Throwable ex) {
+            Log.e(ex);
+        }
     }
 
     private void setLastCleanup(long time) {

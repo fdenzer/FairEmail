@@ -24,6 +24,7 @@ import android.content.Intent;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.text.SpannableString;
+import android.text.TextUtils;
 import android.text.style.RelativeSizeSpan;
 import android.text.style.StyleSpan;
 import android.view.LayoutInflater;
@@ -31,6 +32,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -62,6 +64,9 @@ public class AdapterAnswer extends RecyclerView.Adapter<AdapterAnswer.ViewHolder
     public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener, View.OnLongClickListener {
         private View view;
         private TextView tvName;
+        private TextView tvGroup;
+        private ImageView ivStandard;
+        private ImageView ivFavorite;
 
         private TwoStateOwner powner = new TwoStateOwner(owner, "RulePopup");
 
@@ -70,6 +75,9 @@ public class AdapterAnswer extends RecyclerView.Adapter<AdapterAnswer.ViewHolder
 
             view = itemView.findViewById(R.id.clItem);
             tvName = itemView.findViewById(R.id.tvName);
+            tvGroup = itemView.findViewById(R.id.tvGroup);
+            ivStandard = itemView.findViewById(R.id.ivStandard);
+            ivFavorite = itemView.findViewById(R.id.ivFavorite);
         }
 
         private void wire() {
@@ -84,7 +92,11 @@ public class AdapterAnswer extends RecyclerView.Adapter<AdapterAnswer.ViewHolder
 
         private void bindTo(EntityAnswer answer) {
             view.setAlpha(answer.hide ? Helper.LOW_LIGHT : 1.0f);
-            tvName.setText(answer.toString());
+            tvName.setText(answer.name);
+            tvGroup.setText(answer.group);
+            tvGroup.setVisibility(TextUtils.isEmpty(answer.group) ? View.GONE : View.VISIBLE);
+            ivStandard.setVisibility(answer.standard ? View.VISIBLE : View.GONE);
+            ivFavorite.setVisibility(answer.favorite ? View.VISIBLE : View.GONE);
         }
 
         @Override

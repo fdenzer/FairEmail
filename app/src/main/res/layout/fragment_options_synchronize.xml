@@ -2,6 +2,7 @@
 <eu.faircode.email.ScrollViewEx xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/scroll"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:paddingStart="6dp"
@@ -41,19 +42,7 @@
             app:switchPadding="12dp" />
 
         <eu.faircode.email.FixedTextView
-            android:id="@+id/tvEnabledHint"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="48dp"
-            android:text="@string/title_advanced_enabled_hint"
-            android:textAppearance="@style/TextAppearance.AppCompat.Small"
-            android:textStyle="italic"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/swEnabled" />
-
-        <eu.faircode.email.FixedTextView
-            android:id="@+id/tvManalHint"
+            android:id="@+id/tvManualHint"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
@@ -63,7 +52,7 @@
             android:textStyle="italic"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/tvEnabledHint" />
+            app:layout_constraintTop_toBottomOf="@id/swEnabled" />
 
         <eu.faircode.email.FixedTextView
             android:id="@+id/tvWhen"
@@ -75,7 +64,42 @@
             android:textAppearance="@style/TextAppearance.AppCompat.Large"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/tvManalHint" />
+            app:layout_constraintTop_toBottomOf="@id/tvManualHint" />
+
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/swOptimize"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:checked="true"
+            android:text="@string/title_advanced_optimize"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/tvWhen"
+            app:switchPadding="12dp" />
+
+        <eu.faircode.email.FixedTextView
+            android:id="@+id/tvOptimizeHint"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:minHeight="45dp"
+            android:text="@string/title_advanced_optimize_hint"
+            android:textAppearance="@style/TextAppearance.AppCompat.Small"
+            android:textStyle="italic"
+            app:layout_constraintEnd_toStartOf="@+id/ibOptimizeInfo"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/swOptimize" />
+
+        <ImageButton
+            android:id="@+id/ibOptimizeInfo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:contentDescription="@string/title_info"
+            android:tooltipText="@string/title_info"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@id/tvOptimizeHint"
+            app:srcCompat="@drawable/twotone_info_24" />
 
         <Spinner
             android:id="@+id/spPollInterval"
@@ -84,7 +108,7 @@
             android:layout_marginTop="12dp"
             android:entries="@array/pollIntervalNames"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/tvWhen" />
+            app:layout_constraintTop_toBottomOf="@id/tvOptimizeHint" />
 
         <eu.faircode.email.FixedTextView
             android:id="@+id/tvPollHint"
@@ -410,6 +434,17 @@
             app:layout_constraintTop_toBottomOf="@id/swSyncFolders" />
 
         <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/swSyncSharedFolders"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="@string/title_advanced_sync_shared_folders"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/tvSyncFolders"
+            app:switchPadding="12dp" />
+
+        <androidx.appcompat.widget.SwitchCompat
             android:id="@+id/swSubscriptions"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
@@ -417,21 +452,8 @@
             android:text="@string/title_advanced_subscriptions"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/tvSyncFolders"
+            app:layout_constraintTop_toBottomOf="@id/swSyncSharedFolders"
             app:switchPadding="12dp" />
-
-        <eu.faircode.email.FixedTextView
-            android:id="@+id/tvSubscriptionPro"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
-            android:layout_marginEnd="48dp"
-            android:text="@string/title_pro_feature"
-            android:textAppearance="@style/TextAppearance.AppCompat.Small"
-            android:textColor="?android:attr/textColorLink"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/swSubscriptions" />
 
         <androidx.appcompat.widget.SwitchCompat
             android:id="@+id/swCheckMx"
@@ -441,7 +463,7 @@
             android:text="@string/title_advanced_check_mx"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/tvSubscriptionPro"
+            app:layout_constraintTop_toBottomOf="@id/swSubscriptions"
             app:switchPadding="12dp" />
 
         <eu.faircode.email.FixedTextView
@@ -491,6 +513,18 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/swCheckReply" />
+
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/swTuneKeepAlive"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:checked="true"
+            android:text="@string/title_advanced_tune_keep_alive"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/tvCheckReplyHint"
+            app:switchPadding="12dp" />
 
         <androidx.constraintlayout.widget.Group
             android:id="@+id/grpExempted"

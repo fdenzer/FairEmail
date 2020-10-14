@@ -78,6 +78,7 @@ public class FragmentFolders extends FragmentBase {
     private FloatingActionButton fabError;
 
     private boolean cards;
+    private boolean beige;
     private boolean compact;
 
     private long account;
@@ -104,6 +105,7 @@ public class FragmentFolders extends FragmentBase {
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
         cards = prefs.getBoolean("cards", true);
+        beige = prefs.getBoolean("beige", true);
         compact = prefs.getBoolean("compact_folders", false);
         show_flagged = prefs.getBoolean("flagged_folders", false);
 
@@ -207,14 +209,26 @@ public class FragmentFolders extends FragmentBase {
         fabCompose.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
+                Bundle args = new Bundle();
+                args.putLong("account", account);
+
                 new SimpleTask<EntityFolder>() {
                     @Override
                     protected EntityFolder onExecute(Context context, Bundle args) {
-                        return DB.getInstance(context).folder().getPrimaryDrafts();
+                        long account = args.getLong("account");
+
+                        DB db = DB.getInstance(context);
+                        if (account < 0)
+                            return db.folder().getPrimaryDrafts();
+                        else
+                            return db.folder().getFolderByType(account, EntityFolder.DRAFTS);
                     }
 
                     @Override
                     protected void onExecuted(Bundle args, EntityFolder drafts) {
+                        if (drafts == null)
+                            return;
+
                         LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(getContext());
                         lbm.sendBroadcast(
                                 new Intent(ActivityView.ACTION_VIEW_MESSAGES)
@@ -227,7 +241,7 @@ public class FragmentFolders extends FragmentBase {
                     protected void onException(Bundle args, Throwable ex) {
                         Log.unexpectedError(getParentFragmentManager(), ex);
                     }
-                }.execute(FragmentFolders.this, new Bundle(), "folders:drafts");
+                }.execute(FragmentFolders.this, args, "folders:drafts");
 
                 return true;
             }
@@ -254,7 +268,9 @@ public class FragmentFolders extends FragmentBase {
         // Initialize
 
         if (cards && !Helper.isDarkTheme(getContext()))
-            view.setBackgroundColor(ContextCompat.getColor(getContext(), R.color.lightColorBackground_cards));
+            view.setBackgroundColor(ContextCompat.getColor(getContext(), beige
+                    ? R.color.lightColorBackground_cards_beige
+                    : R.color.lightColorBackground_cards));
 
         grpReady.setVisibility(View.GONE);
         pbWait.setVisibility(View.VISIBLE);
@@ -280,7 +296,7 @@ public class FragmentFolders extends FragmentBase {
 
         // Observe account
         if (account < 0)
-            setSubtitle(R.string.title_folders_unified);
+            setSubtitle(primary ? R.string.title_folder_primary : R.string.title_folders_unified);
         else
             db.account().liveAccount(account).observe(getViewLifecycleOwner(), new Observer<EntityAccount>() {
                 @Override
@@ -399,7 +415,8 @@ public class FragmentFolders extends FragmentBase {
             @Override
             protected void onException(Bundle args, Throwable ex) {
                 if (ex instanceof IllegalStateException) {
-                    Snackbar snackbar = Snackbar.make(view, ex.getMessage(), Snackbar.LENGTH_LONG);
+                    Snackbar snackbar = Snackbar.make(view, ex.getMessage(), Snackbar.LENGTH_LONG)
+                            .setGestureInsetBottomIgnored(true);
                     snackbar.setAction(R.string.title_fix, new View.OnClickListener() {
                         @Override
                         public void onClick(View view) {
@@ -410,7 +427,8 @@ public class FragmentFolders extends FragmentBase {
                     });
                     snackbar.show();
                 } else if (ex instanceof IllegalArgumentException)
-                    Snackbar.make(view, ex.getMessage(), Snackbar.LENGTH_LONG).show();
+                    Snackbar.make(view, ex.getMessage(), Snackbar.LENGTH_LONG)
+                            .setGestureInsetBottomIgnored(true).show();
                 else
                     Log.unexpectedError(getParentFragmentManager(), ex);
             }
@@ -559,6 +577,7 @@ public class FragmentFolders extends FragmentBase {
             protected Void onExecute(Context context, Bundle args) {
                 int months = args.getInt("months", -1);
                 long fid = args.getLong("folder");
+                boolean childs = args.getBoolean("childs");
 
                 if (months < 0 && !ConnectionHelper.getNetworkState(context).isSuitable())
                     throw new IllegalStateException(context.getString(R.string.title_no_internet));
@@ -573,15 +592,25 @@ public class FragmentFolders extends FragmentBase {
                     if (folder == null)
                         return null;
 
-                    if (months == 0) {
-                        db.folder().setFolderInitialize(folder.id, Integer.MAX_VALUE);
-                        db.folder().setFolderKeep(folder.id, Integer.MAX_VALUE);
-                    } else if (months > 0) {
-                        db.folder().setFolderInitialize(folder.id, months * 30);
-                        db.folder().setFolderKeep(folder.id, months * 30);
+                    if (folder.selectable) {
+                        if (months == 0) {
+                            db.folder().setFolderInitialize(folder.id, Integer.MAX_VALUE);
+                            db.folder().setFolderKeep(folder.id, Integer.MAX_VALUE);
+                        } else if (months > 0) {
+                            db.folder().setFolderInitialize(folder.id, months * 30);
+                            db.folder().setFolderKeep(folder.id, months * 30);
+                        }
+
+                        EntityOperation.sync(context, folder.id, true);
                     }
 
-                    EntityOperation.sync(context, folder.id, true);
+                    if (childs) {
+                        List<EntityFolder> folders = db.folder().getChildFolders(folder.id);
+                        if (folders != null)
+                            for (EntityFolder child : folders)
+                                if (child.selectable)
+                                    EntityOperation.sync(context, child.id, true);
+                    }
 
                     if (folder.account != null) {
                         EntityAccount account = db.account().getAccount(folder.account);
@@ -606,7 +635,8 @@ public class FragmentFolders extends FragmentBase {
             @Override
             protected void onException(Bundle args, Throwable ex) {
                 if (ex instanceof IllegalStateException) {
-                    Snackbar snackbar = Snackbar.make(view, ex.getMessage(), Snackbar.LENGTH_LONG);
+                    Snackbar snackbar = Snackbar.make(view, ex.getMessage(), Snackbar.LENGTH_LONG)
+                            .setGestureInsetBottomIgnored(true);
                     snackbar.setAction(R.string.title_fix, new View.OnClickListener() {
                         @Override
                         public void onClick(View view) {
@@ -617,7 +647,8 @@ public class FragmentFolders extends FragmentBase {
                     });
                     snackbar.show();
                 } else if (ex instanceof IllegalArgumentException)
-                    Snackbar.make(view, ex.getMessage(), Snackbar.LENGTH_LONG).show();
+                    Snackbar.make(view, ex.getMessage(), Snackbar.LENGTH_LONG)
+                            .setGestureInsetBottomIgnored(true).show();
                 else
                     Log.unexpectedError(getParentFragmentManager(), ex);
             }
@@ -687,12 +718,25 @@ public class FragmentFolders extends FragmentBase {
                     if (!folder.type.equals(type))
                         throw new IllegalStateException("Invalid folder type=" + type);
 
+                    EntityAccount account = db.account().getAccount(folder.account);
+                    if (account == null)
+                        return null;
+
+                    EntityLog.log(context,
+                            "Empty account=" + account.name + " folder=" + folder.name + " count=" + folder.total);
+
                     List<Long> ids = db.message().getMessageByFolder(folder.id);
                     for (Long id : ids) {
                         EntityMessage message = db.message().getMessage(id);
-                        if (message.uid != null || !TextUtils.isEmpty(message.msgid))
-                            EntityOperation.queue(context, message, EntityOperation.DELETE);
+                        if (message == null)
+                            continue;
+
+                        if (message.uid != null || account.protocol == EntityAccount.TYPE_POP)
+                            db.message().setMessageUiHide(message.id, true);
                     }
+
+                    EntityOperation.queue(context, folder, EntityOperation.PURGE);
+                    EntityOperation.sync(context, folder.id, false);
 
                     db.setTransactionSuccessful();
                 } finally {
@@ -751,8 +795,6 @@ public class FragmentFolders extends FragmentBase {
         @Override
         public Dialog onCreateDialog(@Nullable Bundle savedInstanceState) {
             View view = LayoutInflater.from(getContext()).inflate(R.layout.dialog_folder_all, null);
-            final CheckBox cbPoll = view.findViewById(R.id.cbPoll);
-            final CheckBox cbDownload = view.findViewById(R.id.cbDownload);
             final EditText etSyncDays = view.findViewById(R.id.etSyncDays);
             final EditText etKeepDays = view.findViewById(R.id.etKeepDays);
             final CheckBox cbKeepAll = view.findViewById(R.id.cbKeepAll);
@@ -770,8 +812,6 @@ public class FragmentFolders extends FragmentBase {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
                             Bundle args = getArguments();
-                            args.putBoolean("poll", cbPoll.isChecked());
-                            args.putBoolean("download", cbDownload.isChecked());
                             args.putString("sync", etSyncDays.getText().toString());
                             args.putString("keep", cbKeepAll.isChecked()
                                     ? Integer.toString(Integer.MAX_VALUE)
@@ -781,8 +821,6 @@ public class FragmentFolders extends FragmentBase {
                                 @Override
                                 protected Void onExecute(Context context, Bundle args) throws Throwable {
                                     long account = args.getLong("account");
-                                    boolean poll = args.getBoolean("poll");
-                                    boolean download = args.getBoolean("download");
                                     String sync = args.getString("sync");
                                     String keep = args.getString("keep");
 
@@ -794,8 +832,6 @@ public class FragmentFolders extends FragmentBase {
                                     DB db = DB.getInstance(context);
                                     db.folder().setFolderProperties(
                                             account,
-                                            poll,
-                                            download,
                                             Integer.parseInt(sync),
                                             Integer.parseInt(keep));
 

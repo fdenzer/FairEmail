@@ -27,7 +27,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.core.app.AlarmManagerCompat;
@@ -38,9 +37,12 @@ import org.json.JSONException;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 import javax.mail.Address;
@@ -61,6 +63,8 @@ public class ServiceUI extends IntentService {
     static final int PI_WAKEUP = 12;
     static final int PI_SYNC = 13;
     static final int PI_BANNER = 14;
+
+    static final int HIDE_BANNER = 3; // weeks
 
     public ServiceUI() {
         this(ServiceUI.class.getName());
@@ -173,16 +177,24 @@ public class ServiceUI extends IntentService {
                 default:
                     throw new IllegalArgumentException("Unknown UI action: " + parts[0]);
             }
+
+            Map<String, String> crumb = new HashMap<>();
+            crumb.put("action", action);
+            Log.breadcrumb("serviceui", crumb);
+
+            ServiceSynchronize.eval(this, "ui/" + action);
         } catch (Throwable ex) {
             Log.e(ex);
         }
-
-        ServiceSynchronize.eval(this, "ui/" + action);
     }
 
     private void onClear(long group) {
         DB db = DB.getInstance(this);
-        int cleared = db.message().ignoreAll(group == 0 ? null : group, null);
+        int cleared;
+        if (group < 0)
+            cleared = db.message().ignoreAll(null, -group);
+        else
+            cleared = db.message().ignoreAll(group == 0 ? null : group, null);
         Log.i("Cleared=" + cleared);
     }
 
@@ -256,7 +268,8 @@ public class ServiceUI extends IntentService {
 
             if (block_sender) {
                 EntityRule rule = EntityRule.blockSender(this, message, junk, false, whitelist);
-                rule.id = db.rule().insertRule(rule);
+                if (rule != null)
+                    rule.id = db.rule().insertRule(rule);
             }
 
             db.setTransactionSuccessful();
@@ -305,7 +318,7 @@ public class ServiceUI extends IntentService {
             reply.inreplyto = ref.msgid;
             reply.thread = ref.thread;
             reply.to = ref.from;
-            reply.from = new Address[]{new InternetAddress(identity.email, identity.name)};
+            reply.from = new Address[]{new InternetAddress(identity.email, identity.name, StandardCharsets.UTF_8.name())};
             reply.subject = getString(R.string.title_subject_reply, subject);
             reply.received = new Date().getTime();
             reply.seen = true;
@@ -330,7 +343,6 @@ public class ServiceUI extends IntentService {
         }
 
         ServiceSend.start(this);
-        ToastEx.makeText(this, R.string.title_queued, Toast.LENGTH_LONG).show();
     }
 
     private void onFlag(long id) {
@@ -428,6 +440,7 @@ public class ServiceUI extends IntentService {
             thread.setAction("thread:" + message.thread);
             thread.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             thread.putExtra("account", message.account);
+            thread.putExtra("folder", message.folder);
             thread.putExtra("id", message.id);
             thread.putExtra("filter_archive", !EntityFolder.ARCHIVE.equals(folder.type));
             startActivity(thread);
@@ -457,14 +470,44 @@ public class ServiceUI extends IntentService {
                 }
             } else {
                 if (folder.notify) {
+                    List<EntityAttachment> attachments = db.attachment().getAttachments(id);
+
                     // A new message ID is needed for a new (wearable) notification
                     db.message().deleteMessage(id);
+
                     message.id = null;
                     message.fts = false;
                     message.id = db.message().insertMessage(message);
-                    if (message.content)
-                        EntityMessage.getFile(this, id)
-                                .renameTo(message.getFile(this));
+
+                    if (message.content) {
+                        File source = EntityMessage.getFile(this, id);
+                        File target = message.getFile(this);
+                        try {
+                            Helper.copy(source, target);
+                        } catch (IOException ex) {
+                            Log.e(ex);
+                            db.message().resetMessageContent(message.id);
+                        }
+                    }
+
+                    for (EntityAttachment attachment : attachments) {
+                        File source = attachment.getFile(this);
+
+                        attachment.id = null;
+                        attachment.message = message.id;
+                        attachment.progress = null;
+                        attachment.id = db.attachment().insertAttachment(attachment);
+
+                        if (attachment.available) {
+                            File target = attachment.getFile(this);
+                            try {
+                                Helper.copy(source, target);
+                            } catch (IOException ex) {
+                                Log.e(ex);
+                                db.attachment().setError(attachment.id, Log.formatThrowable(ex, false));
+                            }
+                        }
+                    }
                 }
                 db.message().setMessageSnoozed(message.id, null);
                 db.message().setMessageUnsnoozed(message.id, true);
@@ -503,7 +546,7 @@ public class ServiceUI extends IntentService {
             long now = new Date().getTime();
             long[] schedule = ServiceSynchronize.getSchedule(this);
             boolean poll = (schedule == null || (now >= schedule[0] && now < schedule[1]));
-            schedule(this, poll);
+            schedule(this, poll, null);
         }
     }
 
@@ -517,7 +560,7 @@ public class ServiceUI extends IntentService {
                 .setAction(account == null ? "sync" : "sync:" + account));
     }
 
-    static void schedule(Context context, boolean poll) {
+    static void schedule(Context context, boolean poll, Long at) {
         Intent intent = new Intent(context, ServiceUI.class);
         intent.setAction("sync");
         intent.putExtra("reschedule", true);
@@ -527,18 +570,23 @@ public class ServiceUI extends IntentService {
         AlarmManager am = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
         am.cancel(piSync);
 
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-        boolean enabled = prefs.getBoolean("enabled", true);
-        int pollInterval = prefs.getInt("poll_interval", ServiceSynchronize.DEFAULT_POLL_INTERVAL);
-        if (poll && enabled && pollInterval > 0) {
-            long now = new Date().getTime();
-            long interval = pollInterval * 60 * 1000L;
-            long next = now + interval - now % interval + 30 * 1000L;
+        if (at == null) {
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+            boolean enabled = prefs.getBoolean("enabled", true);
+            int pollInterval = prefs.getInt("poll_interval", ServiceSynchronize.DEFAULT_POLL_INTERVAL);
+            if (poll && enabled && pollInterval > 0) {
+                long now = new Date().getTime();
+                long interval = pollInterval * 60 * 1000L;
+                long next = now + interval - now % interval + 30 * 1000L;
+                if (next < now + interval / 5)
+                    next += interval;
 
-            EntityLog.log(context, "Poll next=" + new Date(next));
+                EntityLog.log(context, "Poll next=" + new Date(next));
 
-            AlarmManagerCompat.setAndAllowWhileIdle(am, AlarmManager.RTC_WAKEUP, next, piSync);
-        }
+                AlarmManagerCompat.setAndAllowWhileIdle(am, AlarmManager.RTC_WAKEUP, next, piSync);
+            }
+        } else
+            AlarmManagerCompat.setAndAllowWhileIdle(am, AlarmManager.RTC_WAKEUP, at, piSync);
     }
 
     private static PendingIntent getBannerIntent(Context context) {
@@ -552,7 +600,7 @@ public class ServiceUI extends IntentService {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
         if (set) {
             long now = new Date().getTime();
-            long interval = AlarmManager.INTERVAL_DAY * 14;
+            long interval = AlarmManager.INTERVAL_DAY * HIDE_BANNER * 7;
             long due = interval - (now % interval);
             long trigger = now + due;
             Log.i("Set banner alarm at " + new Date(trigger) + " due=" + due);

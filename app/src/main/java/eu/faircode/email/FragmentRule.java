@@ -27,11 +27,13 @@ import android.database.Cursor;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Handler;
 import android.provider.ContactsContract;
+import android.speech.tts.TextToSpeech;
 import android.text.TextUtils;
 import android.text.format.DateFormat;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
@@ -41,7 +43,7 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
-import android.widget.ImageView;
+import android.widget.ImageButton;
 import android.widget.NumberPicker;
 import android.widget.ScrollView;
 import android.widget.Spinner;
@@ -55,7 +57,6 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.constraintlayout.widget.Group;
 import androidx.fragment.app.DialogFragment;
-import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -87,17 +88,18 @@ public class FragmentRule extends FragmentBase {
 
     private EditText etSender;
     private CheckBox cbSender;
-    private ImageView ibSender;
+    private ImageButton ibSender;
     private CheckBox cbKnownSender;
 
     private EditText etRecipient;
     private CheckBox cbRecipient;
-    private ImageView ibRecipient;
+    private ImageButton ibRecipient;
 
     private EditText etSubject;
     private CheckBox cbSubject;
 
     private CheckBox cbAttachments;
+    private EditText etMimeType;
 
     private EditText etHeader;
     private CheckBox cbHeader;
@@ -127,7 +129,13 @@ public class FragmentRule extends FragmentBase {
     private Spinner spIdent;
 
     private Spinner spAnswer;
+    private EditText etTo;
+    private ImageButton ibTo;
     private CheckBox cbCc;
+    private CheckBox cbWithAttachments;
+
+    private Button btnTtsSetup;
+    private Button btnTtsData;
 
     private TextView tvAutomation;
 
@@ -142,6 +150,7 @@ public class FragmentRule extends FragmentBase {
     private Group grpMove;
     private Group grpMoveProp;
     private Group grpAnswer;
+    private Group grpTts;
     private Group grpAutomation;
 
     private ArrayAdapter<String> adapterDay;
@@ -153,6 +162,7 @@ public class FragmentRule extends FragmentBase {
     private long id = -1;
     private long copy = -1;
     private long account = -1;
+    private int protocol = -1;
     private long folder = -1;
 
     private final static int MAX_CHECK = 10;
@@ -163,6 +173,9 @@ public class FragmentRule extends FragmentBase {
     private final static int REQUEST_DELETE = 4;
     private final static int REQUEST_SCHEDULE_START = 5;
     private final static int REQUEST_SCHEDULE_END = 6;
+    private static final int REQUEST_TO = 7;
+    private final static int REQUEST_TTS_CHECK = 8;
+    private final static int REQUEST_TTS_DATA = 9;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -175,6 +188,7 @@ public class FragmentRule extends FragmentBase {
         else
             id = args.getLong("id", -1);
         account = args.getLong("account", -1);
+        protocol = args.getInt("protocol", EntityAccount.TYPE_IMAP);
         folder = args.getLong("folder", -1);
     }
 
@@ -182,6 +196,7 @@ public class FragmentRule extends FragmentBase {
     @Nullable
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         setSubtitle(R.string.title_rule_caption);
+        setHasOptionsMenu(true);
 
         view = (ViewGroup) inflater.inflate(R.layout.fragment_rule, container, false);
 
@@ -208,6 +223,7 @@ public class FragmentRule extends FragmentBase {
         cbSubject = view.findViewById(R.id.cbSubject);
 
         cbAttachments = view.findViewById(R.id.cbAttachments);
+        etMimeType = view.findViewById(R.id.etMimeType);
 
         etHeader = view.findViewById(R.id.etHeader);
         cbHeader = view.findViewById(R.id.cbHeader);
@@ -237,8 +253,13 @@ public class FragmentRule extends FragmentBase {
         spIdent = view.findViewById(R.id.spIdent);
 
         spAnswer = view.findViewById(R.id.spAnswer);
+        etTo = view.findViewById(R.id.etTo);
+        ibTo = view.findViewById(R.id.ibTo);
         cbCc = view.findViewById(R.id.cbCc);
+        cbWithAttachments = view.findViewById(R.id.cbWithAttachments);
 
+        btnTtsSetup = view.findViewById(R.id.btnTtsSetup);
+        btnTtsData = view.findViewById(R.id.btnTtsData);
         tvAutomation = view.findViewById(R.id.tvAutomation);
 
         bottom_navigation = view.findViewById(R.id.bottom_navigation);
@@ -253,16 +274,14 @@ public class FragmentRule extends FragmentBase {
         grpMove = view.findViewById(R.id.grpMove);
         grpMoveProp = view.findViewById(R.id.grpMoveProp);
         grpAnswer = view.findViewById(R.id.grpAnswer);
+        grpTts = view.findViewById(R.id.grpTts);
         grpAutomation = view.findViewById(R.id.grpAutomation);
 
         ibSender.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Intent pick = new Intent(Intent.ACTION_PICK, ContactsContract.CommonDataKinds.Email.CONTENT_URI);
-                if (pick.resolveActivity(getContext().getPackageManager()) == null)
-                    Snackbar.make(view, R.string.title_no_contacts, Snackbar.LENGTH_LONG).show();
-                else
-                    startActivityForResult(Helper.getChooser(getContext(), pick), REQUEST_SENDER);
+                startActivityForResult(Helper.getChooser(getContext(), pick), REQUEST_SENDER);
             }
         });
 
@@ -279,10 +298,14 @@ public class FragmentRule extends FragmentBase {
             @Override
             public void onClick(View v) {
                 Intent pick = new Intent(Intent.ACTION_PICK, ContactsContract.CommonDataKinds.Email.CONTENT_URI);
-                if (pick.resolveActivity(getContext().getPackageManager()) == null)
-                    Snackbar.make(view, R.string.title_no_contacts, Snackbar.LENGTH_LONG).show();
-                else
-                    startActivityForResult(Helper.getChooser(getContext(), pick), REQUEST_RECIPIENT);
+                startActivityForResult(Helper.getChooser(getContext(), pick), REQUEST_RECIPIENT);
+            }
+        });
+
+        cbAttachments.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean isChecked) {
+                etMimeType.setEnabled(isChecked);
             }
         });
 
@@ -310,6 +333,26 @@ public class FragmentRule extends FragmentBase {
         String[] dayNames = DateFormatSymbols.getInstance().getWeekdays();
         for (int day = Calendar.SUNDAY; day <= Calendar.SATURDAY; day++)
             adapterDay.add(dayNames[day]);
+
+        AdapterView.OnItemSelectedListener onItemSelectedListener = new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                parent.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        //parent.requestFocusFromTouch();
+                    }
+                });
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+                // Do nothing
+            }
+        };
+
+        spScheduleDayStart.setOnItemSelectedListener(onItemSelectedListener);
+        spScheduleDayEnd.setOnItemSelectedListener(onItemSelectedListener);
 
         tvScheduleHourStart.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -346,10 +389,13 @@ public class FragmentRule extends FragmentBase {
         actions.add(new Action(EntityRule.TYPE_SNOOZE, getString(R.string.title_rule_snooze)));
         actions.add(new Action(EntityRule.TYPE_FLAG, getString(R.string.title_rule_flag)));
         actions.add(new Action(EntityRule.TYPE_IMPORTANCE, getString(R.string.title_rule_importance)));
-        actions.add(new Action(EntityRule.TYPE_KEYWORD, getString(R.string.title_rule_keyword)));
-        actions.add(new Action(EntityRule.TYPE_MOVE, getString(R.string.title_rule_move)));
-        actions.add(new Action(EntityRule.TYPE_COPY, getString(R.string.title_rule_copy)));
+        if (protocol == EntityAccount.TYPE_IMAP) {
+            actions.add(new Action(EntityRule.TYPE_KEYWORD, getString(R.string.title_rule_keyword)));
+            actions.add(new Action(EntityRule.TYPE_MOVE, getString(R.string.title_rule_move)));
+            actions.add(new Action(EntityRule.TYPE_COPY, getString(R.string.title_rule_copy)));
+        }
         actions.add(new Action(EntityRule.TYPE_ANSWER, getString(R.string.title_rule_answer)));
+        actions.add(new Action(EntityRule.TYPE_TTS, getString(R.string.title_rule_tts)));
         actions.add(new Action(EntityRule.TYPE_AUTOMATION, getString(R.string.title_rule_automation)));
         adapterAction.addAll(actions);
 
@@ -362,6 +408,13 @@ public class FragmentRule extends FragmentBase {
                     onActionSelected(action.type);
                 }
                 adapterView.setTag(position);
+
+                adapterView.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        //adapterView.requestFocusFromTouch();
+                    }
+                });
             }
 
             @Override
@@ -372,7 +425,7 @@ public class FragmentRule extends FragmentBase {
             private void onActionSelected(int type) {
                 showActionParameters(type);
 
-                new Handler().post(new Runnable() {
+                getMainHandler().post(new Runnable() {
                     @Override
                     public void run() {
                         scroll.smoothScrollTo(0, content.getBottom());
@@ -398,6 +451,37 @@ public class FragmentRule extends FragmentBase {
                 fragment.setArguments(args);
                 fragment.setTargetFragment(FragmentRule.this, REQUEST_COLOR);
                 fragment.show(getParentFragmentManager(), "rule:color");
+            }
+        });
+
+        spImportance.setOnItemSelectedListener(onItemSelectedListener);
+        spTarget.setOnItemSelectedListener(onItemSelectedListener);
+        spIdent.setOnItemSelectedListener(onItemSelectedListener);
+        spAnswer.setOnItemSelectedListener(onItemSelectedListener);
+
+        ibTo.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent pick = new Intent(Intent.ACTION_PICK, ContactsContract.CommonDataKinds.Email.CONTENT_URI);
+                startActivityForResult(Helper.getChooser(getContext(), pick), REQUEST_TO);
+            }
+        });
+
+        btnTtsSetup.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent();
+                intent.setAction(TextToSpeech.Engine.ACTION_CHECK_TTS_DATA);
+                startActivityForResult(intent, REQUEST_TTS_CHECK);
+            }
+        });
+
+        btnTtsData.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent();
+                intent.setAction(TextToSpeech.Engine.ACTION_INSTALL_TTS_DATA);
+                startActivityForResult(intent, REQUEST_TTS_DATA);
             }
         });
 
@@ -438,7 +522,9 @@ public class FragmentRule extends FragmentBase {
         grpMove.setVisibility(View.GONE);
         grpMoveProp.setVisibility(View.GONE);
         grpAnswer.setVisibility(View.GONE);
+        grpTts.setVisibility(View.GONE);
         grpAutomation.setVisibility(View.GONE);
+
         pbWait.setVisibility(View.VISIBLE);
 
         return view;
@@ -472,7 +558,7 @@ public class FragmentRule extends FragmentBase {
                             if (folders.size() > 0)
                                 Collections.sort(folders, folders.get(0).getComparator(null));
                             for (EntityFolder folder : folders)
-                                data.folders.add(new AccountFolder(account, folder));
+                                data.folders.add(new AccountFolder(account, folder, context));
                         }
                     }
 
@@ -499,7 +585,7 @@ public class FragmentRule extends FragmentBase {
                         getString(R.string.title_rule_action_remark, data.folder.getDisplayName(getContext())));
                 tvActionRemark.setVisibility(View.VISIBLE);
 
-                loadRule();
+                loadRule(savedInstanceState);
             }
 
             @Override
@@ -510,6 +596,41 @@ public class FragmentRule extends FragmentBase {
     }
 
     @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        inflater.inflate(R.menu.menu_rule, menu);
+        super.onCreateOptionsMenu(menu, inflater);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.menu_help:
+                onMenuHelp();
+                return true;
+
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+
+    private void onMenuHelp() {
+        Helper.viewFAQ(getContext(), 71);
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        outState.putInt("fair:start", spScheduleDayStart.getSelectedItemPosition());
+        outState.putInt("fair:end", spScheduleDayEnd.getSelectedItemPosition());
+        outState.putInt("fair:action", spAction.getSelectedItemPosition());
+        outState.putInt("fair:importance", spImportance.getSelectedItemPosition());
+        outState.putInt("fair:target", spTarget.getSelectedItemPosition());
+        outState.putInt("fair:identity", spIdent.getSelectedItemPosition());
+        outState.putInt("fair:answer", spAnswer.getSelectedItemPosition());
+
+        super.onSaveInstanceState(outState);
+    }
+
+    @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
@@ -517,11 +638,11 @@ public class FragmentRule extends FragmentBase {
             switch (requestCode) {
                 case REQUEST_SENDER:
                     if (resultCode == RESULT_OK && data != null)
-                        onPickContact(data, true);
+                        onPickContact(data, etSender);
                     break;
                 case REQUEST_RECIPIENT:
                     if (resultCode == RESULT_OK && data != null)
-                        onPickContact(data, true);
+                        onPickContact(data, etRecipient);
                     break;
                 case REQUEST_COLOR:
                     if (resultCode == RESULT_OK && data != null) {
@@ -540,11 +661,26 @@ public class FragmentRule extends FragmentBase {
                     break;
                 case REQUEST_SCHEDULE_START:
                     if (resultCode == RESULT_OK)
-                        onScheduleStart(data);
+                        onScheduleStart(data.getBundleExtra("args"));
                     break;
                 case REQUEST_SCHEDULE_END:
                     if (resultCode == RESULT_OK)
-                        onScheduleEnd(data);
+                        onScheduleEnd(data.getBundleExtra("args"));
+                    break;
+                case REQUEST_TO:
+                    if (resultCode == RESULT_OK && data != null)
+                        onPickContact(data, etTo);
+                    break;
+                case REQUEST_TTS_CHECK:
+                    if (resultCode == TextToSpeech.Engine.CHECK_VOICE_DATA_PASS)
+                        ToastEx.makeText(getContext(), R.string.title_rule_tts_ok, Toast.LENGTH_LONG).show();
+                    else {
+                        Intent tts = new Intent();
+                        tts.setAction(TextToSpeech.Engine.ACTION_INSTALL_TTS_DATA);
+                        startActivity(tts);
+                    }
+                    break;
+                case REQUEST_TTS_DATA:
                     break;
             }
         } catch (Throwable ex) {
@@ -552,7 +688,7 @@ public class FragmentRule extends FragmentBase {
         }
     }
 
-    private void onPickContact(Intent data, boolean sender) {
+    private void onPickContact(Intent data, final EditText et) {
         Uri uri = data.getData();
         if (uri == null) return;
         try (Cursor cursor = getContext().getContentResolver().query(uri,
@@ -561,10 +697,7 @@ public class FragmentRule extends FragmentBase {
                 },
                 null, null, null)) {
             if (cursor != null && cursor.moveToFirst())
-                if (sender)
-                    etSender.setText(cursor.getString(0));
-                else
-                    etRecipient.setText(cursor.getString(0));
+                et.setText(cursor.getString(0));
         } catch (Throwable ex) {
             Log.e(ex);
             Log.unexpectedError(getParentFragmentManager(), ex);
@@ -605,21 +738,21 @@ public class FragmentRule extends FragmentBase {
         }.execute(this, args, "rule:delete");
     }
 
-    private void onScheduleStart(Intent data) {
-        int minutes = data.getIntExtra("minutes", 0);
+    private void onScheduleStart(Bundle args) {
+        int minutes = args.getInt("minutes", 0);
         tvScheduleHourStart.setTag(minutes);
         tvScheduleHourStart.setText(formatHour(getContext(), minutes));
         cbScheduleEnd.setChecked(true);
     }
 
-    private void onScheduleEnd(Intent data) {
-        int minutes = data.getIntExtra("minutes", 0);
+    private void onScheduleEnd(Bundle args) {
+        int minutes = args.getInt("minutes", 0);
         tvScheduleHourEnd.setTag(minutes);
         tvScheduleHourEnd.setText(formatHour(getContext(), minutes));
         cbScheduleEnd.setChecked(true);
     }
 
-    private void loadRule() {
+    private void loadRule(final Bundle savedInstanceState) {
         Bundle rargs = new Bundle();
         rargs.putLong("id", copy < 0 ? id : copy);
         rargs.putString("sender", getArguments().getString("sender"));
@@ -628,6 +761,16 @@ public class FragmentRule extends FragmentBase {
 
         new SimpleTask<TupleRuleEx>() {
             @Override
+            protected void onPreExecute(Bundle args) {
+                pbWait.setVisibility(View.VISIBLE);
+            }
+
+            @Override
+            protected void onPostExecute(Bundle args) {
+                pbWait.setVisibility(View.GONE);
+            }
+
+            @Override
             protected TupleRuleEx onExecute(Context context, Bundle args) {
                 long id = args.getLong("id");
                 return DB.getInstance(context).rule().getRule(id);
@@ -635,129 +778,150 @@ public class FragmentRule extends FragmentBase {
 
             @Override
             protected void onExecuted(Bundle args, TupleRuleEx rule) {
+                if (copy > 0 && rule != null)
+                    rule.applied = 0;
+
                 try {
-                    JSONObject jcondition = (rule == null ? new JSONObject() : new JSONObject(rule.condition));
-                    JSONObject jaction = (rule == null ? new JSONObject() : new JSONObject(rule.action));
+                    if (savedInstanceState == null) {
+                        JSONObject jcondition = (rule == null ? new JSONObject() : new JSONObject(rule.condition));
+                        JSONObject jaction = (rule == null ? new JSONObject() : new JSONObject(rule.action));
 
-                    JSONObject jsender = jcondition.optJSONObject("sender");
-                    JSONObject jrecipient = jcondition.optJSONObject("recipient");
-                    JSONObject jsubject = jcondition.optJSONObject("subject");
-                    JSONObject jheader = jcondition.optJSONObject("header");
-                    JSONObject jschedule = jcondition.optJSONObject("schedule");
+                        JSONObject jsender = jcondition.optJSONObject("sender");
+                        JSONObject jrecipient = jcondition.optJSONObject("recipient");
+                        JSONObject jsubject = jcondition.optJSONObject("subject");
+                        JSONObject jheader = jcondition.optJSONObject("header");
+                        JSONObject jschedule = jcondition.optJSONObject("schedule");
 
-                    etName.setText(rule == null ? args.getString("subject") : rule.name);
-                    etOrder.setText(rule == null ? null : Integer.toString(rule.order));
-                    cbEnabled.setChecked(rule == null || rule.enabled);
-                    cbStop.setChecked(rule != null && rule.stop);
+                        etName.setText(rule == null ? args.getString("subject") : rule.name);
+                        etOrder.setText(rule == null ? null : Integer.toString(rule.order));
+                        cbEnabled.setChecked(rule == null || rule.enabled);
+                        cbStop.setChecked(rule != null && rule.stop);
 
-                    etSender.setText(jsender == null ? args.getString("sender") : jsender.getString("value"));
-                    cbSender.setChecked(jsender != null && jsender.getBoolean("regex"));
-                    cbKnownSender.setChecked(jsender != null && jsender.optBoolean("known"));
-                    etSender.setEnabled(!cbKnownSender.isChecked());
-                    ibSender.setEnabled(!cbKnownSender.isChecked());
-                    cbSender.setEnabled(!cbKnownSender.isChecked());
+                        etSender.setText(jsender == null ? args.getString("sender") : jsender.getString("value"));
+                        cbSender.setChecked(jsender != null && jsender.getBoolean("regex"));
+                        cbKnownSender.setChecked(jsender != null && jsender.optBoolean("known"));
+                        etSender.setEnabled(!cbKnownSender.isChecked());
+                        ibSender.setEnabled(!cbKnownSender.isChecked());
+                        cbSender.setEnabled(!cbKnownSender.isChecked());
 
-                    etRecipient.setText(jrecipient == null ? args.getString("recipient") : jrecipient.getString("value"));
-                    cbRecipient.setChecked(jrecipient != null && jrecipient.getBoolean("regex"));
+                        etRecipient.setText(jrecipient == null ? args.getString("recipient") : jrecipient.getString("value"));
+                        cbRecipient.setChecked(jrecipient != null && jrecipient.getBoolean("regex"));
 
-                    etSubject.setText(jsubject == null ? args.getString("subject") : jsubject.getString("value"));
-                    cbSubject.setChecked(jsubject != null && jsubject.getBoolean("regex"));
+                        etSubject.setText(jsubject == null ? args.getString("subject") : jsubject.getString("value"));
+                        cbSubject.setChecked(jsubject != null && jsubject.getBoolean("regex"));
 
-                    cbAttachments.setChecked(jcondition.optBoolean("attachments"));
+                        cbAttachments.setChecked(jcondition.optBoolean("attachments"));
+                        etMimeType.setText(jcondition.optString("mimetype"));
+                        etMimeType.setEnabled(cbAttachments.isChecked());
 
-                    etHeader.setText(jheader == null ? null : jheader.getString("value"));
-                    cbHeader.setChecked(jheader != null && jheader.getBoolean("regex"));
+                        etHeader.setText(jheader == null ? null : jheader.getString("value"));
+                        cbHeader.setChecked(jheader != null && jheader.getBoolean("regex"));
 
-                    int start = (jschedule != null && jschedule.has("start") ? jschedule.getInt("start") : 0);
-                    int end = (jschedule != null && jschedule.has("end") ? jschedule.getInt("end") : 0);
+                        int start = (jschedule != null && jschedule.has("start") ? jschedule.getInt("start") : 0);
+                        int end = (jschedule != null && jschedule.has("end") ? jschedule.getInt("end") : 0);
 
-                    spScheduleDayStart.setSelection(start / (24 * 60));
-                    spScheduleDayEnd.setSelection(end / (24 * 60));
+                        spScheduleDayStart.setSelection(start / (24 * 60));
+                        spScheduleDayEnd.setSelection(end / (24 * 60));
 
-                    tvScheduleHourStart.setTag(start % (24 * 60));
-                    tvScheduleHourStart.setText(formatHour(getContext(), start % (24 * 60)));
+                        tvScheduleHourStart.setTag(start % (24 * 60));
+                        tvScheduleHourStart.setText(formatHour(getContext(), start % (24 * 60)));
 
-                    tvScheduleHourEnd.setTag(end % (24 * 60));
-                    tvScheduleHourEnd.setText(formatHour(getContext(), end % (24 * 60)));
+                        tvScheduleHourEnd.setTag(end % (24 * 60));
+                        tvScheduleHourEnd.setText(formatHour(getContext(), end % (24 * 60)));
 
-                    if (rule == null) {
-                        for (int pos = 0; pos < adapterIdentity.getCount(); pos++)
-                            if (adapterIdentity.getItem(pos).primary) {
-                                spIdent.setSelection(pos);
-                                break;
-                            }
-                    } else {
-                        int type = jaction.getInt("type");
-                        switch (type) {
-                            case EntityRule.TYPE_SNOOZE:
-                                npDuration.setValue(jaction.optInt("duration", 0));
-                                cbScheduleEnd.setChecked(jaction.optBoolean("schedule_end", false));
-                                cbSnoozeSeen.setChecked(jaction.optBoolean("seen", false));
-                                break;
-
-                            case EntityRule.TYPE_FLAG:
-                                btnColor.setColor(
-                                        !jaction.has("color") || jaction.isNull("color")
-                                                ? null : jaction.getInt("color"));
-                                break;
-
-                            case EntityRule.TYPE_IMPORTANCE:
-                                spImportance.setSelection(jaction.optInt("value"));
-                                break;
-
-                            case EntityRule.TYPE_KEYWORD:
-                                etKeyword.setText(jaction.getString("keyword"));
-                                break;
-
-                            case EntityRule.TYPE_MOVE:
-                            case EntityRule.TYPE_COPY:
-                                long target = jaction.optLong("target", -1);
-                                for (int pos = 0; pos < adapterTarget.getCount(); pos++)
-                                    if (adapterTarget.getItem(pos).folder.id.equals(target)) {
-                                        spTarget.setSelection(pos);
-                                        break;
-                                    }
-                                if (type == EntityRule.TYPE_MOVE) {
-                                    cbMoveSeen.setChecked(jaction.optBoolean("seen"));
-                                    cbMoveThread.setChecked(jaction.optBoolean("thread"));
+                        if (rule == null) {
+                            for (int pos = 0; pos < adapterIdentity.getCount(); pos++)
+                                if (adapterIdentity.getItem(pos).primary) {
+                                    spIdent.setSelection(pos);
+                                    break;
                                 }
-                                break;
+                        } else {
+                            int type = jaction.getInt("type");
+                            switch (type) {
+                                case EntityRule.TYPE_SNOOZE:
+                                    npDuration.setValue(jaction.optInt("duration", 0));
+                                    cbScheduleEnd.setChecked(jaction.optBoolean("schedule_end", false));
+                                    cbSnoozeSeen.setChecked(jaction.optBoolean("seen", false));
+                                    break;
 
-                            case EntityRule.TYPE_ANSWER:
-                                long identity = jaction.optLong("identity", -1);
-                                for (int pos = 0; pos < adapterIdentity.getCount(); pos++)
-                                    if (adapterIdentity.getItem(pos).id.equals(identity)) {
-                                        spIdent.setSelection(pos);
-                                        break;
+                                case EntityRule.TYPE_FLAG:
+                                    btnColor.setColor(
+                                            !jaction.has("color") || jaction.isNull("color")
+                                                    ? null : jaction.getInt("color"));
+                                    break;
+
+                                case EntityRule.TYPE_IMPORTANCE:
+                                    spImportance.setSelection(jaction.optInt("value"));
+                                    break;
+
+                                case EntityRule.TYPE_KEYWORD:
+                                    etKeyword.setText(jaction.getString("keyword"));
+                                    break;
+
+                                case EntityRule.TYPE_MOVE:
+                                case EntityRule.TYPE_COPY:
+                                    long target = jaction.optLong("target", -1);
+                                    for (int pos = 0; pos < adapterTarget.getCount(); pos++)
+                                        if (adapterTarget.getItem(pos).folder.id.equals(target)) {
+                                            spTarget.setSelection(pos);
+                                            break;
+                                        }
+                                    if (type == EntityRule.TYPE_MOVE) {
+                                        cbMoveSeen.setChecked(jaction.optBoolean("seen"));
+                                        cbMoveThread.setChecked(jaction.optBoolean("thread"));
                                     }
+                                    break;
 
-                                long answer = jaction.optLong("answer", -1);
-                                for (int pos = 0; pos < adapterAnswer.getCount(); pos++)
-                                    if (adapterAnswer.getItem(pos).id.equals(answer)) {
-                                        spAnswer.setSelection(pos);
-                                        break;
-                                    }
+                                case EntityRule.TYPE_ANSWER:
+                                    long identity = jaction.optLong("identity", -1);
+                                    for (int pos = 0; pos < adapterIdentity.getCount(); pos++)
+                                        if (adapterIdentity.getItem(pos).id.equals(identity)) {
+                                            spIdent.setSelection(pos);
+                                            break;
+                                        }
 
-                                cbCc.setChecked(jaction.optBoolean("cc"));
-                                break;
-                        }
+                                    long answer = jaction.optLong("answer", -1);
+                                    for (int pos = 0; pos < adapterAnswer.getCount(); pos++)
+                                        if (adapterAnswer.getItem(pos).id.equals(answer)) {
+                                            spAnswer.setSelection(pos);
+                                            break;
+                                        }
 
-                        for (int pos = 0; pos < adapterAction.getCount(); pos++)
-                            if (adapterAction.getItem(pos).type == type) {
-                                spAction.setTag(pos);
-                                spAction.setSelection(pos);
-                                break;
+                                    etTo.setText(jaction.optString("to"));
+                                    cbCc.setChecked(jaction.optBoolean("cc"));
+                                    cbWithAttachments.setChecked(jaction.optBoolean("attachments"));
+                                    break;
                             }
 
-                        showActionParameters(type);
+                            for (int pos = 0; pos < adapterAction.getCount(); pos++)
+                                if (adapterAction.getItem(pos).type == type) {
+                                    spAction.setTag(pos);
+                                    spAction.setSelection(pos);
+                                    break;
+                                }
+
+                            showActionParameters(type);
+                        }
+                    } else {
+                        spScheduleDayStart.setSelection(savedInstanceState.getInt("fair:start"));
+                        spScheduleDayEnd.setSelection(savedInstanceState.getInt("fair:end"));
+                        spAction.setSelection(savedInstanceState.getInt("fair:action"));
+                        spImportance.setSelection(savedInstanceState.getInt("fair:importance"));
+                        spTarget.setSelection(savedInstanceState.getInt("fair:target"));
+                        spIdent.setSelection(savedInstanceState.getInt("fair:identity"));
+                        spAnswer.setSelection(savedInstanceState.getInt("fair:answer"));
+
+                        Action action = adapterAction.getItem(spAction.getSelectedItemPosition());
+                        if (action != null)
+                            showActionParameters(action.type);
                     }
+
                 } catch (Throwable ex) {
                     Log.e(ex);
                 } finally {
                     grpReady.setVisibility(View.VISIBLE);
                     bottom_navigation.findViewById(R.id.action_delete).setVisibility(id < 0 ? View.GONE : View.VISIBLE);
                     bottom_navigation.setVisibility(View.VISIBLE);
-                    pbWait.setVisibility(View.GONE);
                 }
             }
 
@@ -776,6 +940,7 @@ public class FragmentRule extends FragmentBase {
         grpMove.setVisibility(type == EntityRule.TYPE_MOVE || type == EntityRule.TYPE_COPY ? View.VISIBLE : View.GONE);
         grpMoveProp.setVisibility(type == EntityRule.TYPE_MOVE ? View.VISIBLE : View.GONE);
         grpAnswer.setVisibility(type == EntityRule.TYPE_ANSWER ? View.VISIBLE : View.GONE);
+        grpTts.setVisibility(type == EntityRule.TYPE_TTS ? View.VISIBLE : View.GONE);
         grpAutomation.setVisibility(type == EntityRule.TYPE_AUTOMATION ? View.VISIBLE : View.GONE);
     }
 
@@ -796,7 +961,8 @@ public class FragmentRule extends FragmentBase {
 
             JSONObject jheader = jcondition.optJSONObject("header");
             if (jheader != null) {
-                Snackbar.make(view, R.string.title_rule_no_headers, Snackbar.LENGTH_LONG).show();
+                Snackbar.make(view, R.string.title_rule_no_headers, Snackbar.LENGTH_LONG)
+                        .setGestureInsetBottomIgnored(true).show();
                 return;
             }
 
@@ -910,7 +1076,8 @@ public class FragmentRule extends FragmentBase {
                 @Override
                 protected void onException(Bundle args, Throwable ex) {
                     if (ex instanceof IllegalArgumentException)
-                        Snackbar.make(view, ex.getMessage(), Snackbar.LENGTH_LONG).show();
+                        Snackbar.make(view, ex.getMessage(), Snackbar.LENGTH_LONG)
+                                .setGestureInsetBottomIgnored(true).show();
                     else
                         Log.unexpectedError(getParentFragmentManager(), ex);
                 }
@@ -950,6 +1117,7 @@ public class FragmentRule extends FragmentBase {
         }
 
         jcondition.put("attachments", cbAttachments.isChecked());
+        jcondition.put("mimetype", etMimeType.getText().toString().trim());
 
         String header = etHeader.getText().toString();
         if (!TextUtils.isEmpty(header)) {
@@ -1023,7 +1191,9 @@ public class FragmentRule extends FragmentBase {
                     EntityAnswer answer = (EntityAnswer) spAnswer.getSelectedItem();
                     jaction.put("identity", identity == null ? -1 : identity.id);
                     jaction.put("answer", answer == null ? -1 : answer.id);
+                    jaction.put("to", etTo.getText().toString().trim());
                     jaction.put("cc", cbCc.isChecked());
+                    jaction.put("attachments", cbWithAttachments.isChecked());
                     break;
             }
         }
@@ -1031,30 +1201,30 @@ public class FragmentRule extends FragmentBase {
         return jaction;
     }
 
-    private class AccountFolder {
-        EntityAccount account;
+    private static class AccountFolder {
         EntityFolder folder;
+        String name;
 
-        public AccountFolder(EntityAccount account, EntityFolder folder) {
-            this.account = account;
+        public AccountFolder(EntityAccount account, EntityFolder folder, Context context) {
             this.folder = folder;
+            this.name = account.name + "/" + EntityFolder.localizeName(context, folder.name);
         }
 
         @NonNull
         @Override
         public String toString() {
-            return account.name + "/" + folder.name;
+            return name;
         }
     }
 
-    private class RefData {
+    private static class RefData {
         EntityFolder folder;
         List<AccountFolder> folders;
         List<EntityIdentity> identities;
         List<EntityAnswer> answers;
     }
 
-    private class Action {
+    private static class Action {
         int type;
         String name;
 
@@ -1099,12 +1269,8 @@ public class FragmentRule extends FragmentBase {
         }
 
         public void onTimeSet(TimePicker view, int hour, int minute) {
-            Fragment target = getTargetFragment();
-            if (target != null) {
-                Intent data = new Intent();
-                data.putExtra("minutes", hour * 60 + minute);
-                target.onActivityResult(getTargetRequestCode(), RESULT_OK, data);
-            }
+            getArguments().putInt("minutes", hour * 60 + minute);
+            sendResult(RESULT_OK);
         }
     }
 
@@ -1184,6 +1350,7 @@ public class FragmentRule extends FragmentBase {
                             if (applied > 0)
                                 ServiceSynchronize.eval(getContext(), "rules/manual");
 
+                            dismiss();
                             ToastEx.makeText(getContext(), getString(R.string.title_rule_applied, applied), Toast.LENGTH_LONG).show();
                         }
 

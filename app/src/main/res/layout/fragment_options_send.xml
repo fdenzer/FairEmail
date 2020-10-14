@@ -2,6 +2,7 @@
 <eu.faircode.email.ScrollViewEx xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/scroll"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:paddingStart="6dp"
@@ -55,6 +56,7 @@
             android:id="@+id/tvSuggestLocalHint"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
             android:layout_marginEnd="48dp"
             android:text="@string/title_advanced_suggest_local_hint"
             android:textAppearance="@style/TextAppearance.AppCompat.Small"
@@ -167,6 +169,28 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/spSendDelayed" />
 
+        <eu.faircode.email.FixedTextView
+            android:id="@+id/tvComposeFont"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:layout_marginEnd="48dp"
+            android:text="@string/title_advanced_compose_font"
+            android:textAppearance="@style/TextAppearance.AppCompat.Small"
+            android:textColor="?android:attr/textColorPrimary"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/tvCaptionMessage" />
+
+        <Spinner
+            android:id="@+id/spComposeFont"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:entries="@array/fontNameNames"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/tvComposeFont" />
+
         <androidx.appcompat.widget.SwitchCompat
             android:id="@+id/swPrefixOnce"
             android:layout_width="0dp"
@@ -176,7 +200,18 @@
             android:text="@string/title_advanced_prefix_once"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/tvCaptionMessage"
+            app:layout_constraintTop_toBottomOf="@id/spComposeFont"
+            app:switchPadding="12dp" />
+
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/swSeparateReply"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="@string/title_advanced_separate_reply"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/swPrefixOnce"
             app:switchPadding="12dp" />
 
         <androidx.appcompat.widget.SwitchCompat
@@ -187,7 +222,7 @@
             android:text="@string/title_advanced_extended_reply"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/swPrefixOnce"
+            app:layout_constraintTop_toBottomOf="@id/swSeparateReply"
             app:switchPadding="12dp" />
 
         <androidx.appcompat.widget.SwitchCompat
@@ -236,6 +271,41 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/tvSignatureLocation" />
 
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/swSignatureReply"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:checked="true"
+            android:text="@string/title_advanced_signature_reply"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/spSignatureLocation"
+            app:switchPadding="12dp" />
+
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/swSignatureForward"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:checked="true"
+            android:text="@string/title_advanced_signature_forward"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/swSignatureReply"
+            app:switchPadding="12dp" />
+
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/swDiscardDelete"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="@string/title_advanced_discard_delete"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/swSignatureForward"
+            app:switchPadding="12dp" />
+
         <eu.faircode.email.FixedTextView
             android:id="@+id/tvCaptionAdvanced"
             android:layout_width="0dp"
@@ -246,7 +316,7 @@
             android:textAppearance="@style/TextAppearance.AppCompat.Large"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/spSignatureLocation" />
+            app:layout_constraintTop_toBottomOf="@+id/swDiscardDelete" />
 
         <androidx.appcompat.widget.SwitchCompat
             android:id="@+id/swPlainOnly"

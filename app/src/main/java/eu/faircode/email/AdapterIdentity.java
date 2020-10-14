@@ -71,6 +71,7 @@ public class AdapterIdentity extends RecyclerView.Adapter<AdapterIdentity.ViewHo
         private ImageView ivSync;
         private ImageView ivOAuth;
         private ImageView ivPrimary;
+        private ImageView ivGroup;
         private TextView tvName;
         private TextView tvUser;
         private TextView tvHost;
@@ -78,6 +79,8 @@ public class AdapterIdentity extends RecyclerView.Adapter<AdapterIdentity.ViewHo
         private TextView tvAccount;
         private TextView tvSignKeyId;
         private TextView tvLast;
+        private TextView tvMaxSize;
+        private TextView tvDrafts;
         private TextView tvError;
 
         private TwoStateOwner powner = new TwoStateOwner(owner, "IdentityPopup");
@@ -90,6 +93,7 @@ public class AdapterIdentity extends RecyclerView.Adapter<AdapterIdentity.ViewHo
             ivSync = itemView.findViewById(R.id.ivSync);
             ivOAuth = itemView.findViewById(R.id.ivOAuth);
             ivPrimary = itemView.findViewById(R.id.ivPrimary);
+            ivGroup = itemView.findViewById(R.id.ivGroup);
             tvName = itemView.findViewById(R.id.tvName);
             tvUser = itemView.findViewById(R.id.tvUser);
             tvHost = itemView.findViewById(R.id.tvHost);
@@ -97,6 +101,8 @@ public class AdapterIdentity extends RecyclerView.Adapter<AdapterIdentity.ViewHo
             tvAccount = itemView.findViewById(R.id.tvAccount);
             tvSignKeyId = itemView.findViewById(R.id.tvSignKeyId);
             tvLast = itemView.findViewById(R.id.tvLast);
+            tvMaxSize = itemView.findViewById(R.id.tvMaxSize);
+            tvDrafts = itemView.findViewById(R.id.tvDrafts);
             tvError = itemView.findViewById(R.id.tvError);
         }
 
@@ -114,19 +120,20 @@ public class AdapterIdentity extends RecyclerView.Adapter<AdapterIdentity.ViewHo
             vwColor.setBackgroundColor(identity.color == null ? Color.TRANSPARENT : identity.color);
             vwColor.setVisibility(ActivityBilling.isPro(context) ? View.VISIBLE : View.INVISIBLE);
 
-            ivSync.setImageResource(identity.synchronize ? R.drawable.baseline_sync_24 : R.drawable.baseline_sync_disabled_24);
+            ivSync.setImageResource(identity.synchronize ? R.drawable.twotone_sync_24 : R.drawable.twotone_sync_disabled_24);
             ivSync.setContentDescription(context.getString(identity.synchronize ? R.string.title_legend_synchronize_on : R.string.title_legend_synchronize_off));
 
             ivOAuth.setVisibility(identity.auth_type == EmailService.AUTH_TYPE_PASSWORD ? View.GONE : View.VISIBLE);
             ivPrimary.setVisibility(identity.primary ? View.VISIBLE : View.GONE);
+            ivGroup.setVisibility(identity.self ? View.GONE : View.VISIBLE);
             tvName.setText(identity.getDisplayName());
             tvUser.setText(identity.email);
 
             if ("connected".equals(identity.state)) {
-                ivState.setImageResource(R.drawable.baseline_cloud_24);
+                ivState.setImageResource(R.drawable.twotone_cloud_done_24);
                 ivState.setContentDescription(context.getString(R.string.title_legend_connected));
             } else if ("connecting".equals(identity.state)) {
-                ivState.setImageResource(R.drawable.baseline_cloud_queue_24);
+                ivState.setImageResource(R.drawable.twotone_cloud_queue_24);
                 ivState.setContentDescription(context.getString(R.string.title_legend_connecting));
             } else {
                 ivState.setImageDrawable(null);
@@ -155,7 +162,12 @@ public class AdapterIdentity extends RecyclerView.Adapter<AdapterIdentity.ViewHo
             tvSignKeyId.setVisibility(sb.length() > 0 ? View.VISIBLE : View.GONE);
 
             tvLast.setText(context.getString(R.string.title_last_connected,
-                    identity.last_connected == null ? "-" : DTF.format(identity.last_connected)));
+                    (identity.last_connected == null ? "-" : DTF.format(identity.last_connected))));
+
+            tvMaxSize.setText(identity.max_size == null ? null : Helper.humanReadableByteCount(identity.max_size));
+            tvMaxSize.setVisibility(identity.max_size == null ? View.GONE : View.VISIBLE);
+
+            tvDrafts.setVisibility(identity.drafts == null ? View.VISIBLE : View.GONE);
 
             tvError.setText(identity.error);
             tvError.setVisibility(identity.error == null ? View.GONE : View.VISIBLE);

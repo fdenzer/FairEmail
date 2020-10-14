@@ -22,6 +22,7 @@ package eu.faircode.email;
 import android.annotation.TargetApi;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -39,8 +40,10 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.widget.PopupMenu;
@@ -85,11 +88,13 @@ public class AdapterAccount extends RecyclerView.Adapter<AdapterAccount.ViewHold
         private ImageView ivNotify;
         private TextView tvName;
         private ImageView ivSync;
+        private ImageButton ibInbox;
         private TextView tvUser;
         private ImageView ivState;
         private TextView tvHost;
         private TextView tvLast;
         private TextView tvQuota;
+        private TextView tvMaxSize;
         private TextView tvIdentity;
         private TextView tvDrafts;
         private TextView tvWarning;
@@ -105,6 +110,7 @@ public class AdapterAccount extends RecyclerView.Adapter<AdapterAccount.ViewHold
             view = itemView.findViewById(R.id.clItem);
             vwColor = itemView.findViewById(R.id.vwColor);
             ivSync = itemView.findViewById(R.id.ivSync);
+            ibInbox = itemView.findViewById(R.id.ibInbox);
             ivOAuth = itemView.findViewById(R.id.ivOAuth);
             ivPrimary = itemView.findViewById(R.id.ivPrimary);
             ivNotify = itemView.findViewById(R.id.ivNotify);
@@ -114,6 +120,7 @@ public class AdapterAccount extends RecyclerView.Adapter<AdapterAccount.ViewHold
             tvHost = itemView.findViewById(R.id.tvHost);
             tvLast = itemView.findViewById(R.id.tvLast);
             tvQuota = itemView.findViewById(R.id.tvQuota);
+            tvMaxSize = itemView.findViewById(R.id.tvMaxSize);
             tvIdentity = itemView.findViewById(R.id.tvIdentity);
             tvDrafts = itemView.findViewById(R.id.tvDrafts);
             tvWarning = itemView.findViewById(R.id.tvWarning);
@@ -125,12 +132,14 @@ public class AdapterAccount extends RecyclerView.Adapter<AdapterAccount.ViewHold
         private void wire() {
             view.setOnClickListener(this);
             view.setOnLongClickListener(this);
+            ibInbox.setOnClickListener(this);
             btnHelp.setOnClickListener(this);
         }
 
         private void unwire() {
             view.setOnClickListener(null);
             view.setOnLongClickListener(null);
+            ibInbox.setOnClickListener(null);
             btnHelp.setOnClickListener(null);
         }
 
@@ -139,7 +148,7 @@ public class AdapterAccount extends RecyclerView.Adapter<AdapterAccount.ViewHold
             vwColor.setBackgroundColor(account.color == null ? Color.TRANSPARENT : account.color);
             vwColor.setVisibility(ActivityBilling.isPro(context) ? View.VISIBLE : View.INVISIBLE);
 
-            ivSync.setImageResource(account.synchronize ? R.drawable.baseline_sync_24 : R.drawable.baseline_sync_disabled_24);
+            ivSync.setImageResource(account.synchronize ? R.drawable.twotone_sync_24 : R.drawable.twotone_sync_disabled_24);
             ivSync.setContentDescription(context.getString(account.synchronize ? R.string.title_legend_synchronize_on : R.string.title_legend_synchronize_off));
 
             ivOAuth.setVisibility(
@@ -162,16 +171,16 @@ public class AdapterAccount extends RecyclerView.Adapter<AdapterAccount.ViewHold
             tvUser.setText(account.user);
 
             if ("connected".equals(account.state)) {
-                ivState.setImageResource(R.drawable.baseline_cloud_24);
+                ivState.setImageResource(R.drawable.twotone_cloud_done_24);
                 ivState.setContentDescription(context.getString(R.string.title_legend_connected));
             } else if ("connecting".equals(account.state)) {
-                ivState.setImageResource(R.drawable.baseline_cloud_queue_24);
+                ivState.setImageResource(R.drawable.twotone_cloud_queue_24);
                 ivState.setContentDescription(context.getString(R.string.title_legend_connecting));
             } else if ("closing".equals(account.state)) {
-                ivState.setImageResource(R.drawable.baseline_close_24);
+                ivState.setImageResource(R.drawable.twotone_cancel_24);
                 ivState.setContentDescription(context.getString(R.string.title_legend_closing));
             } else {
-                ivState.setImageResource(R.drawable.baseline_cloud_off_24);
+                ivState.setImageResource(R.drawable.twotone_cloud_off_24);
                 ivState.setContentDescription(context.getString(R.string.title_legend_disconnected));
             }
             ivState.setVisibility(account.synchronize || account.state != null ? View.VISIBLE : View.INVISIBLE);
@@ -185,12 +194,15 @@ public class AdapterAccount extends RecyclerView.Adapter<AdapterAccount.ViewHold
                                             "/" + account.keep_alive_failed +
                                             "/" + account.keep_alive_succeeded : "")));
             tvQuota.setText(context.getString(R.string.title_storage_quota,
-                    (account.quota_usage == null ? "-" : Helper.humanReadableByteCount(account.quota_usage, true)),
-                    (account.quota_limit == null ? "-" : Helper.humanReadableByteCount(account.quota_limit, true))));
+                    (account.quota_usage == null ? "-" : Helper.humanReadableByteCount(account.quota_usage)),
+                    (account.quota_limit == null ? "-" : Helper.humanReadableByteCount(account.quota_limit))));
             tvQuota.setVisibility(account.quota_usage != null || account.quota_limit != null ? View.VISIBLE : View.GONE);
 
+            tvMaxSize.setText(account.max_size == null ? null : Helper.humanReadableByteCount(account.max_size));
+            tvMaxSize.setVisibility(account.max_size != null && BuildConfig.DEBUG ? View.VISIBLE : View.GONE);
+
             tvIdentity.setVisibility(account.identities > 0 || !settings ? View.GONE : View.VISIBLE);
-            tvDrafts.setVisibility(account.drafts || !settings ? View.GONE : View.VISIBLE);
+            tvDrafts.setVisibility(account.drafts != null || !settings ? View.GONE : View.VISIBLE);
 
             tvWarning.setText(account.warning);
             tvWarning.setVisibility(account.warning == null || !settings ? View.GONE : View.VISIBLE);
@@ -199,6 +211,7 @@ public class AdapterAccount extends RecyclerView.Adapter<AdapterAccount.ViewHold
             tvError.setVisibility(account.error == null ? View.GONE : View.VISIBLE);
             btnHelp.setVisibility(account.error == null ? View.GONE : View.VISIBLE);
 
+            ibInbox.setVisibility(settings ? View.GONE : View.VISIBLE);
             grpSettings.setVisibility(settings ? View.VISIBLE : View.GONE);
         }
 
@@ -215,11 +228,45 @@ public class AdapterAccount extends RecyclerView.Adapter<AdapterAccount.ViewHold
                 if (account.tbd != null)
                     return;
 
-                LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(context);
-                lbm.sendBroadcast(
-                        new Intent(settings ? ActivitySetup.ACTION_EDIT_ACCOUNT : ActivityView.ACTION_VIEW_FOLDERS)
-                                .putExtra("id", account.id)
-                                .putExtra("protocol", account.protocol));
+                if (view.getId() == R.id.ibInbox) {
+                    Bundle args = new Bundle();
+                    args.putLong("id", account.id);
+
+                    new SimpleTask<EntityFolder>() {
+                        @Override
+                        protected EntityFolder onExecute(Context context, Bundle args) {
+                            long id = args.getLong("id");
+
+                            DB db = DB.getInstance(context);
+                            return db.folder().getFolderByType(id, EntityFolder.INBOX);
+                        }
+
+                        @Override
+                        protected void onExecuted(Bundle args, EntityFolder inbox) {
+                            if (inbox == null)
+                                return;
+
+                            LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(context);
+                            lbm.sendBroadcast(
+                                    new Intent(ActivityView.ACTION_VIEW_MESSAGES)
+                                            .putExtra("account", inbox.account)
+                                            .putExtra("folder", inbox.id)
+                                            .putExtra("type", inbox.type));
+
+                        }
+
+                        @Override
+                        protected void onException(Bundle args, Throwable ex) {
+                            Log.unexpectedError(parentFragment.getParentFragmentManager(), ex);
+                        }
+                    }.execute(context, owner, args, "account:inbox");
+                } else {
+                    LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(context);
+                    lbm.sendBroadcast(
+                            new Intent(settings ? ActivitySetup.ACTION_EDIT_ACCOUNT : ActivityView.ACTION_VIEW_FOLDERS)
+                                    .putExtra("id", account.id)
+                                    .putExtra("protocol", account.protocol));
+                }
             }
         }
 
@@ -354,7 +401,12 @@ public class AdapterAccount extends RecyclerView.Adapter<AdapterAccount.ViewHold
                     Intent intent = new Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS)
                             .putExtra(Settings.EXTRA_APP_PACKAGE, context.getPackageName())
                             .putExtra(Settings.EXTRA_CHANNEL_ID, EntityAccount.getNotificationChannelId(account.id));
-                    context.startActivity(intent);
+                    try {
+                        context.startActivity(intent);
+                    } catch (ActivityNotFoundException ex) {
+                        Log.w(ex);
+                        ToastEx.makeText(context, context.getString(R.string.title_no_viewer, intent), Toast.LENGTH_LONG).show();
+                    }
                 }
 
                 private void onActionCopy() {
@@ -383,7 +435,8 @@ public class AdapterAccount extends RecyclerView.Adapter<AdapterAccount.ViewHold
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
         boolean highlight_unread = prefs.getBoolean("highlight_unread", true);
-        this.colorUnread = Helper.resolveColor(context, highlight_unread ? R.attr.colorUnreadHighlight : android.R.attr.textColorPrimary);
+        int colorHighlight = prefs.getInt("highlight_color", Helper.resolveColor(context, R.attr.colorUnreadHighlight));
+        this.colorUnread = (highlight_unread ? colorHighlight : Helper.resolveColor(context, R.attr.colorUnread));
         this.textColorSecondary = Helper.resolveColor(context, android.R.attr.textColorSecondary);
 
         this.DTF = Helper.getDateTimeInstance(context, DateFormat.SHORT, DateFormat.SHORT);
@@ -460,7 +513,7 @@ public class AdapterAccount extends RecyclerView.Adapter<AdapterAccount.ViewHold
         public boolean areContentsTheSame(int oldItemPosition, int newItemPosition) {
             TupleAccountEx f1 = prev.get(oldItemPosition);
             TupleAccountEx f2 = next.get(newItemPosition);
-            return f1.uiEquals(f2);
+            return f1.equals(f2);
         }
     }
 

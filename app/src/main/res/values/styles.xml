@@ -24,6 +24,7 @@
     <style name="AppThemeBaseLight" parent="Base.Theme.AppCompat.Light.DarkActionBar">
         <item name="themeName">light</item>
         <item name="android:windowDisablePreview">true</item>
+        <item name="android:windowAnimationStyle">@style/activityAnimationStyle</item>
 
         <item name="colorRead">@color/colorReadLight</item>
         <item name="colorUnread">@color/colorUnreadLight</item>
@@ -64,6 +65,7 @@
     <style name="AppThemeBaseDark" parent="Base.Theme.AppCompat">
         <item name="themeName">dark</item>
         <item name="android:windowDisablePreview">true</item>
+        <item name="android:windowAnimationStyle">@style/activityAnimationStyle</item>
 
         <item name="android:navigationBarColor">@color/black</item>
 
@@ -128,8 +130,6 @@
         <item name="colorAccent">@color/lightBlueAccent</item>
 
         <item name="colorUnreadHighlight">@color/lightBlueAccent</item>
-
-        <item name="colorWarning">@color/lightBlueAccent</item>
 
         <item name="colorFabBackground">@color/lightBlueAccent</item>
 
@@ -208,8 +208,6 @@
 
         <item name="colorUnreadHighlight">@color/darkAmberAccent</item>
 
-        <item name="colorWarning">@color/darkAmberAccent</item>
-
         <item name="colorFabBackground">@color/darkAmberAccent</item>
 
         <item name="colorInfoForeground">@color/white</item>
@@ -222,8 +220,6 @@
         <item name="colorAccent">@color/darkBlueAccent</item>
 
         <item name="colorUnreadHighlight">@color/darkBlueAccent</item>
-
-        <item name="colorWarning">@color/darkBlueAccent</item>
 
         <item name="colorFabBackground">@color/darkBlueAccent</item>
 
@@ -344,6 +340,30 @@
         <item name="colorDrawerBackground">@color/black</item>
     </style>
 
+    <style name="AppThemeBlackAndWhite" parent="AppThemeBlack">
+        <item name="colorPrimary">@color/blackAndWhitePrimary</item>
+        <item name="colorPrimaryDark">@color/blackAndWhitePrimaryDark</item>
+        <item name="colorAccent">@color/white</item>
+
+        <item name="android:textColor">@color/bw_textcolor</item>
+        <item name="android:textColorPrimary">@color/bw_textcolor</item>
+        <item name="android:textColorSecondary">@color/bw_textcolor</item>
+        <item name="android:textColorTertiary">@color/bw_textcolor</item>
+        <item name="android:textColorPrimaryInverse">@color/bw_textcolor_inverse</item>
+        <item name="android:textColorSecondaryInverse">@color/bw_textcolor_inverse</item>
+        <item name="android:textColorTertiaryInverse">@color/bw_textcolor_inverse</item>
+        <item name="android:textColorLink">@color/lightBluePrimary</item>
+
+        <item name="colorWarning">@color/lightColorWarning</item>
+
+        <item name="colorRead">@color/white</item>
+        <item name="colorUnread">@color/white</item>
+        <item name="colorUnreadHighlight">@color/white</item>
+
+        <item name="colorFabForeground">@color/white</item>
+        <item name="colorFabBackground">@color/blackAndWhitePrimaryLight</item>
+    </style>
+
     <style name="AppThemeGreySteelBlueLight" parent="AppThemeBaseLight">
         <item name="colorPrimary">@color/greyPrimary</item>
         <item name="colorPrimaryDark">@color/greyPrimaryDark</item>
@@ -365,7 +385,7 @@
         <item name="colorPrimaryDark">@color/greyPrimaryDark</item>
         <item name="colorAccent">@color/greyAccent</item>
 
-        <item name="colorUnreadHighlight">@color/greyAccent</item>
+        <item name="colorUnreadHighlight">@color/greyAccentLight</item>
         <item name="colorSeparator">@color/greyPrimary</item>
 
         <item name="colorActionBackground">@color/greyPrimary</item>
@@ -386,6 +406,19 @@
         <item name="android:colorBackgroundCacheHint">@null</item>
         <item name="android:windowIsTranslucent">true</item>
         <item name="android:windowAnimationStyle">@android:style/Animation</item>
+    </style>
+
+    <style name="activityAnimationStyle" parent="@android:style/Animation.Activity">
+        <item name="android:activityOpenEnterAnimation">@anim/activity_open_enter</item>
+        <item name="android:activityOpenExitAnimation">@anim/activity_open_exit</item>
+        <item name="android:activityCloseEnterAnimation">@anim/activity_close_enter</item>
+        <item name="android:activityCloseExitAnimation">@anim/activity_close_exit</item>
+        <!--item name="android:fragmentOpenEnterAnimation">@anim/fragment_open_enter</item>
+        <item name="android:fragmentOpenExitAnimation">@anim/fragment_open_exit</item>
+        <item name="android:fragmentCloseEnterAnimation">@anim/fragment_close_enter</item>
+        <item name="android:fragmentCloseExitAnimation">@anim/fragment_close_exit</item>
+        <item name="android:fragmentFadeEnterAnimation">@anim/fragment_fade_enter</item>
+        <item name="android:fragmentFadeExitAnimation">@anim/fragment_fade_exit</item-->
     </style>
 
     <style name="checkboxStyle" parent="Base.Widget.AppCompat.CompoundButton.CheckBox">

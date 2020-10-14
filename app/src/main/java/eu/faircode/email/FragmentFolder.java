@@ -21,9 +21,9 @@ package eu.faircode.email;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
-import android.os.Handler;
 import android.text.TextUtils;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -43,6 +43,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.constraintlayout.widget.Group;
 import androidx.lifecycle.Lifecycle;
+import androidx.preference.PreferenceManager;
 
 import com.google.android.material.snackbar.Snackbar;
 
@@ -212,6 +213,7 @@ public class FragmentFolder extends FragmentBase {
         btnSave.setEnabled(false);
         pbSave.setVisibility(View.GONE);
         tvInboxRootHint.setVisibility(View.GONE);
+
         pbWait.setVisibility(View.VISIBLE);
 
         return view;
@@ -226,6 +228,17 @@ public class FragmentFolder extends FragmentBase {
 
         new SimpleTask<EntityFolder>() {
             @Override
+            protected void onPreExecute(Bundle args) {
+                pbWait.setVisibility(View.VISIBLE);
+            }
+
+            @Override
+            protected void onPostExecute(Bundle args) {
+                // Consider previous save as cancelled
+                pbWait.setVisibility(View.GONE);
+            }
+
+            @Override
             protected EntityFolder onExecute(Context context, Bundle args) {
                 long id = args.getLong("id");
 
@@ -234,8 +247,11 @@ public class FragmentFolder extends FragmentBase {
 
                 if (folder != null) {
                     EntityAccount account = db.account().getAccount(folder.account);
-                    if (account != null)
+                    if (account != null) {
                         args.putInt("interval", account.poll_interval);
+                        args.putBoolean("exempted", account.poll_exempted);
+                        args.putBoolean("ondemand", account.ondemand);
+                    }
                 }
 
                 return folder;
@@ -243,18 +259,23 @@ public class FragmentFolder extends FragmentBase {
 
             @Override
             protected void onExecuted(Bundle args, EntityFolder folder) {
+                SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
+                int pollInterval = prefs.getInt("poll_interval", ServiceSynchronize.DEFAULT_POLL_INTERVAL);
+                int interval = args.getInt("interval", EntityAccount.DEFAULT_KEEP_ALIVE_INTERVAL);
+                boolean exempted = args.getBoolean("exempted", false);
+                boolean ondemand = args.getBoolean("ondemand", false);
+
                 if (savedInstanceState == null) {
-                    int interval = args.getInt("interval", EntityAccount.DEFAULT_KEEP_ALIVE_INTERVAL);
                     etName.setText(folder == null ? null : folder.name);
                     etDisplay.setText(folder == null ? null : folder.display);
-                    etDisplay.setHint(folder == null ? null : Helper.localizeFolderName(getContext(), folder.name));
+                    etDisplay.setHint(folder == null ? null : EntityFolder.localizeName(getContext(), folder.name));
                     btnColor.setColor(folder == null ? null : folder.color);
                     cbHide.setChecked(folder == null ? false : folder.hide);
                     cbUnified.setChecked(folder == null ? false : folder.unified);
                     cbNavigation.setChecked(folder == null ? false : folder.navigation);
                     cbNotify.setChecked(folder == null ? false : folder.notify);
                     cbSynchronize.setChecked(folder == null || folder.synchronize);
-                    cbPoll.setChecked(folder == null ? false : folder.poll);
+                    cbPoll.setChecked(folder == null ? true : folder.poll);
                     etPoll.setText(folder == null ? null : Integer.toString(folder.poll_factor));
                     tvPoll.setText(getString(R.string.title_factor_minutes, interval));
                     cbDownload.setChecked(folder == null ? true : folder.download);
@@ -276,15 +297,14 @@ public class FragmentFolder extends FragmentBase {
                     tvInboxRootHint.setVisibility(folder == null && parent == null ? View.VISIBLE : View.GONE);
                 }
 
-                // Consider previous save as cancelled
-                pbWait.setVisibility(View.GONE);
-
                 Helper.setViewsEnabled(view, true);
 
+                boolean always = (!ondemand && (pollInterval == 0 || exempted));
+
                 etName.setEnabled(folder == null || EntityFolder.USER.equals(folder.type));
-                cbPoll.setEnabled(cbSynchronize.isChecked());
-                etPoll.setEnabled(cbSynchronize.isChecked());
-                tvPoll.setEnabled(cbSynchronize.isChecked());
+                cbPoll.setEnabled(cbSynchronize.isChecked() && always);
+                etPoll.setEnabled(cbSynchronize.isChecked() && always);
+                tvPoll.setEnabled(cbSynchronize.isChecked() && always);
                 grpPoll.setVisibility(cbPoll.isEnabled() && cbPoll.isChecked() ? View.VISIBLE : View.GONE);
                 etKeepDays.setEnabled(!cbKeepAll.isChecked());
                 cbAutoDelete.setEnabled(!cbKeepAll.isChecked());
@@ -318,7 +338,7 @@ public class FragmentFolder extends FragmentBase {
                     break;
                 case REQUEST_SAVE_CHANGES:
                     if (resultCode == RESULT_OK) {
-                        new Handler().post(new Runnable() {
+                        getMainHandler().post(new Runnable() {
                             @Override
                             public void run() {
                                 scroll.smoothScrollTo(0, btnSave.getBottom());
@@ -581,7 +601,8 @@ public class FragmentFolder extends FragmentBase {
             @Override
             protected void onException(Bundle args, Throwable ex) {
                 if (ex instanceof IllegalArgumentException)
-                    Snackbar.make(view, ex.getMessage(), Snackbar.LENGTH_LONG).show();
+                    Snackbar.make(view, ex.getMessage(), Snackbar.LENGTH_LONG)
+                            .setGestureInsetBottomIgnored(true).show();
                 else
                     Log.unexpectedError(getParentFragmentManager(), ex);
             }
@@ -640,7 +661,8 @@ public class FragmentFolder extends FragmentBase {
                 pbSave.setVisibility(View.GONE);
 
                 if (ex instanceof IllegalArgumentException)
-                    Snackbar.make(view, ex.getMessage(), Snackbar.LENGTH_LONG).show();
+                    Snackbar.make(view, ex.getMessage(), Snackbar.LENGTH_LONG)
+                            .setGestureInsetBottomIgnored(true).show();
                 else
                     Log.unexpectedError(getParentFragmentManager(), ex);
             }

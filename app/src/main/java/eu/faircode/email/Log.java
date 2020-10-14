@@ -20,13 +20,17 @@ package eu.faircode.email;
 */
 
 import android.app.ActivityManager;
+import android.app.ApplicationExitInfo;
 import android.app.Dialog;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.app.usage.UsageStatsManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
+import android.database.sqlite.SQLiteFullException;
 import android.graphics.Point;
 import android.net.ConnectivityManager;
 import android.net.Network;
@@ -36,17 +40,20 @@ import android.os.BadParcelableException;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.DeadObjectException;
+import android.os.DeadSystemException;
 import android.os.Debug;
 import android.os.PowerManager;
 import android.os.RemoteException;
 import android.os.TransactionTooLargeException;
 import android.text.TextUtils;
 import android.view.Display;
+import android.view.InflateException;
 import android.view.WindowManager;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.FragmentManager;
 import androidx.preference.PreferenceManager;
@@ -80,8 +87,10 @@ import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Array;
 import java.net.SocketException;
+import java.nio.charset.StandardCharsets;
 import java.security.cert.CertPathValidatorException;
 import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -102,6 +111,7 @@ import javax.mail.MessagingException;
 import javax.mail.Part;
 import javax.mail.StoreClosedException;
 import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeUtility;
 import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLPeerUnverifiedException;
 
@@ -279,7 +289,7 @@ public class Log {
         config.setAutoTrackSessions(false);
 
         ErrorTypes etypes = new ErrorTypes();
-        etypes.setAnrs(false);
+        etypes.setAnrs(BuildConfig.DEBUG);
         etypes.setNdkCrashes(false);
         config.setEnabledErrorTypes(etypes);
 
@@ -316,13 +326,16 @@ public class Log {
         config.setDiscardClasses(ignore);
 
         final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        ActivityManager am = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
 
         String no_internet = context.getString(R.string.title_no_internet);
 
         String installer = context.getPackageManager().getInstallerPackageName(BuildConfig.APPLICATION_ID);
         config.addMetadata("extra", "installer", installer == null ? "-" : installer);
-        config.addMetadata("extra", "installed", new Date(Helper.getInstallTime(context)));
+        config.addMetadata("extra", "installed", new Date(Helper.getInstallTime(context)).toString());
         config.addMetadata("extra", "fingerprint", Helper.hasValidFingerprint(context));
+        config.addMetadata("extra", "memory_class", am.getMemoryClass());
+        config.addMetadata("extra", "memory_class_large", am.getLargeMemoryClass());
 
         config.addOnSession(new OnSessionCallback() {
             @Override
@@ -345,7 +358,8 @@ public class Log {
 
                 if (should) {
                     event.addMetadata("extra", "thread", Thread.currentThread().getName() + ":" + Thread.currentThread().getId());
-                    event.addMetadata("extra", "free", Log.getFreeMemMb());
+                    event.addMetadata("extra", "memory_free", getFreeMemMb());
+                    event.addMetadata("extra", "memory_available", getAvailableMb());
 
                     Boolean ignoringOptimizations = Helper.isIgnoringOptimizations(context);
                     event.addMetadata("extra", "optimizing", (ignoringOptimizations != null && !ignoringOptimizations));
@@ -517,7 +531,6 @@ public class Log {
                 "Thread starting during runtime shutdown".equals(ex.getMessage()))
             /*
                 java.lang.InternalError: Thread starting during runtime shutdown
-                java.lang.InternalError: Thread starting during runtime shutdown
                   at java.lang.Thread.nativeCreate(Native Method)
                   at java.lang.Thread.start(Thread.java:1063)
                   at java.util.concurrent.ThreadPoolExecutor.addWorker(ThreadPoolExecutor.java:921)
@@ -531,14 +544,12 @@ public class Log {
         if ("android.app.RemoteServiceException".equals(ex.getClass().getName()))
             /*
                 android.app.RemoteServiceException: Bad notification for startForeground: java.util.ConcurrentModificationException
-                android.app.RemoteServiceException: Bad notification for startForeground: java.util.ConcurrentModificationException
-                at android.app.ActivityThread$H.handleMessage(ActivityThread.java:2204)
+                  at android.app.ActivityThread$H.handleMessage(ActivityThread.java:2204)
             */
             return false;
 
         if ("android.view.WindowManager$BadTokenException".equals(ex.getClass().getName()))
             /*
-                android.view.WindowManager$BadTokenException: Unable to add window -- token android.os.BinderProxy@e9084db is not valid; is your activity running?
                 android.view.WindowManager$BadTokenException: Unable to add window -- token android.os.BinderProxy@e9084db is not valid; is your activity running?
                   at android.view.ViewRootImpl.setView(ViewRootImpl.java:827)
                   at android.view.WindowManagerGlobal.addView(WindowManagerGlobal.java:356)
@@ -554,11 +565,10 @@ public class Log {
         if (ex instanceof NoSuchMethodError)
             /*
                 java.lang.NoSuchMethodError: No direct method ()V in class Landroid/security/IKeyChainService$Stub; or its super classes (declaration of 'android.security.IKeyChainService$Stub' appears in /system/framework/framework.jar!classes2.dex)
-                java.lang.NoSuchMethodError: No direct method ()V in class Landroid/security/IKeyChainService$Stub; or its super classes (declaration of 'android.security.IKeyChainService$Stub' appears in /system/framework/framework.jar!classes2.dex)
-                at com.android.keychain.KeyChainService$1.(KeyChainService.java:95)
-                at com.android.keychain.KeyChainService.(KeyChainService.java:95)
-                at java.lang.Class.newInstance(Native Method)
-                at android.app.AppComponentFactory.instantiateService(AppComponentFactory.java:103)
+                  at com.android.keychain.KeyChainService$1.(KeyChainService.java:95)
+                  at com.android.keychain.KeyChainService.(KeyChainService.java:95)
+                  at java.lang.Class.newInstance(Native Method)
+                  at android.app.AppComponentFactory.instantiateService(AppComponentFactory.java:103)
              */
             return false;
 
@@ -568,14 +578,37 @@ public class Log {
                 Android 9 only
                 java.lang.IllegalStateException: Drag shadow dimensions must be positive
                 java.lang.IllegalStateException: Drag shadow dimensions must be positive
-                at android.view.View.startDragAndDrop(View.java:24027)
-                at android.widget.Editor.startDragAndDrop(Editor.java:1165)
-                at android.widget.Editor.performLongClick(Editor.java:1191)
-                at android.widget.TextView.performLongClick(TextView.java:11346)
-                at android.view.View.performLongClick(View.java:6653)
-                at android.view.View$CheckForLongPress.run(View.java:25855)
-                at android.os.Handler.handleCallback(Handler.java:873)
+                  at android.view.View.startDragAndDrop(View.java:24027)
+                  at android.widget.Editor.startDragAndDrop(Editor.java:1165)
+                  at android.widget.Editor.performLongClick(Editor.java:1191)
+                  at android.widget.TextView.performLongClick(TextView.java:11346)
+                  at android.view.View.performLongClick(View.java:6653)
+                  at android.view.View$CheckForLongPress.run(View.java:25855)
+                  at android.os.Handler.handleCallback(Handler.java:873)
             */
+            return false;
+
+        if (ex instanceof IllegalStateException &&
+                "Results have already been set".equals(ex.getMessage()))
+            /*
+                Play billing?
+                java.lang.IllegalStateException: Results have already been set
+                  at Gu.a(Unknown:8)
+                  at Fq.a(Unknown:29)
+                  at Fk.b(Unknown:17)
+                  at Fk.a(Unknown:12)
+                  at Fk.b(Unknown:5)
+                  at Ex.a(Unknown:3)
+                  at Ep.b(Unknown:9)
+                  at Ep.a(Unknown:76)
+                  at Ep.a(Unknown:16)
+                  at GH.a(Unknown:2)
+                  at Gz.a(Unknown:48)
+                  at GC.handleMessage(Unknown:6)
+                  at android.os.Handler.dispatchMessage(Handler.java:108)
+                  at android.os.Looper.loop(Looper.java:166)
+                  at android.os.HandlerThread.run(HandlerThread.java:65)
+             */
             return false;
 
         if (ex instanceof IllegalArgumentException &&
@@ -625,31 +658,68 @@ public class Log {
             */
             return false;
 
+        if (ex instanceof IllegalArgumentException &&
+                "page introduces incorrect tiling".equals(ex.getMessage()))
+            /*
+                java.lang.IllegalArgumentException: page introduces incorrect tiling
+                  at androidx.paging.PagedStorage.insertPage(SourceFile:545)
+                  at androidx.paging.PagedStorage.tryInsertPageAndTrim(SourceFile:504)
+                  at androidx.paging.TiledPagedList$1.onPageResult(SourceFile:60)
+                  at androidx.paging.DataSource$LoadCallbackHelper$1.run(SourceFile:324)
+                  at android.os.Handler.handleCallback(Handler.java:789)
+            */
+            return false;
+
+        if (ex instanceof IllegalMonitorStateException)
+            /*
+                java.lang.IllegalMonitorStateException
+                  at java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject.signal(AbstractQueuedSynchronizer.java:1959)
+                  at java.util.concurrent.ScheduledThreadPoolExecutor$DelayedWorkQueue.take(ScheduledThreadPoolExecutor.java:1142)
+                  at java.util.concurrent.ScheduledThreadPoolExecutor$DelayedWorkQueue.take(ScheduledThreadPoolExecutor.java:849)
+                  at java.util.concurrent.ThreadPoolExecutor.getTask(ThreadPoolExecutor.java:1092)
+                  at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1152)
+                  at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:641)
+                  at java.lang.Thread.run(Thread.java:764)
+             */
+            return false;
+
         if (ex instanceof RuntimeException &&
                 ex.getCause() instanceof TransactionTooLargeException)
             // Some Android versions (Samsung) send images as clip data
             return false;
 
         if (ex instanceof RuntimeException &&
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            Throwable cause = ex.getCause();
+            while (cause != null) {
+                if (cause instanceof DeadSystemException)
+                    return false;
+                cause = cause.getCause();
+            }
+        }
+
+        if (ex instanceof RuntimeException &&
                 ex.getMessage() != null &&
-                (ex.getMessage().startsWith("Could not get application info") ||
+                (ex.getMessage().contains("DeadSystemException") ||
+                        ex.getMessage().startsWith("Could not get application info") ||
                         ex.getMessage().startsWith("Unable to create service") ||
                         ex.getMessage().startsWith("Unable to start service") ||
                         ex.getMessage().startsWith("Unable to resume activity") ||
                         ex.getMessage().startsWith("Failure delivering result")))
             return false;
             /*
-                java.lang.RuntimeException: Could not get application info.
-                 java.lang.RuntimeException: Could not get application info.
-                   at CH0.a(PG:11)
-                   at org.chromium.content.browser.ChildProcessLauncherHelperImpl.a(PG:34)
-                   at Fn2.run(PG:5)
-                   at android.os.Handler.handleCallback(Handler.java:874)
-                   at android.os.Handler.dispatchMessage(Handler.java:100)
-                   at android.os.Looper.loop(Looper.java:198)
-                   at android.os.HandlerThread.run(HandlerThread.java:65)
+                java.lang.RuntimeException: Unable to unbind to service androidx.work.impl.background.systemjob.SystemJobService@291a412 with Intent { cmp=eu.faircode.email/androidx.work.impl.background.systemjob.SystemJobService }: java.lang.RuntimeException: android.os.DeadSystemException
+                  at android.app.ActivityThread.handleUnbindService(ActivityThread.java:4352)
 
-                java.lang.RuntimeException: Unable to create service eu.faircode.email.ServiceSynchronize: java.lang.NullPointerException: Attempt to invoke interface method 'java.util.List android.os.IUserManager.getProfiles(int, boolean)' on a null object reference
+                java.lang.RuntimeException: Could not get application info.
+                  at CH0.a(PG:11)
+                  at org.chromium.content.browser.ChildProcessLauncherHelperImpl.a(PG:34)
+                  at Fn2.run(PG:5)
+                  at android.os.Handler.handleCallback(Handler.java:874)
+                  at android.os.Handler.dispatchMessage(Handler.java:100)
+                  at android.os.Looper.loop(Looper.java:198)
+                  at android.os.HandlerThread.run(HandlerThread.java:65)
+
                 java.lang.RuntimeException: Unable to create service eu.faircode.email.ServiceSynchronize: java.lang.NullPointerException: Attempt to invoke interface method 'java.util.List android.os.IUserManager.getProfiles(int, boolean)' on a null object reference
                   at android.app.ActivityThread.handleCreateService(ActivityThread.java:2739)
 
@@ -687,7 +757,6 @@ public class Log {
                 "InputChannel is not initialized.".equals(ex.getMessage()))
             return false;
             /*
-                java.lang.RuntimeException: InputChannel is not initialized.
                 java.lang.RuntimeException: InputChannel is not initialized.
                   at android.view.InputEventReceiver.nativeInit(Native Method)
                   at android.view.InputEventReceiver.<init>(InputEventReceiver.java:72)
@@ -734,12 +803,194 @@ public class Log {
                 ex.getMessage().contains("finalize"))
             return false;
 
-        if (ex instanceof CursorWindowAllocationException)
+        if (ex instanceof CursorWindowAllocationException ||
+                "android.database.CursorWindowAllocationException".equals(ex.getClass().getName()))
+            /*
+                android.database.CursorWindowAllocationException: Could not allocate CursorWindow '/data/user/0/eu.faircode.email/no_backup/androidx.work.workdb' of size 2097152 due to error -12.
+                  at android.database.CursorWindow.nativeCreate(Native Method)
+                  at android.database.CursorWindow.<init>(CursorWindow.java:139)
+                  at android.database.CursorWindow.<init>(CursorWindow.java:120)
+                  at android.database.AbstractWindowedCursor.clearOrCreateWindow(AbstractWindowedCursor.java:202)
+                  at android.database.sqlite.SQLiteCursor.fillWindow(SQLiteCursor.java:147)
+                  at android.database.sqlite.SQLiteCursor.getCount(SQLiteCursor.java:140)
+                  at android.database.AbstractCursor.moveToPosition(AbstractCursor.java:232)
+                  at android.database.AbstractCursor.moveToNext(AbstractCursor.java:281)
+                  at androidx.room.InvalidationTracker$1.checkUpdatedTable(SourceFile:417)
+                  at androidx.room.InvalidationTracker$1.run(SourceFile:388)
+                  at androidx.work.impl.utils.SerialExecutor$Task.run(SourceFile:91)
+             */
+            return false;
+
+        if (ex instanceof SQLiteFullException) // database or disk is full (code 13 SQLITE_FULL)
+            return false;
+
+        if ("android.util.SuperNotCalledException".equals(ex.getClass().getName()))
+            /*
+                android.util.SuperNotCalledException: Activity {eu.faircode.email/eu.faircode.email.ActivityView} did not call through to super.onResume()
+                  at android.app.Activity.performResume(Activity.java:7304)
+                  at android.app.ActivityThread.performNewIntents(ActivityThread.java:3165)
+                  at android.app.ActivityThread.handleNewIntent(ActivityThread.java:3180)
+                  at android.app.servertransaction.NewIntentItem.execute(NewIntentItem.java:49)
+             */
+            return false;
+
+        if ("android.view.WindowManager$InvalidDisplayException".equals(ex.getClass().getName()))
+            /*
+                android.view.WindowManager$InvalidDisplayException: Unable to add window android.view.ViewRootImpl$W@d7b5a0b -- the specified display can not be found
+                  at android.view.ViewRootImpl.setView(ViewRootImpl.java:854)
+                  at android.view.WindowManagerGlobal.addView(WindowManagerGlobal.java:356)
+                  at android.view.WindowManagerImpl.addView(WindowManagerImpl.java:93)
+                  at android.widget.PopupWindow.invokePopup(PopupWindow.java:1492)
+                  at android.widget.PopupWindow.showAsDropDown(PopupWindow.java:1342)
+                  at androidx.appcompat.widget.AppCompatPopupWindow.showAsDropDown(SourceFile:77)
+                  at androidx.core.widget.PopupWindowCompat.showAsDropDown(SourceFile:69)
+                  at androidx.appcompat.widget.ListPopupWindow.show(SourceFile:754)
+                  at androidx.appcompat.view.menu.CascadingMenuPopup.showMenu(SourceFile:486)
+                  at androidx.appcompat.view.menu.CascadingMenuPopup.show(SourceFile:265)
+                  at androidx.appcompat.view.menu.MenuPopupHelper.showPopup(SourceFile:290)
+                  at androidx.appcompat.view.menu.MenuPopupHelper.tryShow(SourceFile:177)
+                  at androidx.appcompat.widget.ActionMenuPresenter$OpenOverflowRunnable.run(SourceFile:792)
+               */
             return false;
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N)
             if (ex instanceof RuntimeException && ex.getCause() instanceof DeadObjectException)
                 return false;
+
+        StackTraceElement[] stack = ex.getStackTrace();
+        if (stack.length > 0 &&
+                "android.text.TextLine".equals(stack[0].getClassName()) &&
+                "measure".equals(stack[0].getMethodName()))
+            /*
+                java.lang.IndexOutOfBoundsException: offset(21) should be less than line limit(20)
+                  at android.text.TextLine.measure(Unknown Source:233)
+                  at android.text.Layout.getHorizontal(Unknown Source:104)
+                  at android.text.Layout.getHorizontal(Unknown Source:4)
+                  at android.text.Layout.getPrimaryHorizontal(Unknown Source:4)
+                  at android.text.Layout.getPrimaryHorizontal(Unknown Source:1)
+                  at android.widget.Editor$ActionPinnedPopupWindow.computeLocalPosition(Unknown Source:275)
+                  at android.widget.Editor$PinnedPopupWindow.show(Unknown Source:15)
+                  at android.widget.Editor$ActionPinnedPopupWindow.show(Unknown Source:3)
+                  at android.widget.Editor$EmailAddPopupWindow.show(Unknown Source:92)
+                  at android.widget.Editor$1.run(Unknown Source:6)
+                  at android.os.Handler.handleCallback(Unknown Source:2)
+             */
+            return false;
+
+        if (stack.length > 0 &&
+                "android.os.Parcel".equals(stack[0].getClassName()) &&
+                ("createException".equals(stack[0].getMethodName()) ||
+                        "readException".equals(stack[0].getMethodName())))
+            /*
+                java.lang.IllegalArgumentException
+                  at android.os.Parcel.createException(Parcel.java:1954)
+                  at android.os.Parcel.readException(Parcel.java:1918)
+                  at android.os.Parcel.readException(Parcel.java:1868)
+                  at android.view.IWindowSession$Stub$Proxy.addToDisplay(IWindowSession.java:826)
+                  at android.view.ViewRootImpl.setView(ViewRootImpl.java:758)
+                  at android.view.WindowManagerGlobal.addView(WindowManagerGlobal.java:356)
+                  at android.view.WindowManagerImpl.addView(WindowManagerImpl.java:93)
+                  at android.app.ActivityThread.handleResumeActivity(ActivityThread.java:3906)
+
+                java.lang.NullPointerException: Attempt to invoke virtual method 'int com.android.server.job.controllers.JobStatus.getUid()' on a null object reference
+                  at android.os.Parcel.readException(Parcel.java:1605)
+                  at android.os.Parcel.readException(Parcel.java:1552)
+                  at android.app.job.IJobCallback$Stub$Proxy.jobFinished(IJobCallback.java:167)
+                  at android.app.job.JobService$JobHandler.handleMessage(JobService.java:147)
+                  at android.os.Handler.dispatchMessage(Handler.java:102)
+             */
+            return false;
+
+        if (stack.length > 0 &&
+                "android.hardware.biometrics.BiometricPrompt".equals(stack[0].getClassName()))
+            /*
+                java.lang.NullPointerException: Attempt to invoke virtual method 'java.lang.String android.hardware.fingerprint.FingerprintManager.getErrorString(int, int)' on a null object reference
+                  at android.hardware.biometrics.BiometricPrompt.lambda$sendError$0(BiometricPrompt.java:490)
+                  at android.hardware.biometrics.-$$Lambda$BiometricPrompt$HqBGXtBUWNc-v8NoHYsj2gLfaRw.run(Unknown Source:6)
+                  at android.os.Handler.handleCallback(Handler.java:873)
+             */
+            return false;
+
+        if (stack.length > 0 &&
+                "android.text.SpannableStringInternal".equals(stack[0].getClassName()))
+            /*
+                java.lang.IndexOutOfBoundsException: setSpan (-1 ... -1) starts before 0
+                  at android.text.SpannableStringInternal.checkRange(SpannableStringInternal.java:478)
+                  at android.text.SpannableStringInternal.setSpan(SpannableStringInternal.java:189)
+                  at android.text.SpannableStringInternal.setSpan(SpannableStringInternal.java:178)
+                  at android.text.SpannableString.setSpan(SpannableString.java:60)
+                  at android.text.Selection.setSelection(Selection.java:93)
+                  at android.text.Selection.setSelection(Selection.java:77)
+                  at android.widget.Editor$SelectionHandleView.updateSelection(Editor.java:5281)
+                  at android.widget.Editor$HandleView.positionAtCursorOffset(Editor.java:4676)
+                  at android.widget.Editor$SelectionHandleView.positionAtCursorOffset(Editor.java:5466)
+                  at android.widget.Editor$SelectionHandleView.positionAndAdjustForCrossingHandles(Editor.java:5528)
+                  at android.widget.Editor$SelectionHandleView.updatePosition(Editor.java:5458)
+                  at android.widget.Editor$HandleView.onTouchEvent(Editor.java:4989)
+                  at android.widget.Editor$SelectionHandleView.onTouchEvent(Editor.java:5472)
+                  at android.view.View.dispatchTouchEvent(View.java:12545)
+                  at android.view.ViewGroup.dispatchTransformedTouchEvent(ViewGroup.java:3083)
+                  at android.view.ViewGroup.dispatchTouchEvent(ViewGroup.java:2741)
+                  at android.widget.PopupWindow$PopupDecorView.dispatchTouchEvent(PopupWindow.java:2407)
+                  at android.view.View.dispatchPointerEvent(View.java:12789)
+             */
+            return false;
+
+        if (stack.length > 0 &&
+                "android.text.method.WordIterator".equals(stack[0].getClassName()) &&
+                "checkOffsetIsValid".equals(stack[0].getMethodName()))
+            /*
+                https://issuetracker.google.com/issues/37068143
+                https://android.googlesource.com/platform/frameworks/base/+/refs/heads/marshmallow-release/core/java/android/text/method/WordIterator.java
+                java.lang.IllegalArgumentException: Invalid offset: -1. Valid range is [0, 1673]
+                at android.text.method.WordIterator.checkOffsetIsValid(WordIterator.java:380)
+                at android.text.method.WordIterator.isBoundary(WordIterator.java:101)
+                at android.widget.Editor$SelectionStartHandleView.positionAtCursorOffset(Editor.java:4287)
+                at android.widget.Editor$HandleView.updatePosition(Editor.java:3735)
+                at android.widget.Editor$PositionListener.onPreDraw(Editor.java:2512)
+                at android.view.ViewTreeObserver.dispatchOnPreDraw(ViewTreeObserver.java:944)
+                at android.view.ViewRootImpl.performTraversals(ViewRootImpl.java:2412)
+                at android.view.ViewRootImpl.doTraversal(ViewRootImpl.java:1321)
+                at android.view.ViewRootImpl$TraversalRunnable.run(ViewRootImpl.java:6763)
+                at android.view.Choreographer$CallbackRecord.run(Choreographer.java:894)
+                at android.view.Choreographer.doCallbacks(Choreographer.java:696)
+                at android.view.Choreographer.doFrame(Choreographer.java:631)
+                at android.view.Choreographer$FrameDisplayEventReceiver.run(Choreographer.java:880)
+                at android.os.Handler.handleCallback(Handler.java:815)
+             */
+            return false;
+
+        if (stack.length > 0 &&
+                "view.AccessibilityInteractionController".equals(stack[0].getClassName()) &&
+                "applyAppScaleAndMagnificationSpecIfNeeded".equals(stack[0].getMethodName()))
+            /*
+                java.lang.NullPointerException: Attempt to invoke virtual method 'void android.graphics.RectF.scale(float)' on a null object reference
+                  at android.view.AccessibilityInteractionController.applyAppScaleAndMagnificationSpecIfNeeded(AccessibilityInteractionController.java:872)
+                  at android.view.AccessibilityInteractionController.applyAppScaleAndMagnificationSpecIfNeeded(AccessibilityInteractionController.java:796)
+                  at android.view.AccessibilityInteractionController.updateInfosForViewportAndReturnFindNodeResult(AccessibilityInteractionController.java:924)
+                  at android.view.AccessibilityInteractionController.findAccessibilityNodeInfoByAccessibilityIdUiThread(AccessibilityInteractionController.java:345)
+                  at android.view.AccessibilityInteractionController.access$400(AccessibilityInteractionController.java:75)
+                  at android.view.AccessibilityInteractionController$PrivateHandler.handleMessage(AccessibilityInteractionController.java:1393)
+                  at android.os.Handler.dispatchMessage(Handler.java:107)
+             */
+            return false;
+
+        if (ex instanceof InflateException)
+            /*
+                android.view.InflateException: Binary XML file line #7: Binary XML file line #7: Error inflating class <unknown>
+                Caused by: android.view.InflateException: Binary XML file line #7: Error inflating class <unknown>
+                Caused by: java.lang.reflect.InvocationTargetException
+                  at java.lang.reflect.Constructor.newInstance0(Native Method)
+                  at java.lang.reflect.Constructor.newInstance(Constructor.java:343)
+                  at android.view.LayoutInflater.createView(LayoutInflater.java:686)
+                  at android.view.LayoutInflater.createViewFromTag(LayoutInflater.java:829)
+                  at android.view.LayoutInflater.createViewFromTag(LayoutInflater.java:769)
+                  at android.view.LayoutInflater.rInflate(LayoutInflater.java:902)
+                  at android.view.LayoutInflater.rInflateChildren(LayoutInflater.java:863)
+                  at android.view.LayoutInflater.inflate(LayoutInflater.java:554)
+                  at android.view.LayoutInflater.inflate(LayoutInflater.java:461)
+             */
+            return false;
 
         if (BuildConfig.BETA_RELEASE)
             return true;
@@ -758,8 +1009,8 @@ public class Log {
         return formatThrowable(ex, true);
     }
 
-    static String formatThrowable(Throwable ex, boolean santize) {
-        return formatThrowable(ex, " ", santize);
+    static String formatThrowable(Throwable ex, boolean sanitize) {
+        return formatThrowable(ex, " ", sanitize);
     }
 
     static String formatThrowable(Throwable ex, String separator, boolean sanitize) {
@@ -874,7 +1125,7 @@ public class Log {
 
             List<TupleIdentityEx> identities = db.identity().getComposableIdentities(null);
             if (identities == null || identities.size() == 0)
-                throw new IllegalArgumentException(context.getString(R.string.title_no_identities));
+                throw new IllegalArgumentException(context.getString(R.string.title_no_composable));
 
             EntityIdentity identity = identities.get(0);
             EntityFolder drafts = db.folder().getFolderByType(identity.account, EntityFolder.DRAFTS);
@@ -907,6 +1158,8 @@ public class Log {
             attachLog(context, draft.id, 4);
             attachOperations(context, draft.id, 5);
             attachLogcat(context, draft.id, 6);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+                attachNotificationInfo(context, draft.id, 7);
 
             EntityOperation.queue(context, draft, EntityOperation.ADD);
 
@@ -921,10 +1174,15 @@ public class Log {
     }
 
     static void unexpectedError(FragmentManager manager, Throwable ex) {
+        unexpectedError(manager, ex, true);
+    }
+
+    static void unexpectedError(FragmentManager manager, Throwable ex, boolean report) {
         Log.e(ex);
 
         Bundle args = new Bundle();
         args.putSerializable("ex", ex);
+        args.putBoolean("report", report);
 
         FragmentDialogUnexpected fragment = new FragmentDialogUnexpected();
         fragment.setArguments(args);
@@ -936,41 +1194,45 @@ public class Log {
         @Override
         public Dialog onCreateDialog(@Nullable Bundle savedInstanceState) {
             final Throwable ex = (Throwable) getArguments().getSerializable("ex");
+            boolean report = getArguments().getBoolean("report", true);
 
-            return new AlertDialog.Builder(getContext())
+            AlertDialog.Builder builder = new AlertDialog.Builder(getContext())
                     .setTitle(R.string.title_unexpected_error)
                     .setMessage(Log.formatThrowable(ex, false))
-                    .setPositiveButton(android.R.string.cancel, null)
-                    .setNeutralButton(R.string.title_report, new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            // Dialog will be dismissed
-                            final Context context = getContext();
+                    .setPositiveButton(android.R.string.cancel, null);
 
-                            new SimpleTask<Long>() {
-                                @Override
-                                protected Long onExecute(Context context, Bundle args) throws Throwable {
-                                    return Log.getDebugInfo(context, R.string.title_crash_info_remark, ex, null).id;
-                                }
+            if (report)
+                builder.setNeutralButton(R.string.title_report, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        // Dialog will be dismissed
+                        final Context context = getContext();
 
-                                @Override
-                                protected void onExecuted(Bundle args, Long id) {
-                                    context.startActivity(new Intent(context, ActivityCompose.class)
-                                            .putExtra("action", "edit")
-                                            .putExtra("id", id));
-                                }
+                        new SimpleTask<Long>() {
+                            @Override
+                            protected Long onExecute(Context context, Bundle args) throws Throwable {
+                                return Log.getDebugInfo(context, R.string.title_unexpected_info_remark, ex, null).id;
+                            }
 
-                                @Override
-                                protected void onException(Bundle args, Throwable ex) {
-                                    if (ex instanceof IllegalArgumentException)
-                                        ToastEx.makeText(context, ex.getMessage(), Toast.LENGTH_LONG).show();
-                                    else
-                                        ToastEx.makeText(context, ex.toString(), Toast.LENGTH_LONG).show();
-                                }
-                            }.execute(getContext(), getActivity(), new Bundle(), "error:unexpected");
-                        }
-                    })
-                    .create();
+                            @Override
+                            protected void onExecuted(Bundle args, Long id) {
+                                context.startActivity(new Intent(context, ActivityCompose.class)
+                                        .putExtra("action", "edit")
+                                        .putExtra("id", id));
+                            }
+
+                            @Override
+                            protected void onException(Bundle args, Throwable ex) {
+                                if (ex instanceof IllegalArgumentException)
+                                    ToastEx.makeText(context, ex.getMessage(), Toast.LENGTH_LONG).show();
+                                else
+                                    ToastEx.makeText(context, ex.toString(), Toast.LENGTH_LONG).show();
+                            }
+                        }.execute(getContext(), getActivity(), new Bundle(), "error:unexpected");
+                    }
+                });
+
+            return builder.create();
         }
     }
 
@@ -1006,11 +1268,14 @@ public class Log {
         sb.append(String.format("Processors: %d\r\n", Runtime.getRuntime().availableProcessors()));
 
         ActivityManager am = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
-        sb.append(String.format("Memory class: %d\r\n", am.getMemoryClass()));
+        ActivityManager.MemoryInfo mi = new ActivityManager.MemoryInfo();
+        am.getMemoryInfo(mi);
+        sb.append(String.format("Memory class: %d MB/%s\r\n",
+                am.getMemoryClass(), Helper.humanReadableByteCount(mi.totalMem)));
 
         sb.append(String.format("Storage space: %s/%s\r\n",
-                Helper.humanReadableByteCount(Helper.getAvailableStorageSpace(), true),
-                Helper.humanReadableByteCount(Helper.getTotalStorageSpace(), true)));
+                Helper.humanReadableByteCount(Helper.getAvailableStorageSpace()),
+                Helper.humanReadableByteCount(Helper.getTotalStorageSpace())));
 
         Runtime rt = Runtime.getRuntime();
         long hused = (rt.totalMemory() - rt.freeMemory()) / 1024L;
@@ -1046,6 +1311,9 @@ public class Log {
             sb.append(String.format("Data saving: %b\r\n", saving));
         }
 
+        String charset = MimeUtility.getDefaultJavaCharset();
+        sb.append(String.format("Default charset: %s/%s\r\n", charset, MimeUtility.mimeCharset(charset)));
+
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
         boolean reporting = prefs.getBoolean("crash_reports", false);
         if (reporting) {
@@ -1054,6 +1322,23 @@ public class Log {
         }
 
         sb.append("\r\n");
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            try {
+                // https://developer.android.com/reference/android/app/ApplicationExitInfo
+                List<ApplicationExitInfo> infos = am.getHistoricalProcessExitReasons(
+                        context.getPackageName(), 0, 20);
+                for (ApplicationExitInfo info : infos)
+                    sb.append(String.format("%s: %s %s/%s reason=%d status=%d importance=%d\r\n",
+                            new Date(info.getTimestamp()), info.getDescription(),
+                            Helper.humanReadableByteCount(info.getPss() * 1024L),
+                            Helper.humanReadableByteCount(info.getRss() * 1024L),
+                            info.getReason(), info.getStatus(), info.getReason()));
+            } catch (Throwable ex) {
+                Log.e(ex);
+            }
+            sb.append("\r\n");
+        }
 
         sb.append(new Date(Helper.getInstallTime(context))).append("\r\n");
         sb.append(new Date()).append("\r\n");
@@ -1104,20 +1389,59 @@ public class Log {
         attachment.progress = 0;
         attachment.id = db.attachment().insertAttachment(attachment);
 
+        DateFormat dtf = Helper.getDateTimeInstance(context, SimpleDateFormat.SHORT, SimpleDateFormat.SHORT);
+
         long size = 0;
         File file = attachment.getFile(context);
         try (OutputStream os = new BufferedOutputStream(new FileOutputStream(file))) {
             List<EntityAccount> accounts = db.account().getAccounts();
+            size += write(os, "accounts=" + accounts.size() + "\r\n\r\n");
+
+            for (EntityAccount account : accounts) {
+                if (account.synchronize) {
+                    size += write(os, account.name +
+                            " " + (account.protocol == EntityAccount.TYPE_IMAP ? "IMAP" : "POP") + "/" + account.auth_type +
+                            " " + account.host + ":" + account.port + "/" + account.encryption +
+                            " sync=" + account.synchronize +
+                            " exempted=" + account.poll_exempted +
+                            " poll=" + account.poll_interval +
+                            " " + account.state +
+                            (account.last_connected == null ? "" : " " + dtf.format(account.last_connected)) +
+                            "\r\n");
+
+                    List<EntityFolder> folders = db.folder().getFolders(account.id, false, false);
+                    if (folders.size() > 0)
+                        Collections.sort(folders, folders.get(0).getComparator(context));
+                    for (EntityFolder folder : folders)
+                        if (folder.synchronize)
+                            size += write(os, "- " + folder.name + " " + folder.type +
+                                    " poll=" + folder.poll + "/" + folder.poll_factor +
+                                    " days=" + folder.sync_days + "/" + folder.keep_days +
+                                    " " + folder.state +
+                                    (folder.last_sync == null ? "" : " " + dtf.format(folder.last_sync)) +
+                                    "\r\n");
+
+                    size += write(os, "\r\n");
+                }
+            }
+
             for (EntityAccount account : accounts)
                 try {
                     JSONObject jaccount = account.toJSON();
-                    jaccount.put("state", account.state);
+                    jaccount.put("state", account.state == null ? "null" : account.state);
                     jaccount.put("warning", account.warning);
                     jaccount.put("error", account.error);
+
                     if (account.last_connected != null)
                         jaccount.put("last_connected", new Date(account.last_connected).toString());
+
+                    jaccount.put("keep_alive_ok", account.keep_alive_ok);
+                    jaccount.put("keep_alive_failed", account.keep_alive_failed);
+                    jaccount.put("keep_alive_succeeded", account.keep_alive_succeeded);
+
                     jaccount.remove("user");
                     jaccount.remove("password");
+
                     size += write(os, "==========\r\n");
                     size += write(os, jaccount.toString(2) + "\r\n");
 
@@ -1130,8 +1454,8 @@ public class Log {
                         jfolder.put("total", folder.total);
                         jfolder.put("initialize", folder.initialize);
                         jfolder.put("subscribed", folder.subscribed);
-                        jfolder.put("state", folder.state);
-                        jfolder.put("sync_state", folder.sync_state);
+                        jfolder.put("state", folder.state == null ? "null" : folder.state);
+                        jfolder.put("sync_state", folder.sync_state == null ? "null" : folder.sync_state);
                         jfolder.put("read_only", folder.read_only);
                         jfolder.put("selectable", folder.selectable);
                         jfolder.put("inferiors", folder.inferiors);
@@ -1181,7 +1505,12 @@ public class Log {
 
             NetworkInfo ani = cm.getActiveNetworkInfo();
             if (ani != null)
-                size += write(os, ani.toString() + " metered=" + cm.isActiveNetworkMetered() + "\r\n\r\n");
+                size += write(os, ani.toString() +
+                        " connected=" + ani.isConnected() +
+                        " metered=" + cm.isActiveNetworkMetered() +
+                        " roaming=" + ani.isRoaming() +
+                        " type=" + ani.getType() + "/" + ani.getTypeName() +
+                        "\r\n\r\n");
 
             Network active = null;
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
@@ -1189,7 +1518,8 @@ public class Log {
 
             for (Network network : cm.getAllNetworks()) {
                 NetworkCapabilities caps = cm.getNetworkCapabilities(network);
-                size += write(os, (network.equals(active) ? "active=" : "network=") + network + " capabilities=" + caps + "\r\n\r\n");
+                size += write(os, (network.equals(active) ? "active=" : "network=") + network +
+                        " capabilities=" + caps + "\r\n\r\n");
             }
 
             size += write(os, "VPN active=" + ConnectionHelper.vpnActive(context) + "\r\n\r\n");
@@ -1204,6 +1534,7 @@ public class Log {
 
         db.attachment().setDownloaded(attachment.id, size);
     }
+
 
     private static void attachLog(Context context, long id, int sequence) throws IOException {
         DB db = DB.getInstance(context);
@@ -1300,6 +1631,39 @@ public class Log {
         }
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    private static void attachNotificationInfo(Context context, long id, int sequence) throws IOException {
+        DB db = DB.getInstance(context);
+
+        EntityAttachment attachment = new EntityAttachment();
+        attachment.message = id;
+        attachment.sequence = sequence;
+        attachment.name = "channel.txt";
+        attachment.type = "text/plain";
+        attachment.disposition = Part.ATTACHMENT;
+        attachment.size = null;
+        attachment.progress = 0;
+        attachment.id = db.attachment().insertAttachment(attachment);
+
+        long size = 0;
+        File file = attachment.getFile(context);
+        try (OutputStream os = new BufferedOutputStream(new FileOutputStream(file))) {
+            NotificationManager nm = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+
+            for (NotificationChannel channel : nm.getNotificationChannels())
+                try {
+                    JSONObject jchannel = NotificationHelper.channelToJSON(channel);
+                    size += write(os, jchannel.toString(2) + "\r\n\r\n");
+                } catch (JSONException ex) {
+                    size += write(os, ex.toString() + "\r\n");
+                }
+
+            size += write(os, "Importance none=0; min=1; low=2; default=3; high=4; max=5\r\n\r\n");
+        }
+
+        db.attachment().setDownloaded(attachment.id, size);
+    }
+
     private static int write(OutputStream os, String text) throws IOException {
         byte[] bytes = text.getBytes();
         os.write(bytes);
@@ -1317,8 +1681,13 @@ public class Log {
         return (int) (getFreeMem() / 1024L / 1024L);
     }
 
+    static int getAvailableMb() {
+        Runtime rt = Runtime.getRuntime();
+        return (int) (rt.maxMemory() / 1024L / 1024L);
+    }
+
     static InternetAddress myAddress() throws UnsupportedEncodingException {
-        return new InternetAddress("marcel+fairemail@faircode.eu", "FairCode");
+        return new InternetAddress("marcel+fairemail@faircode.eu", "FairCode", StandardCharsets.UTF_8.name());
     }
 
     static boolean isSupportedDevice() {

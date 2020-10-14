@@ -24,10 +24,8 @@ import android.content.ContentResolver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.res.AssetFileDescriptor;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.ParcelFileDescriptor;
 import android.text.Spanned;
 import android.text.TextUtils;
 import android.text.method.LinkMovementMethod;
@@ -159,8 +157,7 @@ public class ActivityEML extends ActivityBase {
                 Result result = new Result();
 
                 ContentResolver resolver = context.getContentResolver();
-                AssetFileDescriptor descriptor = resolver.openTypedAssetFileDescriptor(uri, "*/*", null);
-                try (InputStream is = descriptor.createInputStream()) {
+                try (InputStream is = resolver.openInputStream(uri)) {
 
                     Properties props = MessageHelper.getSessionProperties();
                     Session isession = Session.getInstance(props, null);
@@ -182,7 +179,7 @@ public class ActivityEML extends ActivityBase {
                     if (html != null) {
                         Document parsed = JsoupEx.parse(html);
                         Document document = HtmlHelper.sanitizeView(context, parsed, false);
-                        result.body = HtmlHelper.fromDocument(context, document);
+                        result.body = HtmlHelper.fromDocument(context, document, true, null, null);
                     }
 
                     return result;
@@ -252,11 +249,10 @@ public class ActivityEML extends ActivityBase {
                                 if (!TextUtils.isEmpty(apart.attachment.name))
                                     create.putExtra(Intent.EXTRA_TITLE, apart.attachment.name);
                                 Helper.openAdvanced(create);
-                                if (create.resolveActivity(getPackageManager()) == null)
+                                if (create.resolveActivity(getPackageManager()) == null) // system whitelisted
                                     ToastEx.makeText(ActivityEML.this, R.string.title_no_saf, Toast.LENGTH_LONG).show();
                                 else
                                     startActivityForResult(Helper.getChooser(ActivityEML.this, create), REQUEST_ATTACHMENT);
-
                             }
                         });
                 rvAttachment.setAdapter(adapter);
@@ -268,9 +264,10 @@ public class ActivityEML extends ActivityBase {
             @Override
             protected void onException(Bundle args, @NonNull Throwable ex) {
                 if (ex instanceof IllegalArgumentException)
-                    Snackbar.make(findViewById(android.R.id.content), ex.getMessage(), Snackbar.LENGTH_LONG).show();
+                    Snackbar.make(findViewById(android.R.id.content), ex.getMessage(), Snackbar.LENGTH_LONG)
+                            .setGestureInsetBottomIgnored(true).show();
                 else
-                    Log.unexpectedError(getSupportFragmentManager(), ex);
+                    Log.unexpectedError(getSupportFragmentManager(), ex, false);
             }
         }.execute(this, args, "eml:decode");
     }
@@ -305,12 +302,10 @@ public class ActivityEML extends ActivityBase {
                     throw new IllegalArgumentException(context.getString(R.string.title_no_stream));
                 }
 
-                ParcelFileDescriptor pfd = null;
                 OutputStream os = null;
                 InputStream is;
                 try {
-                    pfd = getContentResolver().openFileDescriptor(uri, "w");
-                    os = new FileOutputStream(pfd.getFileDescriptor());
+                    os = getContentResolver().openOutputStream(uri);
                     is = apart.part.getInputStream();
 
                     byte[] buffer = new byte[Helper.BUFFER_SIZE];
@@ -318,12 +313,6 @@ public class ActivityEML extends ActivityBase {
                     while ((read = is.read(buffer)) != -1)
                         os.write(buffer, 0, read);
                 } finally {
-                    try {
-                        if (pfd != null)
-                            pfd.close();
-                    } catch (Throwable ex) {
-                        Log.w(ex);
-                    }
                     try {
                         if (os != null)
                             os.close();
@@ -415,15 +404,14 @@ public class ActivityEML extends ActivityBase {
                                             throw new IllegalArgumentException(context.getString(R.string.title_no_folder));
 
                                         ContentResolver resolver = context.getContentResolver();
-                                        AssetFileDescriptor descriptor = resolver.openTypedAssetFileDescriptor(uri, "*/*", null);
-                                        try (InputStream is = descriptor.createInputStream()) {
+                                        try (InputStream is = resolver.openInputStream(uri)) {
 
                                             Properties props = MessageHelper.getSessionProperties();
                                             Session isession = Session.getInstance(props, null);
                                             MimeMessage imessage = new MimeMessage(isession, is);
 
                                             try (EmailService iservice = new EmailService(
-                                                    context, account.getProtocol(), account.realm, account.insecure, true)) {
+                                                    context, account.getProtocol(), account.realm, account.encryption, account.insecure, true)) {
                                                 iservice.setPartialFetch(account.partial_fetch);
                                                 iservice.setIgnoreBodyStructureSize(account.ignore_size);
                                                 iservice.connect(account);
@@ -452,7 +440,8 @@ public class ActivityEML extends ActivityBase {
                                     @Override
                                     protected void onException(Bundle args, @NonNull Throwable ex) {
                                         if (ex instanceof IllegalArgumentException)
-                                            Snackbar.make(findViewById(android.R.id.content), ex.getMessage(), Snackbar.LENGTH_LONG).show();
+                                            Snackbar.make(findViewById(android.R.id.content), ex.getMessage(), Snackbar.LENGTH_LONG)
+                                                    .setGestureInsetBottomIgnored(true).show();
                                         else
                                             Log.unexpectedError(getSupportFragmentManager(), ex);
                                     }

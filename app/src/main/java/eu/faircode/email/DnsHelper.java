@@ -21,6 +21,7 @@ package eu.faircode.email;
 
 import android.content.Context;
 import android.net.ConnectivityManager;
+import android.net.DnsResolver;
 import android.net.LinkProperties;
 import android.net.Network;
 import android.net.NetworkInfo;
@@ -30,16 +31,21 @@ import androidx.annotation.NonNull;
 
 import org.xbill.DNS.Lookup;
 import org.xbill.DNS.MXRecord;
+import org.xbill.DNS.Message;
 import org.xbill.DNS.Record;
 import org.xbill.DNS.SRVRecord;
 import org.xbill.DNS.SimpleResolver;
 import org.xbill.DNS.TextParseException;
 import org.xbill.DNS.Type;
 
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 
 import javax.mail.Address;
 import javax.mail.internet.InternetAddress;
@@ -47,6 +53,8 @@ import javax.mail.internet.InternetAddress;
 public class DnsHelper {
     // https://dns.watch/
     private static final String DEFAULT_DNS = "84.200.69.80";
+    private static final int CHECK_TIMEOUT = 5; // seconds
+    private static final int LOOKUP_TIMEOUT = 15; // seconds
 
     static void checkMx(Context context, Address[] addresses) throws UnknownHostException {
         if (addresses == null)
@@ -63,12 +71,26 @@ public class DnsHelper {
 
             String domain = email.substring(d + 1);
 
+            boolean found = true;
             try {
-                lookup(context, domain, "mx");
-            } catch (UnknownHostException ex) {
-                Log.i(ex);
-                throw new UnknownHostException(context.getString(R.string.title_no_server, domain));
+                SimpleResolver resolver = new SimpleResolver(getDnsServer(context));
+                resolver.setTimeout(CHECK_TIMEOUT);
+                Lookup lookup = new Lookup(domain, Type.MX);
+                lookup.setResolver(resolver);
+                lookup.run();
+                Log.i("Check name=" + domain + " @" + resolver.getAddress() + " result=" + lookup.getResult());
+
+                if (lookup.getResult() == Lookup.HOST_NOT_FOUND ||
+                        lookup.getResult() == Lookup.TYPE_NOT_FOUND)
+                    found = false;
+                else if (lookup.getResult() != Lookup.SUCCESSFUL)
+                    throw new UnknownHostException("DNS error=" + lookup.getErrorString());
+            } catch (Throwable ex) {
+                Log.e(ex);
             }
+
+            if (!found)
+                throw new UnknownHostException(context.getString(R.string.title_no_server, domain));
         }
     }
 
@@ -99,9 +121,81 @@ public class DnsHelper {
         }
 
         try {
-            Lookup lookup = new Lookup(name, rtype);
+            SimpleResolver resolver = new SimpleResolver(getDnsServer(context)) {
+                private IOException ex;
+                private Message result;
 
-            SimpleResolver resolver = new SimpleResolver(getDnsServer(context));
+                @Override
+                public Message send(Message query) throws IOException {
+                    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q)
+                        return super.send(query);
+                    else {
+                        Log.i("Using Android DNS resolver");
+                        Semaphore sem = new Semaphore(0);
+                        DnsResolver resolver = DnsResolver.getInstance();
+                        //OPTRecord optRecord = new OPTRecord(4096, 0, 0, Flags.DO, null);
+                        //query.addRecord(optRecord, Section.ADDITIONAL);
+                        //query.getHeader().setFlag(Flags.AD);
+                        Log.i("DNS query=" + query.toString());
+                        resolver.rawQuery(
+                                null,
+                                query.toWire(),
+                                DnsResolver.FLAG_EMPTY,
+                                new Executor() {
+                                    @Override
+                                    public void execute(Runnable command) {
+                                        command.run();
+                                    }
+                                },
+                                null,
+                                new DnsResolver.Callback<byte[]>() {
+                                    @Override
+                                    public void onAnswer(@NonNull byte[] answer, int rcode) {
+                                        try {
+                                            if (rcode == 0)
+                                                result = new Message(answer);
+                                            else
+                                                ex = new IOException("rcode=" + rcode);
+                                        } catch (Throwable e) {
+                                            ex = new IOException(e.getMessage());
+                                        } finally {
+                                            sem.release();
+                                        }
+                                    }
+
+                                    @Override
+                                    public void onError(@NonNull DnsResolver.DnsException e) {
+                                        try {
+                                            Log.w(e);
+                                            ex = new IOException(e.getMessage());
+                                        } finally {
+                                            sem.release();
+                                        }
+                                    }
+                                });
+                        try {
+                            if (!sem.tryAcquire(LOOKUP_TIMEOUT, TimeUnit.SECONDS))
+                                ex = new IOException("timeout");
+                        } catch (InterruptedException e) {
+                            ex = new IOException("interrupted");
+                        }
+
+                        if (ex == null) {
+                            //ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+                            //Network active = (cm == null ? null : cm.getActiveNetwork());
+                            //LinkProperties props = (active == null ? null : cm.getLinkProperties(active));
+                            //Log.i("DNS private=" + (props == null ? null : props.isPrivateDnsActive()));
+                            Log.i("DNS answer=" + result.toString() + " flags=" + result.getHeader().printFlags());
+                            return result;
+                        } else {
+                            Log.w(ex);
+                            throw ex;
+                        }
+                    }
+                }
+            };
+            resolver.setTimeout(LOOKUP_TIMEOUT);
+            Lookup lookup = new Lookup(name, rtype);
             lookup.setResolver(resolver);
             Log.i("Lookup name=" + name + " @" + resolver.getAddress() + " type=" + rtype);
             Record[] records = lookup.run();
@@ -110,7 +204,7 @@ public class DnsHelper {
                     lookup.getResult() == Lookup.TYPE_NOT_FOUND)
                 throw new UnknownHostException(name);
             else if (lookup.getResult() != Lookup.SUCCESSFUL)
-                Log.w("DNS error=" + lookup.getErrorString());
+                Log.e("DNS error=" + lookup.getErrorString());
 
             List<DnsRecord> result = new ArrayList<>();
 

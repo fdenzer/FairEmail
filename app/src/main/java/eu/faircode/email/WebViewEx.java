@@ -24,6 +24,8 @@ import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Build;
 import android.util.Pair;
+import android.view.InputDevice;
+import android.view.MotionEvent;
 import android.view.View;
 import android.webkit.DownloadListener;
 import android.webkit.WebSettings;
@@ -39,15 +41,20 @@ public class WebViewEx extends WebView implements DownloadListener, View.OnLongC
     public WebViewEx(Context context) {
         super(context);
 
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        boolean overview_mode = prefs.getBoolean("overview_mode", false);
+        boolean safe_browsing = prefs.getBoolean("safe_browsing", false);
+
         setVerticalScrollBarEnabled(false);
         setHorizontalScrollBarEnabled(false);
+        setOverScrollMode(View.OVER_SCROLL_NEVER);
 
         setDownloadListener(this);
         setOnLongClickListener(this);
 
         WebSettings settings = getSettings();
         settings.setUseWideViewPort(true);
-        settings.setLoadWithOverviewMode(true);
+        settings.setLoadWithOverviewMode(overview_mode);
 
         settings.setBuiltInZoomControls(true);
         settings.setDisplayZoomControls(false);
@@ -55,25 +62,22 @@ public class WebViewEx extends WebView implements DownloadListener, View.OnLongC
         settings.setLayoutAlgorithm(WebSettings.LayoutAlgorithm.TEXT_AUTOSIZING);
 
         settings.setAllowFileAccess(false);
+        settings.setCacheMode(WebSettings.LOAD_CACHE_ELSE_NETWORK);
         settings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-            boolean safe_browsing = prefs.getBoolean("safe_browsing", false);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
             settings.setSafeBrowsingEnabled(safe_browsing);
-        }
     }
 
     void init(
             int height, float size, Pair<Integer, Integer> position,
             float textSize, boolean monospaced,
-            boolean show_images, boolean inline,
             IWebView intf) {
         Log.i("Init height=" + height + " size=" + size);
 
         this.height = (height == 0 ? getMinimumHeight() : height);
 
-        setInitialScale(size == 0 ? 1 : Math.round(size * 100));
+        setInitialScale(size == 0 ? 0 : Math.round(size * 100));
 
         if (position != null) {
             setScrollX(position.first);
@@ -88,10 +92,6 @@ public class WebViewEx extends WebView implements DownloadListener, View.OnLongC
         }
         if (monospaced)
             settings.setStandardFontFamily("monospace");
-
-        settings.setLoadsImagesAutomatically(show_images || inline);
-        settings.setBlockNetworkLoads(!show_images);
-        settings.setBlockNetworkImage(!show_images);
 
         this.intf = intf;
 
@@ -118,6 +118,13 @@ public class WebViewEx extends WebView implements DownloadListener, View.OnLongC
             });
     }
 
+    void setImages(boolean show_images, boolean inline) {
+        WebSettings settings = getSettings();
+        settings.setLoadsImagesAutomatically(show_images || inline);
+        settings.setBlockNetworkLoads(!show_images);
+        settings.setBlockNetworkImage(!show_images);
+    }
+
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         if (height > getMinimumHeight())
@@ -136,6 +143,58 @@ public class WebViewEx extends WebView implements DownloadListener, View.OnLongC
         super.onSizeChanged(w, h, ow, oh);
         Log.i("Size changed height=" + h);
         this.intf.onSizeChanged(w, h, ow, oh);
+    }
+
+    @Override
+    protected boolean overScrollBy(int deltaX, int deltaY, int scrollX, int scrollY, int scrollRangeX, int scrollRangeY, int maxOverScrollX, int maxOverScrollY, boolean isTouchEvent) {
+        final int overScrollMode = getOverScrollMode();
+        final boolean canScrollHorizontal =
+                computeHorizontalScrollRange() > computeHorizontalScrollExtent();
+        final boolean canScrollVertical =
+                computeVerticalScrollRange() > computeVerticalScrollExtent();
+        final boolean overScrollHorizontal = overScrollMode == OVER_SCROLL_ALWAYS ||
+                (overScrollMode == OVER_SCROLL_IF_CONTENT_SCROLLS && canScrollHorizontal);
+        final boolean overScrollVertical = overScrollMode == OVER_SCROLL_ALWAYS ||
+                (overScrollMode == OVER_SCROLL_IF_CONTENT_SCROLLS && canScrollVertical);
+
+        int newScrollX = scrollX + deltaX;
+        if (!overScrollHorizontal) {
+            maxOverScrollX = 0;
+        }
+
+        int newScrollY = scrollY + deltaY;
+        if (!overScrollVertical) {
+            maxOverScrollY = 0;
+        }
+
+        // Clamp values if at the limits and record
+        final int left = -maxOverScrollX;
+        final int right = maxOverScrollX + scrollRangeX;
+        final int top = -maxOverScrollY;
+        final int bottom = maxOverScrollY + scrollRangeY;
+
+        boolean clampedX = false;
+        if (newScrollX > right) {
+            newScrollX = right;
+            clampedX = true;
+        } else if (newScrollX < left) {
+            newScrollX = left;
+            clampedX = true;
+        }
+
+        boolean clampedY = false;
+        if (newScrollY > bottom) {
+            newScrollY = bottom;
+            clampedY = true;
+        } else if (newScrollY < top) {
+            newScrollY = top;
+            clampedY = true;
+        }
+
+        Log.i("onOverScrolled clamped=" + clampedY + " new=" + newScrollY + " dy=" + deltaY);
+        intf.onOverScrolled(scrollX, scrollY, deltaX, deltaY, clampedX, clampedY);
+
+        return super.overScrollBy(deltaX, deltaY, scrollX, scrollY, scrollRangeX, scrollRangeY, maxOverScrollX, maxOverScrollY, isTouchEvent);
     }
 
     @Override
@@ -168,12 +227,44 @@ public class WebViewEx extends WebView implements DownloadListener, View.OnLongC
         return false;
     }
 
+    @Override
+    public boolean onGenericMotionEvent(MotionEvent event) {
+        if (event.getAction() == MotionEvent.ACTION_SCROLL &&
+                (event.getSource() & InputDevice.SOURCE_MOUSE) != 0)
+            return false;
+        return super.onGenericMotionEvent(event);
+    }
+
+    public boolean isZoomedX() {
+        int xtend = computeHorizontalScrollExtent();
+        if (xtend != 0) {
+            float xscale = computeHorizontalScrollRange() / (float) xtend;
+            if (xscale > 1.2)
+                return true;
+        }
+
+        return false;
+    }
+
+    public boolean isZoomedY() {
+        int ytend = computeVerticalScrollExtent();
+        if (ytend != 0) {
+            float yscale = computeVerticalScrollRange() / (float) ytend;
+            if (yscale > 1.2)
+                return true;
+        }
+
+        return false;
+    }
+
     interface IWebView {
         void onSizeChanged(int w, int h, int ow, int oh);
 
         void onScaleChanged(float newScale);
 
         void onScrollChange(int scrollX, int scrollY);
+
+        void onOverScrolled(int scrollX, int scrollY, int dx, int dy, boolean clampedX, boolean clampedY);
 
         boolean onOpenLink(String url);
     }

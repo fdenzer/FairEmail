@@ -88,22 +88,22 @@ public class AdapterNavFolder extends RecyclerView.Adapter<AdapterNavFolder.View
         private void bindTo(TupleFolderNav folder) {
             if (EntityFolder.OUTBOX.equals(folder.type)) {
                 if ("syncing".equals(folder.sync_state))
-                    ivItem.setImageResource(R.drawable.baseline_compare_arrows_24);
+                    ivItem.setImageResource(R.drawable.twotone_compare_arrows_24);
                 else
                     ivItem.setImageResource(EntityFolder.getIcon(folder.type));
 
                 ivItem.clearColorFilter();
             } else {
                 if ("syncing".equals(folder.sync_state))
-                    ivItem.setImageResource(R.drawable.baseline_compare_arrows_24);
+                    ivItem.setImageResource(R.drawable.twotone_compare_arrows_24);
                 else if ("downloading".equals(folder.sync_state))
-                    ivItem.setImageResource(R.drawable.baseline_cloud_download_24);
+                    ivItem.setImageResource(R.drawable.twotone_cloud_download_24);
                 else if (folder.executing > 0)
-                    ivItem.setImageResource(R.drawable.baseline_dns_24);
+                    ivItem.setImageResource(R.drawable.twotone_dns_24);
                 else
                     ivItem.setImageResource("connected".equals(folder.state)
-                            ? R.drawable.baseline_folder_24
-                            : R.drawable.baseline_folder_open_24);
+                            ? R.drawable.twotone_folder_done_24
+                            : R.drawable.twotone_folder_24);
 
                 if (folder.accountColor == null || !ActivityBilling.isPro(context))
                     ivItem.clearColorFilter();
@@ -161,7 +161,8 @@ public class AdapterNavFolder extends RecyclerView.Adapter<AdapterNavFolder.View
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
         boolean highlight_unread = prefs.getBoolean("highlight_unread", true);
         this.debug = prefs.getBoolean("debug", false);
-        this.colorUnread = Helper.resolveColor(context, highlight_unread ? R.attr.colorUnreadHighlight : android.R.attr.textColorPrimary);
+        int colorHighlight = prefs.getInt("highlight_color", Helper.resolveColor(context, R.attr.colorUnreadHighlight));
+        this.colorUnread = (highlight_unread ? colorHighlight : Helper.resolveColor(context, R.attr.colorUnread));
         this.textColorSecondary = Helper.resolveColor(context, android.R.attr.textColorSecondary);
 
         this.DTF = Helper.getTimeInstance(context, SimpleDateFormat.SHORT);

@@ -32,18 +32,22 @@ public interface DaoIdentity {
     @Query(TupleIdentityView.query)
     LiveData<List<TupleIdentityView>> liveIdentityView();
 
-    @Query("SELECT identity.*, account.name AS accountName FROM identity" +
-            " JOIN account ON account.id = identity.account")
+    @Query("SELECT identity.*, account.name AS accountName, folder.id AS drafts" +
+            " FROM identity" +
+            " JOIN account ON account.id = identity.account" +
+            " LEFT JOIN folder ON folder.account = account.id AND folder.type = '" + EntityFolder.DRAFTS + "'")
     LiveData<List<TupleIdentityEx>> liveIdentities();
 
-    @Query("SELECT identity.*, account.name AS accountName FROM identity" +
+    @Query("SELECT identity.*, account.name AS accountName, folder.id AS drafts" +
+            " FROM identity" +
             " JOIN account ON account.id = identity.account" +
             " JOIN folder ON folder.account = identity.account AND folder.type = '" + EntityFolder.DRAFTS + "'" +
             " AND identity.synchronize" +
             " AND account.synchronize")
     LiveData<List<TupleIdentityEx>> liveComposableIdentities();
 
-    @Query("SELECT identity.*, account.name AS accountName FROM identity" +
+    @Query("SELECT identity.*, account.name AS accountName, folder.id AS drafts" +
+            " FROM identity" +
             " JOIN account ON account.id = identity.account" +
             " JOIN folder ON folder.account = identity.account AND folder.type = '" + EntityFolder.DRAFTS + "'" +
             " WHERE (:account IS NULL OR account.id = :account)" +
@@ -111,6 +115,9 @@ public interface DaoIdentity {
 
     @Query("UPDATE identity SET sign_key_alias = :alias WHERE id = :id")
     int setIdentitySignKeyAlias(long id, String alias);
+
+    @Query("UPDATE identity SET max_size = :max_size WHERE id = :id")
+    int setIdentityMaxSize(long id, Long max_size);
 
     @Query("UPDATE identity SET error = :error WHERE id = :id")
     int setIdentityError(long id, String error);

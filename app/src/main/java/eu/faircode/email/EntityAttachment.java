@@ -20,9 +20,7 @@ package eu.faircode.email;
 */
 
 import android.content.Context;
-import android.os.Build;
 import android.text.TextUtils;
-import android.webkit.MimeTypeMap;
 
 import androidx.annotation.NonNull;
 import androidx.room.Entity;
@@ -32,8 +30,6 @@ import androidx.room.PrimaryKey;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
@@ -49,7 +45,7 @@ import static androidx.room.ForeignKey.CASCADE;
         },
         indices = {
                 @Index(value = {"message"}),
-                @Index(value = {"message", "sequence"}, unique = true),
+                @Index(value = {"message", "sequence", "subsequence"}, unique = true),
                 @Index(value = {"message", "cid"})
         }
 )
@@ -65,27 +61,13 @@ public class EntityAttachment {
     static final Integer SMIME_SIGNED_DATA = 7;
     static final Integer SMIME_CONTENT = 8;
 
-    // https://developer.android.com/guide/topics/media/media-formats#image-formats
-    private static final List<String> IMAGE_TYPES = Collections.unmodifiableList(Arrays.asList(
-            "image/bmp",
-            "image/gif",
-            "image/jpeg",
-            "image/jpg",
-            "image/png",
-            "image/webp"
-    ));
-
-    private static final List<String> IMAGE_TYPES8 = Collections.unmodifiableList(Arrays.asList(
-            "image/heic",
-            "image/heif"
-    ));
-
     @PrimaryKey(autoGenerate = true)
     public Long id;
     @NonNull
     public Long message;
     @NonNull
     public Integer sequence;
+    public Integer subsequence; // embedded messages
     public String name;
     @NonNull
     public String type;
@@ -109,11 +91,7 @@ public class EntityAttachment {
     }
 
     boolean isImage() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
-            if (IMAGE_TYPES8.contains(getMimeType()))
-                return true;
-
-        return IMAGE_TYPES.contains(getMimeType());
+        return Helper.isImage(getMimeType());
     }
 
     boolean isEncryption() {
@@ -143,8 +121,6 @@ public class EntityAttachment {
         for (EntityAttachment attachment : attachments) {
             File source = attachment.getFile(context);
 
-            long aid = attachment.id;
-
             attachment.id = null;
             attachment.message = newid;
             attachment.progress = null;
@@ -156,7 +132,6 @@ public class EntityAttachment {
                     Helper.copy(source, target);
                 } catch (IOException ex) {
                     Log.e(ex);
-                    db.attachment().setError(aid, Log.formatThrowable(ex, false));
                     db.attachment().setError(attachment.id, Log.formatThrowable(ex, false));
                 }
             }
@@ -176,26 +151,14 @@ public class EntityAttachment {
         if (extension == null)
             return type;
 
-        String gtype = MimeTypeMap.getSingleton()
-                .getMimeTypeFromExtension(extension.toLowerCase(Locale.ROOT));
+        extension = extension.toLowerCase(Locale.ROOT);
 
-        if (gtype != null) {
-            if (TextUtils.isEmpty(type) || "*/*".equals(type))
-                type = gtype;
-
-            // Some servers erroneously remove dots from mime types
-            if (gtype.replace(".", "").equals(type))
-                type = gtype;
-        }
-
-        if ("csv".equals(extension))
-            return "text/csv";
-
-        if ("eml".equals(extension))
-            return "message/rfc822";
-
+        // Fix types
         if ("gpx".equals(extension))
             return "application/gpx+xml";
+
+        if ("pdf".equals(extension))
+            return "application/pdf";
 
         if ("text/plain".equals(type) && "ics".equals(extension))
             return "text/calendar";
@@ -203,23 +166,31 @@ public class EntityAttachment {
         if ("text/plain".equals(type) && "ovpn".equals(extension))
             return "application/x-openvpn-profile";
 
-        if ("application/x-pdf".equals(type))
+        // https://www.rfc-editor.org/rfc/rfc3555.txt
+        if ("video/jpeg".equals(type))
+            return "image/jpeg";
+
+        if (!TextUtils.isEmpty(type) &&
+                (type.endsWith("/pdf") || type.endsWith("/x-pdf")))
             return "application/pdf";
 
         if ("application/vnd.ms-pps".equals(type))
             return "application/vnd.ms-powerpoint";
 
-        if (TextUtils.isEmpty(type) ||
-                type.startsWith("unknown/") || type.endsWith("/unknown") ||
-                "application/octet-stream".equals(type) || "application/zip".equals(type)) {
-            if ("log".equalsIgnoreCase(extension))
-                return "text/plain";
+        // Guess types
+        String gtype = Helper.guessMimeType(name);
+        if (gtype != null) {
+            if (TextUtils.isEmpty(type) ||
+                    "*/*".equals(type) ||
+                    type.startsWith("unknown/") ||
+                    type.endsWith("/unknown") ||
+                    "application/octet-stream".equals(type) ||
+                    "application/zip".equals(type))
+                return gtype;
 
-            if (gtype == null || gtype.equals(type))
-                return type;
-
-            Log.w("Guessing file=" + name + " type=" + gtype);
-            return gtype;
+            // Some servers erroneously remove dots from mime types
+            if (gtype.replace(".", "").equals(type))
+                return gtype;
         }
 
         return type;

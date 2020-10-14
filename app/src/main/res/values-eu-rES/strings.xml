@@ -6,7 +6,6 @@
     <string name="app_limitations">Adibidez, mezuei beti aldatuko zaie formatua elementu ez seguruak kentzeko eta irakurterraztasuna hobetzeko, eta estekak irekitzea segurtasunagatik baieztatu egin behar da.</string>
     <string name="app_crash">FairEmail-ek ez du gailu honentzako euskarririk Android akatsek kraskatzea eragiten dutelako</string>
     <string name="app_exit">Jo \'atzera\' berriro irteteko</string>
-    <string name="channel_service">Zerbitzua</string>
     <string name="channel_send">Bidali</string>
     <string name="channel_notification">Jakinarazpenak</string>
     <string name="channel_update">Eguneraketak</string>
@@ -53,10 +52,6 @@
         <item quantity="one">Elkarrizketa %1$d hautatuta</item>
         <item quantity="other">%1$d elkarrizketa hautatuta</item>
     </plurals>
-    <plurals name="title_moving_messages">
-        <item quantity="one">Eraman mezu %1$d %2$s helburura?</item>
-        <item quantity="other">Eraman %1$d mezu %2$s(e)ra?</item>
-    </plurals>
     <plurals name="title_deleting_messages">
         <item quantity="one">Ezabatu mezu %1$d behin betiko?</item>
         <item quantity="other">Ezabatu %1$d mezu behin betiko?</item>
@@ -76,9 +71,10 @@
     <string name="title_notification_idle">Inaktiboa</string>
     <string name="title_notification_failed">%1$s(e)k huts egin du</string>
     <string name="title_notification_alert">\'%1$s\' zerbitzariko alerta</string>
+    <string name="title_of">%1$s/%2$s</string>
     <string name="title_name_count">%1$s (%2$s)</string>
     <string name="title_name_plus">%1$s +%2$d</string>
-    <string name="title_from_to">%1$s ➤ %2$s</string>
+    <string name="title_title_description">%1$s: %2$s</string>
     <string name="title_factor_minutes">%1$d minutu</string>
     <string name="menu_exit">Irten</string>
     <string name="menu_answers">Txantiloiak</string>
@@ -94,9 +90,7 @@
     <string name="menu_privacy">Pribatutasuna</string>
     <string name="menu_about">Honi buruz</string>
     <string name="menu_pro">Ordainpeko ezaugarriak</string>
-    <string name="menu_invite">Gonbidatu</string>
     <string name="menu_rate">Baloratu aplikazio hau</string>
-    <string name="menu_other">Beste aplikazio batzuk</string>
     <string name="title_welcome">Ongi etorri</string>
     <string name="title_eula">Azken erabiltzailearen lizentziaren onarpena</string>
     <string name="title_agree">Ados nago</string>
@@ -126,6 +120,7 @@
     <string name="title_setup_gmail_rationale">Eman baimena kontu bat aukeratu eta zure izena irakurtzeko</string>
     <string name="title_setup_gmail_permissions">Google-k zure posta elektronikoa irakurri, konposatu, bidali eta ezabatzeko baimenak eskatuko ditu. FairEmail-ek ez ditu zure mezuak ezabatuko baimen espliziturik gabe.</string>
     <string name="title_setup_gmail_drafts">Zirriborroen karpeta IMAP bidez eskuragarri ez badago, Gmailen etiketen ezarpenetan konpondu daiteke</string>
+    <string name="title_setup_office_auth">\'AUTENTIFIKAZIOAK huts egin du\' errorea sistema administratzaileak IMAP/SMTP desgaitu duelako izan daiteke</string>
     <string name="title_setup_oauth_rationale">Baimendu zure %1$s kontura sarbidea</string>
     <string name="title_setup_oauth_authorize">Baimendu</string>
     <string name="title_setup_select_account">Hautatu kontua</string>
@@ -134,7 +129,6 @@
     <string name="title_setup_no_settings_hint">Saiatu kontu eta identitate bat konfiguratzen 1. eta 2. konfigurazio-urratsean, zure posta elektronikoaren hornitzaileak emandako ezarpenak erabiliz</string>
     <string name="title_setup_no_auth_hint">Egiaztatu zure helbide elektronikoa eta pasahitza eta ziurtatu kanpoko sarbidea (IMAP / SMTP) gaituta dagoela zure konturako</string>
     <string name="title_setup_app_password_hint">Hornitzaile honek aplikazio-pasahitza eskatzen du kontu-pasahitzaren ordez, egiaztatu zure hornitzailearen argibideak</string>
-    <string name="title_setup_no_system_folders">Sarrera-ontzia edo zirriborroen karpeta ez da aurkitu</string>
     <string name="title_setup_quick_success">Kontu eta identitate bat gehitu dira</string>
     <string name="title_setup_quick_failed">Kontu eta identitate bat konfiguratzen saiatu zaitezke hemen azpian</string>
     <string name="title_setup_manage">Kudeatu</string>
@@ -149,11 +143,11 @@
     <string name="title_setup_permissions">Eman baimenak</string>
     <string name="title_setup_permissions_remark">Kontaktuen informazioa atzitzeko (aukerakoa)</string>
     <string name="title_setup_doze">Ezarri bateria optimizazioak</string>
-    <string name="title_setup_doze_remark">Etenik gabe e-maila jasotzeko (aukerakoa)</string>
     <string name="title_setup_doze_instructions">Hurrengo elkarrizketa-koadroan, hautatu \'Aplikazio guztiak\' goialdean, gero hautatu aplikazio hau eta baieztatu \"Ez optimizatu\"</string>
     <string name="title_setup_doze_battery">Bateria-erabilera handia?</string>
     <string name="title_setup_doze_stopped">Sinkronizazioa gelditu da?</string>
     <string name="title_setup_data">Datuen aurreztailea gaituta dago</string>
+    <string name="title_setup_advanced_options">Erakutsi aukera aurreratuak</string>
     <string name="title_setup_inbox">Joan mezuetara</string>
     <string name="title_setup_go">Goazen</string>
     <string name="title_setup_to_do">Egiteke</string>
@@ -162,7 +156,6 @@
     <string name="title_setup_error">Akatsa</string>
     <string name="title_setup_export">Esportatu ezarpenak</string>
     <string name="title_setup_import">Inportatu ezarpenak</string>
-    <string name="title_setup_export_do">Gailuko Google kontura lotutako Gmail kontuak ezin dira esportatu</string>
     <string name="title_setup_import_do">Inportatutako kontuak daudenak gainidatzi gabe gehituko dira</string>
     <string name="title_setup_password">Pasahitza</string>
     <string name="title_setup_password_chars">Pasahitzak kontrol karaktereak edo espazio zuriak ditu</string>
@@ -189,8 +182,8 @@
     <string name="title_setup_theme_black">Beltza</string>
     <string name="title_setup_theme_reverse">Alderantzizkatu koloreak</string>
     <string name="title_setup_theme_dark">Iluna</string>
-    <string name="title_setup_theme_black_background">Atzeko plano beltza</string>
     <string name="title_setup_theme_system">Jarraitu sistema</string>
+    <string name="title_setup_theme_black_background">Atzeko plano beltza</string>
     <string name="title_setup_theme_system_hint">Jarraitu sistemako azala automatikoki txandakatuko ditu argia eta iluna eguna eta gauaren arabera, Androidek onartzen duenean</string>
     <string name="title_setup_advanced">Aurreratua</string>
     <string name="title_setup_options">Aukerak</string>
@@ -210,9 +203,9 @@
     <string name="title_advanced_section_encryption">Zifratzea</string>
     <string name="title_advanced_section_notifications">Jakinarazpenak</string>
     <string name="title_advanced_section_misc">Miszelanea</string>
-    <string name="title_advanced_receive">Jaso mezuak</string>
+    <string name="title_advanced_receive">Jaso kontu guztietako mezuak</string>
     <string name="title_advanced_when">Noiz</string>
-    <string name="title_advanced_always">Sinkronizatu beti kontu hauek</string>
+    <string name="title_advanced_always">Jaso beti kontu hauetako mezuak</string>
     <string name="title_advanced_schedule">Egitaraua</string>
     <string name="title_advanced_advanced">Aurreratua</string>
     <string name="title_advanced_no_date">Datarik gabeko mezuak</string>
@@ -222,7 +215,11 @@
     <string name="title_advanced_kept_removed">Egiaztatu mezu zaharrak zerbitzaritik ezabatu diren</string>
     <string name="title_advanced_gmail_thread">Gmail mezu-taldekatze estiloa Gmail kontuetan</string>
     <string name="title_advanced_sync_folders">Sinkronizatu karpeten zerrenda</string>
+    <string name="title_advanced_sync_shared_folders">Sinkronizatu partekatutako karpeten zerrenda</string>
     <string name="title_advanced_subscriptions">Kudeatu karpeten harpidetzak</string>
+    <string name="title_advanced_check_mx">Egiaztatu bidaltzailearen helbide elektronikoak mezuak sinkronizatzean</string>
+    <string name="title_advanced_check_reply">Egiaztatu erantzuteko helbide elektronikoak mezuak sinkronizatzean</string>
+    <string name="title_advanced_tune_keep_alive">Doitu automatikoki biziri-mantendu tartea</string>
     <string name="title_advanced_keyboard">Erakutsi teklatua lehenetsita</string>
     <string name="title_advanced_suggest_local">Proposatu lokalean gordetako kontaktuak</string>
     <string name="title_advanced_suggest_sent">Proposatu bidalitako mezuetan aurkitutako helbideak</string>
@@ -233,7 +230,8 @@
     <string name="title_advanced_quote_reply">Aipatu erantzundako testua</string>
     <string name="title_advanced_resize_reply">Aldatu irudien tamaina erantzundako testuan</string>
     <string name="title_advanced_signature_location">Sinaduraren kokapena</string>
-    <string name="title_advanced_signature_end">Gehitu sinadura aipatutako/bidalitako mezuaren ondoren</string>
+    <string name="title_advanced_signature_reply">Erabili sinadura erantzutean</string>
+    <string name="title_advanced_signature_forward">Erabili sinadura birbidaltzean</string>
     <string name="title_advanced_plain_only">Bidali testu soil hutsa lehenetsita</string>
     <string name="title_advanced_flow">egokitu formatua testu soilean</string>
     <string name="title_advanced_receipt">Agiria eskatzean</string>
@@ -248,7 +246,6 @@
     <string name="title_advanced_rlah">Ibili etxean bezala</string>
     <string name="title_advanced_timeout">Konektatzeko itxarote muga (segundotan)</string>
     <string name="title_advanced_ssl_harden">Gogortu SSL konexioak</string>
-    <string name="title_advanced_socks">Erabili SOCKS proxya</string>
     <string name="title_advanced_manage_connectivity">Kudeatu konektibitatea</string>
     <string name="title_advanced_caption_general">Orokorra</string>
     <string name="title_advanced_caption_list">Zerrenda</string>
@@ -262,6 +259,7 @@
     <string name="title_advanced_cards">Erabili txartela estiloa tabulazio estiloaren ordez</string>
     <string name="title_advanced_date_header">Taldekatu dataren arabera</string>
     <string name="title_advanced_threading">Elkarrizketak haritzea</string>
+    <string name="title_advanced_threading_unread">Erakutsi irakurri gabeko mezu kopurua elkarrizketetan</string>
     <string name="title_advanced_indentation">Ezker/eskuin marjina elkarrizketetan jaso/bidalitako mezuetan</string>
     <string name="title_advanced_highlight_unread">Nabarmendu irakurri gabeko mezuak</string>
     <string name="title_advanced_highlight_subject">Nabarmendu gaia</string>
@@ -278,8 +276,6 @@
     <string name="title_advanced_replace_name">Nahiago kontaktu-izena bidaltzaile-izena baino</string>
     <string name="title_advanced_distinguish_contacts">Azpimarratu igorlea kontaktua jasotzaile lokalki ezaguna bada</string>
     <string name="title_advanced_show_recipients">Erakutsi hartzaileak mezuaren goiburuan</string>
-    <string name="title_advanced_font_size_sender">Igorlearen letra tamaina</string>
-    <string name="title_advanced_font_size_subject">Gaiaren letra tamaina</string>
     <string name="title_advanced_subject_top">Erakutsi mintzagaia igorlearen gainean</string>
     <string name="title_advanced_subject_italic">Erakutsi mintzagaia letra etzanean</string>
     <string name="title_advanced_subject_elipsed">Behar denean laburtu mintzagaia</string>
@@ -289,15 +285,9 @@
     <string name="title_advanced_preview">Erakutsi mezuaren aurrebista</string>
     <string name="title_advanced_preview_italic">Erakutsi mezuaren aurrebista letra etzanean</string>
     <string name="title_advanced_preview_lines">Aurrebistaren lerro kopurua</string>
-    <string name="title_advanced_archive_trash">Erakutsi mezuak artxibatzeko edo zakarrontzira botatzeko botoiak</string>
-    <string name="title_advanced_move">Erakutsi mezua mugitzeko botoia</string>
     <string name="title_advanced_addresses">Erakutsi helbidearen xehetasunak lehenetsita</string>
     <string name="title_advanced_attachments_alt">Erakutsi gehitutakoa mezuko testuaren ondoren</string>
     <string name="title_advanced_contrast">Erabili kontraste altua mezuaren testuarentzat</string>
-    <string name="title_advanced_monospaced">Erabili tipografia monoespaziatua mezuen testuan</string>
-    <string name="title_advanced_text_color">Erakutsi testu-koloreak</string>
-    <string name="title_advanced_text_size">Erakutsi testu labur eta luzeak</string>
-    <string name="title_advanced_text_align">Erakutsi ezkerrean/erdian/eskuinean lerrokatutako testuak</string>
     <string name="title_advanced_collapse_quotes">Tolestu aipatutako testua</string>
     <string name="title_advanced_images_inline">Erakutsi automatikoki txertatutako irudiak</string>
     <string name="title_advanced_seekbar">Erakutsi posizio erlatiboa elkarrizketan puntu batekin</string>
@@ -330,9 +320,11 @@
     <string name="title_advanced_default_snooze">Lehenetsitako atzeratze denbora</string>
     <string name="title_advanced_notifications">Kudeatu jakinarazpenak</string>
     <string name="title_advanced_notifications_default">Kanal lehenetsia</string>
-    <string name="title_advanced_notifications_service">Zerbitzuko kanala</string>
+    <string name="title_advanced_notifications_background">Erabili bigarren planoko zerbitzua mezuak sinkrinizatzeko</string>
+    <string name="title_advanced_notifications_background_hint">Bigarren planoko zerbitzua Androidek gelditu dezake noiznahi, baina ez du jakinarazpenik behar egoera barran</string>
     <string name="title_advanced_badge">Erakutsi mezu berrien kopurua abiarazleko ikonoan</string>
     <string name="title_advanced_unseen_ignored">Mezu berri kopurua eta jakinarazpenen kopurua berdina izan dadila</string>
+    <string name="title_advanced_notify_known">Erakutsi jakinarazpenak kontaktuentzat soilik</string>
     <string name="title_advanced_notify_summary">Erakutsi laburpen jakinarazpen bat besterik ez</string>
     <string name="title_advanced_notify_preview">Erakutsi mezuaren aurrebista jakinarazpenetan</string>
     <string name="title_advanced_notify_preview_all">Aurreikusi testu osoa</string>
@@ -340,7 +332,7 @@
     <string name="title_advanced_notify_action_trash">Zakarrontzia</string>
     <string name="title_advanced_notify_action_junk">Spama</string>
     <string name="title_advanced_notify_action_archive">Artxibatu</string>
-    <string name="title_advanced_notify_action_move">Mugitu</string>
+    <string name="title_advanced_notify_action_move">Eraman</string>
     <string name="title_advanced_notify_action_reply">Erantzun</string>
     <string name="title_advanced_notify_action_reply_direct">Erantzun zuzena</string>
     <string name="title_advanced_notify_action_flag">Izarra</string>
@@ -356,7 +348,6 @@
     <string name="title_advanced_browse_links">Delegatu Androiden estekak irekitzea</string>
     <string name="title_advanced_confirm_images">Berretsi irudiak erakustea</string>
     <string name="title_advanced_confirm_html">Berez erakutsi erreformatutako mezuak</string>
-    <string name="title_advanced_tracking">Antzeman eta desgaitu jarraipen irudiak automatikoki</string>
     <string name="title_advanced_hide_timezone">Bidali mezuak denbora-zona daturik gabe</string>
     <string name="title_advanced_display_hidden">Erakutsi ezkutatutako mezuen testuak</string>
     <string name="title_advanced_secure">Ezkutatu erabilitako azken aplikazioen pantailatik eta saihestu pantaila-argazkia egitea</string>
@@ -368,9 +359,11 @@
     <string name="title_advanced_openpgp">OpenPGP hornitzailea</string>
     <string name="title_advanced_autocrypt">Erabili Autocrypt</string>
     <string name="title_advanced_autocrypt_mutual">Elkarrekiko Autocrypt modua</string>
+    <string name="title_advanced_check_certificate">Egiaztatu gako publikoa bidaltzean</string>
     <string name="title_advanced_manage_certificates">Kudeatu gako publikoak</string>
     <string name="title_advanced_import_key">Inportatu gako pribatua</string>
     <string name="title_advanced_manage_keys">Kudeatu gako pribatuak</string>
+    <string name="title_advanced_ca">Instalatutako CA ziurtagiriak</string>
     <string name="title_advanced_external_search">Baimendu beste aplikazioei mezuetan bilatzea</string>
     <string name="title_advanced_shortcuts">Erakutsi maiz erabilitako kontaktuak Android partekatzeko menuan</string>
     <string name="title_advanced_conversation_actions">Iradoki ekintzak</string>
@@ -378,39 +371,36 @@
     <string name="title_advanced_language_detection">Detektatu mezuen testuaren hizkuntza</string>
     <string name="title_advanced_fts">Sortu bilaketa-indizea</string>
     <string name="title_advanced_fts_indexed">%1$d / %2$d mezu indexatuak (%3$s)</string>
-    <string name="title_advanced_english">Behartu hizkuntza ingelesa</string>
     <string name="title_advanced_watchdog">Aldiro egiaztatu FairEmail aktibo dagoen</string>
-    <string name="title_advanced_optimize">Optimizatu ezarpenak automatikoki</string>
+    <string name="title_advanced_optimize">Optimizatu automatikoki</string>
     <string name="title_advanced_updates">Egiaztatu eguneraketarik dagoen</string>
     <string name="title_advanced_experiments">Probatu ezaugarri esperimentalak</string>
+    <string name="title_advanced_query_threads">Mugatu datu-baseak paraleloki atzitzea</string>
     <string name="title_advanced_crash_reports">Bidali errore txostenak</string>
     <string name="title_advanced_debug">Arazketa modua</string>
     <string name="title_advanced_cleanup_attachments">Ezabatu mezu zaharren eranskinak</string>
     <string name="title_advanced_cleanup">Garbiketa</string>
+    <string name="title_advanced_app">Aplikazioaren ezarpenak</string>
     <string name="title_advanced_more">Aukera gehiago</string>
-    <string name="title_advanced_enabled_hint">Ezgaitu edo gaitu mezuak jasotzea orokorrean</string>
-    <string name="title_advanced_manual_hint">Sinkronizazioa desgaituta badago, mezuen zerrendatik behera tiraka eskuz sinkroniza daiteke.</string>
-    <string name="title_advanced_poll_hint">Aldizka sinkronizatzeak tokiko eta urruneko mezuak konparatuko ditu behin eta berriz, hau da, eragiketa neketsua izanik bateriaren gehiegizko erabilera eragin dezake, batez ere sinkronizatzeko mezu asko daudenean. Sinkronizazioak hau saihestuko du aldaketak bakarrik monitorizatuz.</string>
+    <string name="title_advanced_manual_hint">Mezuak jasotzea desgaituta badago, mezuak jaso daitezke oraindik ere mezuen zerrenda behera tiratuz</string>
+    <string name="title_advanced_poll_hint">Aldiro mezu berriak bilatzean tokiko eta urruneko mezuak konparatuko ditu bakoitzean, hau eragiketa garestia da eta bateria kontsumituko du, bereziki mezu asko badaude. Beti jasok hau ekiditen du aldaketak etengabe jarraituz.</string>
     <string name="title_advanced_schedule_hint">Sakatu orduren batean ordua ezartzeko</string>
-    <string name="title_advanced_check_mx">Egiaztatu bidaltzailearen helbide elektronikoak mezuak sinkronizatzean</string>
-    <string name="title_advanced_check_reply">Egiaztatu erantzuteko helbide elektronikoak mezuak sinkronizatzean</string>
     <string name="title_advanced_no_date_hint">Hornitzaile batzuek ezezaguna, baliogabea edo etorkizuneko data duten mezuak datarik gabe gordetzen dituzte</string>
     <string name="title_advanced_unseen_hint">Hornitzaile batzuek ez dute hori behar bezala onartzen, eta horrek mezu bat edo guztiak ez sinkronizatzea eragin dezake</string>
     <string name="title_advanced_deleted_unseen">Desaktibatuta dagoenean, irakurri gabeko mezuak gailuan gordeko dira betiko</string>
     <string name="title_advanced_sync_kept_hint">Honek datu gehigarriak transferituko ditu eta bateriaren energia gehigarria kontsumituko du, batez ere telefonoan mezu asko gordetzen badira</string>
     <string name="title_advanced_sync_folders_hint">Hori ezgaitzeak datuak eta bateriaren erabilera zertxobait murriztuko ditu, baina karpeten zerrenda eguneratzea ere ezgaituko du</string>
+    <string name="title_advanced_lookup_mx_hint">Honek DNS MX erregistroak dauden ala ez egiaztatuko du</string>
     <string name="title_advanced_sync_delay_hint">Honek mezuen sinkronizazioa motelduko du</string>
+    <string name="title_advanced_check_reply_hint">Honek egiaztatuko du bidaltzailearen domeinuaren izena eta erantzutekoa berdinak ote diren</string>
     <string name="title_advanced_suggest_local_hint">Android-en kontaktuez gain. Kontaktuen datuak gordeko dira mezuak bidali edo jasotzean soilik baimenduta badago.</string>
     <string name="title_advanced_usenet_hint">Txertatu \'-- \' testua eta sinaduraren artean</string>
     <string name="title_advanced_send_reminders_hint">Erakutsi abisua mezuaren edo gairen testua hutsik dagoenean edo eranskina falta denean</string>
-    <string name="title_advanced_lookup_mx_hint">Honek DNS MX erregistroak dauden ala ez egiaztatuko du</string>
-    <string name="title_advanced_check_reply_hint">Honek egiaztatuko du bidaltzailearen domeinuaren izena eta erantzutekoa berdinak ote diren</string>
     <string name="title_advanced_metered_hint">Neurtutako konexioak orokorrean konexio mugikorrak eta ordainpeko wifi guneak dira</string>
     <string name="title_advanced_metered_warning">Aukera hau desgaitzeak internet konexio mugikorrekin mezuak bidaltzea eta jasotzea eragotziko du</string>
     <string name="title_advanced_rlah_hint">EBn ez da datuen ibiltaritza onartzen</string>
     <string name="title_advanced_timeout_hint">Irakurtzeko/idazteko itxarote-muga konexio-denboraren bikoitza ezarriko da. Balio altuagoak bateriaren erabileran gehiago eragingo lukete.</string>
     <string name="title_advanced_ssl_harden_hint">Hori aktibatuz gero, SSL protokolo ahulak eta zifratzeak desgaituko dira eta horrek konexio arazoak sor ditzake</string>
-    <string name="title_advanced_socks_hint">Urruneko proxy zerbitzari bat erabiltzea ez da segurua proxy-konexioak zifratuta ez daudelako</string>
     <string name="title_advanced_roaming_hint">Mezuen goiburuak beti jasoko dira datuen ibiltaritza dagoenean. Telefonoaren datuen ibiltaritza ezarpena erabil dezakezu internet desgaitzeko.</string>
     <string name="title_advanced_browse_hint">Bilatu mezu gehiago korritzerakoan</string>
     <string name="title_advanced_layout_hint">Diseinua trinkotzea eta mezuaren testuaren tamaina alda daiteke mezuen ikuspegiko goiko ekintza-barran</string>
@@ -418,7 +408,6 @@
     <string name="title_advanced_date_hint">Mezuak dataren arabera multzokatzen dira soilik denboraren arabera ordenatuta badaude</string>
     <string name="title_advanced_navbar_colorize_hint">Hau funtzionatzea Android bertsioa eta aldaeraren araberakoa da</string>
     <string name="title_advanced_threading_hint">Harremana duten mezuak taldekatu</string>
-    <string name="title_advanced_highlight_hint">Gaiaren kolorea indartua erabiliko da nabarmentzeko</string>
     <string name="title_advanced_gravatars_hint">Pribatutasun-arriskua egon daiteke</string>
     <string name="title_advanced_name_email_hint">Desgaituta dagonean erabilgarri dauden izenak bakarrik erakutsiko dira</string>
     <string name="title_advanced_preview_hint">Eskuragarri soilik mezuaren testua deskargatu bada</string>
@@ -446,9 +435,7 @@
     <string name="title_advanced_notify_no_channels">Android bertsio honek ez ditu jakinarazpenen kanalak onartzen</string>
     <string name="title_advanced_fts_hint">Hori gaitzeak bilaketa-errendimendua handituko du, baina bateriaren erabilera areagotuko du eta biltegiratze handiagoa erabiltzen du</string>
     <string name="title_advanced_english_hint">Honek aplikazioa berrabiaraziko du</string>
-    <string name="title_advanced_optimize_hint">Hori aktibatuz gero, automatikoki aldatu daitezke mezuen sarrera ezarpenak bateriaren erabilera murrizteko</string>
     <string name="title_advanced_experiments_hint">Egungo funtzio esperimentalen zerrenda</string>
-    <string name="title_advanced_debug_hint">Gaitu aparteko erregistroa eta erakutsi arazketaren informazioa hainbat tokitan</string>
     <string name="title_advanced_cleanup_attachments_hint">Horrek kenduko ditu eskuz garbitzerakoan jada sinkronizatzen ez diren mezuetako eranskinak</string>
     <string name="title_advanced_cleanup_hint">Honek behin behineko fitxategi guztiak ezabatuko ditu</string>
     <string name="title_advanced_never_favorite">Inoiz ez gogokoa</string>
@@ -461,7 +448,6 @@
     <string name="title_advanced_sender">Baimendu bidaltzailearen helbidea editatzea</string>
     <string name="title_advanced_sender_regex">Regex sarrerako helbideen erabiltzaile izenarekin bat etortzeko</string>
     <string name="title_identity_reply_to">Erantzun-helbidea</string>
-    <string name="title_identity_unicode">Onartu Unicode helbide elektronikoetan</string>
     <string name="title_identity_receipt">Eskatu defektuz bidalketa/irakurri izanaren egiaztagiria</string>
     <string name="title_identity_use_ip_hint">\'Baliogabeko agurra\', \'baliozko helbidea behar da\' edo antzeko mezurik jasotzen baduzu, saiatu ezarpen hau aldatzen</string>
     <string name="title_optional">Aukerakoa</string>
@@ -476,7 +462,7 @@
     <string name="title_account_notify">Banatutako jakinarazpenak</string>
     <string name="title_account_left">Pasatu hatza ezkerrera</string>
     <string name="title_account_right">Pasatu hatza eskumara</string>
-    <string name="title_account_move">Lehenetsita mugitu hona</string>
+    <string name="title_account_move">Lehenetsita eraman hona</string>
     <string name="title_account_gmail">Gmail kontu baten sinkronizazio fidagarria lortzeko, Gmail-en konfigurazio azkarreko morroia erabili behar da ahal den guztietan</string>
     <string name="title_domain">Domeinu-izena</string>
     <string name="title_autoconfig">Jaso ezarpenak</string>
@@ -489,6 +475,7 @@
     <string name="title_port">Ataka zenbakia</string>
     <string name="title_user">Erabiltzaile izena</string>
     <string name="title_password">Pasahitza</string>
+    <string name="title_case_sensitive">Erabiltzaile-izenak eta pasahitzek maiuskulak eta minuskulak bereizi ohi dituzte</string>
     <string name="title_client_certificate">Bezero ziurtagiria</string>
     <string name="title_realm">Domeinua</string>
     <string name="title_use_ip">Erabili IP lokala ostalari izenaren ordez</string>
@@ -501,7 +488,6 @@
     <string name="title_leave_on_device">Utzi mezuak gailuan</string>
     <string name="title_max_messages">Deskargatzeko gehienezko mezuen kopurua (guztientzako hutsik)</string>
     <string name="title_keep_alive_interval">Mantendu-bizirik/eskaera tartea (minutuak)</string>
-    <string name="title_use_date">Erabili goiburuko datuetan bidalketa unea eta ez jasoketarena</string>
     <string name="title_related_identity">Gehitu lotutako identitatea</string>
     <string name="title_check">Egiaztatu</string>
     <string name="title_trust">Fidatu %1$s hatz marka duen zerbitzariaren agiriarekin</string>
@@ -514,22 +500,18 @@
     <string name="title_no_user">Erabiltzailearen izena falta da</string>
     <string name="title_no_password">Pasahitza falta da</string>
     <string name="title_no_inbox">Ez da sarrera ontzia aurkitu</string>
-    <string name="title_no_primary_drafts">Kontu nagusirik edo zirriborroen karpetarik ez</string>
-    <string name="title_no_identities">Posta elektronikoak bidaltzeak gutxienez identitate bat eta zirriborroen karpeta behar ditu</string>
     <string name="title_no_standard">Hornitzaile honek e-posta protokolo jabeduna erabiltzen du eta, beraz, ezin da hirugarrenen bezeroak erabili</string>
     <string name="title_no_idle">Hornitzaile honek ez ditu push mezuak onartzen. Honek mezu berriak jasotzea atzeratuko du eta bateriaren erabilera areagotuko du.</string>
     <string name="title_no_utf8">Hornitzaile honek ez du UTF-8 onartzen</string>
     <string name="title_no_sync">Sinkronizazio akatsak %1$s geroztik</string>
     <string name="title_reply_domain">Bidaltzailearena (%1$s) eta erantzuteko domeinua (%2$s) ez datoz bat</string>
-    <string name="title_identity_required">Identitate bat behar da mezuak bidaltzeko</string>
-    <string name="title_drafts_required">Zirriborroen karpeta beharrezkoa da mezuak bidaltzeko</string>
     <string name="title_account_delete">Ezabatu kontu hau behin betiko?</string>
     <string name="title_identity_delete">Ezabatu identitate hau behin betiko?</string>
     <string name="title_edit_html">Editatu HTML gisa</string>
     <string name="title_sign_key">Sinadura-gakoa: %1$s</string>
     <string name="title_last_connected">Azken konexioa: %1$s</string>
     <string name="title_storage_quota">Zerbitzariko biltegiratze erabilera: %1$s/%2$s</string>
-    <string name="title_pop_support">POP3 protokoloak mezuak deskargatzea eta ezabatzea soilik sarrerako ontzitik onartzen du. POP3-k ezin ditu mezuak irakurrita gisa markatu, mugitu eta abar. POP3-k bateriaren energia eta datu gehiago erabiliko ditu IMAPek baino. Beraz, hobetsi IMAP protokoloa erabiltzea ahal den guztietan.</string>
+    <string name="title_pop_support">POP3 protokoloak mezuak deskargatzea eta ezabatzea soilik sarrerako ontzitik onartzen du. POP3-k ezin ditu mezuak irakurrita gisa markatu, eraman eta abar. POP3-k bateriaren energia eta datu gehiago erabiliko ditu IMAPek baino. Beraz, hobetsi IMAP protokoloa erabiltzea ahal den guztietan.</string>
     <string name="title_oauth_support">Ez da OAuth onartzen</string>
     <string name="title_review">Berrikusi</string>
     <string name="title_hint_alias">Sakatu luze aukeratzeko, hala nola kopiatzeko ezizen identitateak sortzeko</string>
@@ -578,7 +560,7 @@
     <string name="title_keep_days">Mantendu mezuak (egunak)</string>
     <string name="title_keep_days_remark">Mezu zaharrak gailutik kenduko dira, baina zerbitzarian mantenduko dira</string>
     <string name="title_keep_all">Mantendu mezu guztiak</string>
-    <string name="title_auto_trash">Mugitu automatikoki mezu zaharrak zakarrontzira</string>
+    <string name="title_auto_trash">Eraman automatikoki mezu zaharrak zakarrontzira</string>
     <string name="title_auto_delete">Ezabatu mezu zaharrak behin betiko automatikoki</string>
     <string name="title_auto_delete_hint">Mezu zaharrak jadanik gailuan gordetzen ez diren mezuak dira</string>
     <string name="title_inbox_root_hint">        Hornitzaile batzuk karpetak sarrera ontziaren azpian sortzea eskatzen dute.
@@ -644,11 +626,11 @@
     <string name="title_delete">Ezabatu</string>
     <string name="title_more">Gehiago</string>
     <string name="title_spam">Spama</string>
-    <string name="title_move">Mugitu</string>
+    <string name="title_move">Eraman</string>
     <string name="title_no_junk">Ez da spama</string>
-    <string name="title_move_to">Mugitu hona &#8230;</string>
-    <string name="title_move_to_folder">Mugitu hona &#8230;</string>
-    <string name="title_move_to_account">Mugitu %1$s kontura &#8230;</string>
+    <string name="title_move_to">Eraman hona &#8230;</string>
+    <string name="title_move_to_folder">Eraman hona &#8230;</string>
+    <string name="title_move_to_account">Eraman hona %1$s &#8230;</string>
     <string name="title_report_spam">Tratatu spam gisa</string>
     <string name="title_delete_permanently">Ezabatu behin betiko</string>
     <string name="title_snooze">Atzeratu &#8230;</string>
@@ -659,7 +641,6 @@
     <string name="title_reply_list">Erantzun zerrendari</string>
     <string name="title_reply_receipt">Bidali jaso izanaren agiria</string>
     <string name="title_reply_template">Erantzun txantiloia erabiliz</string>
-    <string name="title_moving">%1$s helburura mugitzen</string>
     <string name="title_open_with">Ireki honekin</string>
     <string name="title_authentication_failed">%1$s autentifikazioak huts egin du</string>
     <string name="title_receipt_subject">Irakurragiria: %1$s</string>
@@ -670,7 +651,6 @@
     <string name="title_no_camera">Ez dago kamera aplikazio egokirik eskuragarri</string>
     <string name="title_no_saf">Biltegiratzea atzitzeko tresneria ez dago eskuragarri</string>
     <string name="title_no_stream">Zaharkitutako aplikazio batek fitxategi bide bat bidali du fitxategi jario baten ordez</string>
-    <string name="title_no_contacts">Kontaktuan hautatzailea ez dago eskuragarri</string>
     <string name="title_no_internet">Internet konexiorik ez edo konexio desegokia</string>
     <string name="title_no_connection">Konektatzen kontu batera edo batzuetara &#8230;</string>
     <string name="title_no_folder">Karpeta ez da existitzen</string>
@@ -682,7 +662,7 @@
     <string name="title_insufficient_memory">Mezua handiegia da erabilgarri dagoen memorian sartzeko</string>
     <string name="title_show_full">Erakutsi mezu osoa</string>
     <string name="title_unused_inline">Erabili gabeko txertatutako irudiak kenduko dira bidaltzean</string>
-    <string name="title_accross_remark">Kontuen artean mugitutako mezuak berriro deskargatuko dira horrek dakarren datuen erabilera gehigarriarekin</string>
+    <string name="title_accross_remark">Kontutik kontura eramandako mezuak berriro deskargatuko dira horrek dakarren datuen erabilera gehigarriarekin</string>
     <string name="title_raw_saved">Mezu gordina gorde da</string>
     <string name="title_attachment_saved">Eranskina gordeta</string>
     <string name="title_attachments_saved">Eranskinak gordeta</string>
@@ -702,10 +682,6 @@
     <string name="title_ask_reporting">Bidali errore txostenak?</string>
     <string name="title_reporting_why">Errore txostenek FairEmail hobetzen laguntzen dute</string>
     <string name="title_ask_review">Baloratu FairEmail mesedez</string>
-    <string name="title_ask_review_rationale">FairEmail denbora batez erabili duzu.
-Eskertzekoa litzateke Play Storen FairEmail baloratuko bazenu.
-Honekin aldeko eta kontrako botoen arteko oreka mantenduko da.
-    </string>
     <string name="title_third_party">Hirugarren baten bertsioa erabiltzen ari zara</string>
     <string name="title_expand_warning">Mezu hau hedatzean %1$s deskargatuko da</string>
     <string name="title_download_message">Deskargatzen &#8230;</string>
@@ -717,6 +693,7 @@ Honekin aldeko eta kontrako botoen arteko oreka mantenduko da.
     <string name="title_reply_to">Erantzun honi:</string>
     <string name="title_cc">CC:</string>
     <string name="title_bcc">BCC:</string>
+    <string name="title_recipients">%1$d hartzaile</string>
     <string name="title_via_identity">Honen bidez:</string>
     <string name="title_sent">Bidalita:</string>
     <string name="title_received">Jasota:</string>
@@ -738,14 +715,12 @@ Honekin aldeko eta kontrako botoen arteko oreka mantenduko da.
     <string name="title_style_italic">Etzana</string>
     <string name="title_style_underline">Azpimarra</string>
     <string name="title_style_size">Tamaina</string>
-    <string name="title_style_color">Kolorea</string>
     <string name="title_style_clear">Garbitu formatua</string>
     <string name="title_style_link">Txertatu esteka</string>
     <string name="title_add_image">Gehitu irudia</string>
     <string name="title_add_image_inline">Txertatu</string>
     <string name="title_add_image_attach">Erantsi</string>
     <string name="title_add_image_resize">Aldatu tamaina</string>
-    <string name="title_add_image_privacy">Kendu kokaleku geografikoa</string>
     <string name="title_add_resize_pixels">&lt; %1$d pixel</string>
     <string name="title_add_image_select">Aukeratu fitxategia</string>
     <string name="title_add_attachment">Gehitu eranskina</string>
@@ -766,6 +741,7 @@ Honekin aldeko eta kontrako botoen arteko oreka mantenduko da.
     <string name="title_no_key">Ez dago gako pribaturik</string>
     <string name="title_invalid_key">Baliorik gabeko gako pribatua</string>
     <string name="title_unknown_key">Gako pribatua ez dator bat zifratze-gakoekin</string>
+    <string name="title_send_reminder_remark">Oroigarriak berriro gaitu daitezke bidalketa ezarpenetan</string>
     <string name="title_send_plain_text">Testu soila besterik ez</string>
     <string name="title_send_receipt">Eskatu agiria</string>
     <string name="title_send_receipt_remark">Hornitzaile eta bezero gehienek ez dituzte jasotze agiri eskariak aintzat hartzen</string>
@@ -816,7 +792,8 @@ Honekin aldeko eta kontrako botoen arteko oreka mantenduko da.
         Zerbitzarian ere bilatzeko, sakatu \'bilatu berriro\' botoian.
     </string>
     <string name="title_search_index_hint">Bilaketa-indizearen bidez bilatzea azkarra da, baina hitz osoak soilik topatuko ditu</string>
-    <string name="title_search_text_hint">E-mail zerbitzari batzuk arazoak dituzte testua mezu askotan aurkitzeko</string>
+    <string name="title_search_text_hint">Mezuetan testua bilatzea, mezu asko daudenean, agian ez dabil zerbitzari guztietan</string>
+    <string name="title_search_size_hint">Mezuak neurriagatik bilatzea, mezu asko daudenean, agian ez dabil zerbitzari guztietan</string>
     <string name="title_search_more">Aukera gehiago</string>
     <string name="title_search_use_index">Erabili bilaketa indizea</string>
     <string name="title_search_in_senders">Igorleetan (nork)</string>
@@ -830,6 +807,7 @@ Honekin aldeko eta kontrako botoen arteko oreka mantenduko da.
     <string name="title_search_with_hidden">Ezkutatuta (gailuan soilik)</string>
     <string name="title_search_with_encrypted">Zifratuta (gailuan soilik)</string>
     <string name="title_search_with_attachments">Eranskinekin (gailuan soilik)</string>
+    <string name="title_search_with_size">Mezuaren neurria hau baino handiagoa</string>
     <string name="title_search_with_before">Aurretik</string>
     <string name="title_search_with_after">Ondoren</string>
     <string name="title_search_flag_unseen">irakurri gabea</string>
@@ -837,6 +815,8 @@ Honekin aldeko eta kontrako botoen arteko oreka mantenduko da.
     <string name="title_search_flag_hidden">ezkutuan</string>
     <string name="title_search_flag_encrypted">zifratuta</string>
     <string name="title_search_flag_attachments">eranskinak</string>
+    <string name="title_search_flag_invite">gonbidapena</string>
+    <string name="title_search_flag_size">neurria &gt; %1$s</string>
     <string name="title_search_device">Bilatu gailuan</string>
     <string name="title_search_server">Bilatu zerbitzarian</string>
     <string name="title_search_in">Bilatu hemen</string>
@@ -862,6 +842,7 @@ Honekin aldeko eta kontrako botoen arteko oreka mantenduko da.
     <string name="title_select_language">Hautatu hizkuntza</string>
     <string name="title_select_all">Hautatu denak</string>
     <string name="title_select_found">Hautatu aurkitutakoak</string>
+    <string name="title_mark_all_read">Markatu denak irakurrita bezala</string>
     <string name="title_force_sync">Behartu sinkronizazioa</string>
     <string name="title_force_send">Behartu bidalketa</string>
     <string name="title_language_all">Denak</string>
@@ -887,9 +868,8 @@ Honekin aldeko eta kontrako botoen arteko oreka mantenduko da.
     <string name="title_rule_flag">Gehitu izarra</string>
     <string name="title_rule_importance">Ezarri garrantzia</string>
     <string name="title_rule_keyword">Gehitu hitz gakoa</string>
-    <string name="title_rule_move">Mugitu</string>
+    <string name="title_rule_move">Eraman</string>
     <string name="title_rule_copy">Kopiatu (etiketa)</string>
-    <string name="title_rule_answer">Erantzun</string>
     <string name="title_rule_automation">Automatizazioa</string>
     <string name="title_rule_caption">Editatu araua</string>
     <string name="title_rule_title">Araua honi aplikatzen zaio</string>
@@ -915,6 +895,7 @@ Honekin aldeko eta kontrako botoen arteko oreka mantenduko da.
     <string name="title_rule_identity">Identitatea</string>
     <string name="title_rule_template">Erantzun txantiloia</string>
     <string name="title_rule_cc">Erantzun CC helbideei</string>
+    <string name="title_rule_answer_remark">Erantzun bakarra bidaliko da elkarrizketako, erantzun begiztan sahiesteko</string>
     <string name="title_rule_name_missing">Arauaren izena falta da</string>
     <string name="title_rule_condition_missing">Baldintza falta da</string>
     <string name="title_rule_automation_hint">Honek \'%1$s\' intent-a bidaliko du \'%2$s\' gehigarriekin</string>
@@ -930,8 +911,6 @@ Honekin aldeko eta kontrako botoen arteko oreka mantenduko da.
     <string name="title_legend_section_compose">Idatzi</string>
     <string name="title_legend_section_keyboard">Teklatua</string>
     <string name="title_legend_oauth">OAuth baimena</string>
-    <string name="title_legend_primary_connected">Kontua konektatuta</string>
-    <string name="title_legend_primary_disconnected">Kontua deskonektatuta</string>
     <string name="title_legend_download_on">Deskargatu mezuaren edukia automatikoki</string>
     <string name="title_legend_download_off">Deskargatu mezuaren eskaria eskatzen denean</string>
     <string name="title_legend_synchronize_on">Sinkronizazioa aktibo</string>
@@ -997,8 +976,6 @@ Honekin aldeko eta kontrako botoen arteko oreka mantenduko da.
     <string name="title_legend_bold">Bihurtu testu lodia</string>
     <string name="title_legend_italic">Bihurtu testu etzana</string>
     <string name="title_legend_underline">Azpimarratu testua</string>
-    <string name="title_legend_text_size">Ezarri testuaren tamaina</string>
-    <string name="title_legend_text_color">Ezarri testuaren kolorea</string>
     <string name="title_legend_metered">Konexioa neurtua da</string>
     <string name="title_legend_unmetered">Konexioa ez da neurtua</string>
     <string name="title_legend_roaming">Ibiltaritza</string>
@@ -1008,7 +985,7 @@ Honekin aldeko eta kontrako botoen arteko oreka mantenduko da.
     <string name="title_legend_show_junk">Tratatu spam gisa</string>
     <string name="title_legend_show_unsubscribe">Kendu zerrendarako harpidetza</string>
     <string name="title_legend_show_images">Erakutsi irudiak</string>
-    <string name="title_legend_show_full">Erakutsi pantaila osoan</string>
+    <string name="title_legend_show_full">Erakutsi jatorrizko mezua</string>
     <string name="title_legend_edit">Editatu</string>
     <string name="title_legend_default_color">Lehenetsitako kolorea</string>
     <string name="title_legend_close_hint">Itxi laguntza</string>
@@ -1085,7 +1062,6 @@ Honekin aldeko eta kontrako botoen arteko oreka mantenduko da.
     <string name="title_dismiss">Baztertu</string>
     <string name="title_snooze_now">Atzeratu</string>
     <string name="title_loading">Kargatzen &#8230;</string>
-    <string name="title_set">Ezarri</string>
     <string name="title_fetching_again">Mezua berriro zerbitzaritik jasotzen</string>
     <string name="title_conversation_actions">Ekintzak</string>
     <string name="title_conversation_action_reply">Erantzun honekin: \'%1$s\'</string>
@@ -1094,18 +1070,17 @@ Honekin aldeko eta kontrako botoen arteko oreka mantenduko da.
     <string name="title_icalendar_decline">Errefusatu</string>
     <string name="title_icalendar_maybe">Agian</string>
     <string name="title_icalendar_calendar">Egutegia</string>
-    <string name="title_try">Probatu FairEmail, Android plataformarako e-mail bezeroa, kode irekikoa eta pribatutasuna aintzat duena</string>
     <string name="title_pro_feature">Hau ordainpeko ezaugarri bat da</string>
     <string name="title_pro_list">Ordainpeko ezaugarrien zerrenda</string>
     <string name="title_pro_purchase">Erosi</string>
     <string name="title_pro_once">Behin bakarrik</string>
-    <string name="title_pro_info">        FairEmail garatzeko literalki milaka ordu erabili dira ezaugarri gehienak doan erabili badaitezke ere.
-        FairEmail epe luzera mantengarria izan dadin, erosotasun funtzio batzuk edo funtzio aurreratu batzuk ordainpekokoak dira.
-        FairEmail-ek mezu txiki bat bistaratzen du hau gogorarazteko, ordainpeko ezaugarriak erosiz gero mezua desagertzen da.
+    <string name="title_pro_info">        FairEmail garatzeko milaka ordu erabili dira, hala ere ezaugarri gehienak doan erabili daitezke.
+        FairEmail-ek serio hartzen du zure pribatutasuna eta ez ditu iragarkiak erakusten ezta jarraipen-elementuak edo analitikak erabiltzen dirua irabazteko.
+        FairEmail epe luzean mantendu ahal izateko ezaugarri aurreratu batzuk ordainpekoak dira.
+        FairEmail-ek mezu txiki bat erakusten du hau gogoratuz, ordainpeko ezaugarriak erostean desagertzen dena.
     </string>
-    <string name="title_pro_hide">Ezkutatu mezu txikia bi astez</string>
+    <string name="title_pro_hide">Ezkutatu mezu txikia %1$d astez</string>
     <string name="title_pro_hint">Ordainpeko ezaugarriak erostean oraingo eta etorkizuneko ordainpeko ezaugarri guztiak erabiltzeko eskubidea ematen dizu, eta aplikazio hau mantentzen lagunduko du.</string>
-    <string name="title_pro_price">Begiratu <a href="https://github.com/M66B/FairEmail/blob/master/FAQ.md#user-content-faq19">maiz egindako galderak</a> ordainpeko ezaugarrien salneurriari buruz</string>
     <string name="title_pro_pending">Erosketa egiteke</string>
     <string name="title_pro_activated">Ordainpeko ezaugarri guztiak aktibatuta</string>
     <string name="title_pro_valid">Ordainpeko ezaugarri guztiak aktibatuta</string>
@@ -1128,6 +1103,7 @@ Honekin aldeko eta kontrako botoen arteko oreka mantenduko da.
     <string name="title_widget_folder_unified">Bateratutako sarrera-ontziko karpetak</string>
     <string name="title_widget_unseen">Irakurri gabeko mezuak soilik</string>
     <string name="title_widget_flagged">Izardun mezuak soilik</string>
+    <string name="title_widget_padding">Betegarriaren tamaina</string>
     <string name="title_widget_semi_transparent">Atzeko plano erdi gardena</string>
     <string name="title_accessibility_collapsed">Tolestuta</string>
     <string name="title_accessibility_expanded">Hedatua</string>
@@ -1229,6 +1205,7 @@ Honekin aldeko eta kontrako botoen arteko oreka mantenduko da.
         <item>Hasieran</item>
         <item>Erdian</item>
         <item>Amaieran</item>
+        <item>Erakutsi moztu gabe</item>
     </string-array>
     <string-array name="priorityNames">
         <item>Baxua</item>
@@ -1263,5 +1240,16 @@ Honekin aldeko eta kontrako botoen arteko oreka mantenduko da.
         <item>PGP sinadura eta zifratzea</item>
         <item>S/MIME sinadura soilik</item>
         <item>S/MIME sinadura eta zifratzea</item>
+    </string-array>
+    <string-array name="sizeNames">
+        <item>0 B</item>
+        <item>256 KB</item>
+        <item>512 KB</item>
+        <item>1 MB</item>
+        <item>2 MB</item>
+        <item>5 MB</item>
+        <item>10 MB</item>
+        <item>20 MB</item>
+        <item>50 MB</item>
     </string-array>
 </resources>

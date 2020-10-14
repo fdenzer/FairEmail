@@ -6,7 +6,6 @@
     <string name="app_limitations">例えば常に安全でない要素を削除し読みやすさを向上させるために再フォーマットされ、リンクを開くには安全の為に確認する必要があります</string>
     <string name="app_crash">Androidのバグによりクラッシュが発生する為、このデバイスではFairEmailはサポートされていません</string>
     <string name="app_exit">もう一度押すと終了します</string>
-    <string name="channel_service">サービス</string>
     <string name="channel_send">送信</string>
     <string name="channel_notification">通知</string>
     <string name="channel_update">更新</string>
@@ -45,9 +44,6 @@
     <plurals name="title_selected_conversations">
         <item quantity="other">会話 %1$d を選択</item>
     </plurals>
-    <plurals name="title_moving_messages">
-        <item quantity="other">%1$d メッセージを %2$s に移動しますか？</item>
-    </plurals>
     <plurals name="title_deleting_messages">
         <item quantity="other">%1$d メッセージを完全に削除しますか？</item>
     </plurals>
@@ -65,9 +61,9 @@
     <string name="title_notification_idle">待機</string>
     <string name="title_notification_failed">\'%1$s\' 失敗</string>
     <string name="title_notification_alert">%1$s サーバアラート</string>
+    <string name="title_of">%1$s/%2$s</string>
     <string name="title_name_count">%1$s (%2$s)</string>
     <string name="title_name_plus">%1$s +%2$d</string>
-    <string name="title_from_to">%1$s ➤ %2$s</string>
     <string name="title_factor_minutes">%1$d 分</string>
     <string name="menu_exit">終了</string>
     <string name="menu_answers">テンプレート</string>
@@ -83,9 +79,7 @@
     <string name="menu_privacy">プライバシー</string>
     <string name="menu_about">このアプリについて</string>
     <string name="menu_pro">Pro版の機能</string>
-    <string name="menu_invite">招待</string>
     <string name="menu_rate">このアプリを評価</string>
-    <string name="menu_other">その他のアプリ</string>
     <string name="title_welcome">ようこそ</string>
     <string name="title_eula">エンドユーザー使用許諾契約書</string>
     <string name="title_agree">同意する</string>
@@ -124,7 +118,6 @@ Microsoft Exchange WebサービスやMicrosoft ActiveSyncなどの非標準プ�
     <string name="title_setup_no_settings_hint">メールプロバイダーから提供された設定を使用しセットアップ手順1及び2でアカウントとIDをセットアップして下さい</string>
     <string name="title_setup_no_auth_hint">メールアドレスとパスワードを再確認しアカウントで外部アクセス(IMAP/SMTP)が有効になっている事を確認して下さい</string>
     <string name="title_setup_app_password_hint">このプロバイダーにはアカウントのパスワードで無くアプリのパスワードが必要です。プロバイダーの指示を確認して下さい</string>
-    <string name="title_setup_no_system_folders">受信トレイ又は下書きフォルダーが見つかりません</string>
     <string name="title_setup_quick_success">アカウントとユーザ情報が正常に追加されました</string>
     <string name="title_setup_quick_failed">以下のアカウントとユーザ情報設定してみて下さい</string>
     <string name="title_setup_manage">管理する</string>
@@ -139,7 +132,6 @@ Microsoft Exchange WebサービスやMicrosoft ActiveSyncなどの非標準プ�
     <string name="title_setup_permissions">アクセス許可を付与</string>
     <string name="title_setup_permissions_remark">連絡先情報にアクセスします(オプション)</string>
     <string name="title_setup_doze">電池の最適化セットアップ</string>
-    <string name="title_setup_doze_remark">メールを継続的に受信(オプション)</string>
     <string name="title_setup_doze_instructions">次のダイアログで上部の\"全てのアプリ\"を選び、FairEmailを選択し\"最適化しない\"を選んで完了します</string>
     <string name="title_setup_doze_battery">電池消費量が多いですか？</string>
     <string name="title_setup_doze_stopped">同期が停止しましたか？</string>
@@ -152,7 +144,6 @@ Microsoft Exchange WebサービスやMicrosoft ActiveSyncなどの非標準プ�
     <string name="title_setup_error">エラー</string>
     <string name="title_setup_export">設定をエクスポート</string>
     <string name="title_setup_import">設定をインポート</string>
-    <string name="title_setup_export_do">デバイス上でGoogleアカウントにリンクされているGmailアカウントはエクスポート出来ません</string>
     <string name="title_setup_import_do">インポートされたアカウントは既存のアカウントを上書きせずに追加されます</string>
     <string name="title_setup_password">パスワード</string>
     <string name="title_setup_password_chars">パスワードに制御文字又は空白が含まれています</string>
@@ -179,8 +170,8 @@ Microsoft Exchange WebサービスやMicrosoft ActiveSyncなどの非標準プ�
     <string name="title_setup_theme_black">ブラック</string>
     <string name="title_setup_theme_reverse">色を反転</string>
     <string name="title_setup_theme_dark">ダーク</string>
-    <string name="title_setup_theme_black_background">ブラック背景</string>
     <string name="title_setup_theme_system">システム設定に従う</string>
+    <string name="title_setup_theme_black_background">ブラック背景</string>
     <string name="title_setup_theme_system_hint">Androidでサポートされている場合、システムテーマは昼/夜に自動的に切り替わります</string>
     <string name="title_setup_advanced">詳細</string>
     <string name="title_setup_options">オプション</string>
@@ -199,9 +190,7 @@ Microsoft Exchange WebサービスやMicrosoft ActiveSyncなどの非標準プ�
     <string name="title_advanced_section_encryption">暗号化</string>
     <string name="title_advanced_section_notifications">通知</string>
     <string name="title_advanced_section_misc">その他</string>
-    <string name="title_advanced_receive">メッセージを受信する</string>
     <string name="title_advanced_when">同期</string>
-    <string name="title_advanced_always">アカウントを常に同期</string>
     <string name="title_advanced_schedule">スケジュール</string>
     <string name="title_advanced_advanced">詳細</string>
     <string name="title_advanced_no_date">日付無しのメッセージ</string>
@@ -212,6 +201,8 @@ Microsoft Exchange WebサービスやMicrosoft ActiveSyncなどの非標準プ�
     <string name="title_advanced_gmail_thread">Gmailアカウント用のGmailメッセージグループ化</string>
     <string name="title_advanced_sync_folders">フォルダーリストの同期</string>
     <string name="title_advanced_subscriptions">購読したフォルダーの管理</string>
+    <string name="title_advanced_check_mx">メッセージの同期時に送信者のメールアドレスを確認</string>
+    <string name="title_advanced_check_reply">メッセージ同期に関する返信メールアドレスを確認</string>
     <string name="title_advanced_keyboard">デフォルトでキーボードを表示</string>
     <string name="title_advanced_suggest_local">ローカルに保存された連絡先を提案</string>
     <string name="title_advanced_suggest_sent">送信したメッセージで見つかったアドレスを提案</string>
@@ -222,7 +213,6 @@ Microsoft Exchange WebサービスやMicrosoft ActiveSyncなどの非標準プ�
     <string name="title_advanced_quote_reply">返信テキスト時に引用符を付ける</string>
     <string name="title_advanced_resize_reply">返信したテキストの画像のサイズを変更する</string>
     <string name="title_advanced_signature_location">署名の場所</string>
-    <string name="title_advanced_signature_end">引用/転送されたメッセージの後に署名を追加</string>
     <string name="title_advanced_plain_only">デフォルトでプレーンテキストのみを送信</string>
     <string name="title_advanced_flow">プレーンテキストの \'フォーマットフロー\'</string>
     <string name="title_advanced_receipt">受取をリクエストする時</string>
@@ -237,7 +227,6 @@ Microsoft Exchange WebサービスやMicrosoft ActiveSyncなどの非標準プ�
     <string name="title_advanced_rlah">EU内無制限ローミング(EUのみ)</string>
     <string name="title_advanced_timeout">接続タイムアウト(秒)</string>
     <string name="title_advanced_ssl_harden">SSL接続を有効</string>
-    <string name="title_advanced_socks">SOCKS proxyを使用</string>
     <string name="title_advanced_manage_connectivity">接続の管理</string>
     <string name="title_advanced_caption_general">全般</string>
     <string name="title_advanced_caption_list">リスト</string>
@@ -251,6 +240,7 @@ Microsoft Exchange WebサービスやMicrosoft ActiveSyncなどの非標準プ�
     <string name="title_advanced_cards">表形式では無くカード形式を使用</string>
     <string name="title_advanced_date_header">日付毎にグループ化</string>
     <string name="title_advanced_threading">会話スレッド</string>
+    <string name="title_advanced_threading_unread">会話の中の未読メッセージの数を表示する</string>
     <string name="title_advanced_indentation">会話の受信/送信メッセージの左/右インデント</string>
     <string name="title_advanced_highlight_unread">未読メッセージを強調表示</string>
     <string name="title_advanced_highlight_subject">件名を強調する</string>
@@ -267,8 +257,6 @@ Microsoft Exchange WebサービスやMicrosoft ActiveSyncなどの非標準プ�
     <string name="title_advanced_replace_name">送信名より連絡先名を優先する</string>
     <string name="title_advanced_distinguish_contacts">送信者がローカル(宛先)連絡先として知られている場合、送信者に下線を引く</string>
     <string name="title_advanced_show_recipients">メッセージヘッダーにキーワードを表示</string>
-    <string name="title_advanced_font_size_sender">送信者のフォントサイズ</string>
-    <string name="title_advanced_font_size_subject">件名のフォントサイズ</string>
     <string name="title_advanced_subject_top">送信者の上に件名を表示</string>
     <string name="title_advanced_subject_italic">件名を斜体で表示</string>
     <string name="title_advanced_subject_elipsed">必要に応じて件名を短くします</string>
@@ -278,15 +266,9 @@ Microsoft Exchange WebサービスやMicrosoft ActiveSyncなどの非標準プ�
     <string name="title_advanced_preview">メッセージプレビューを表示</string>
     <string name="title_advanced_preview_italic">斜体でメッセージプレビューを表示</string>
     <string name="title_advanced_preview_lines">プレビュー行の数</string>
-    <string name="title_advanced_archive_trash">メッセージをアーカイブ又はゴミ箱に表示する</string>
-    <string name="title_advanced_move">メッセージを移動するボタンを表示</string>
     <string name="title_advanced_addresses">デフォルトでアドレスの詳細を表示</string>
     <string name="title_advanced_attachments_alt">メッセージテキストの後に添付ファイルを表示</string>
     <string name="title_advanced_contrast">メッセージテキストにハイコントラストを使用</string>
-    <string name="title_advanced_monospaced">メッセージテキストに等幅フォントを使用</string>
-    <string name="title_advanced_text_color">テキストの色を表示</string>
-    <string name="title_advanced_text_size">大小のテキストを表示</string>
-    <string name="title_advanced_text_align">左/中央/右揃えのテキストを表示</string>
     <string name="title_advanced_collapse_quotes">引用テキストを折りたたむ</string>
     <string name="title_advanced_images_inline">インライン画像を自動的に表示</string>
     <string name="title_advanced_seekbar">ドットで相対的な会話の位置を表示</string>
@@ -319,7 +301,8 @@ Microsoft Exchange WebサービスやMicrosoft ActiveSyncなどの非標準プ�
     <string name="title_advanced_default_snooze">デフォルトのスヌーズ時間</string>
     <string name="title_advanced_notifications">通知の管理</string>
     <string name="title_advanced_notifications_default">デフォルトチャンネル</string>
-    <string name="title_advanced_notifications_service">サービスチャンネル</string>
+    <string name="title_advanced_notifications_background">メッセージの同期にバックグラウンドサービスを使用</string>
+    <string name="title_advanced_notifications_background_hint">バックグラウンドサービスはAndroidによって停止される可能性がありますが、ステータスバーに通知が表示されなくなります。</string>
     <string name="title_advanced_badge">新着メッセージの数をランチャーアイコンに表示</string>
     <string name="title_advanced_unseen_ignored">新着メッセージ数を通知数と一致</string>
     <string name="title_advanced_notify_summary">簡素な通知のみ表示</string>
@@ -333,7 +316,7 @@ Microsoft Exchange WebサービスやMicrosoft ActiveSyncなどの非標準プ�
     <string name="title_advanced_notify_action_reply">返信</string>
     <string name="title_advanced_notify_action_reply_direct">直接返信</string>
     <string name="title_advanced_notify_action_flag">スター</string>
-    <string name="title_advanced_notify_action_seen">読む</string>
+    <string name="title_advanced_notify_action_seen">既読</string>
     <string name="title_advanced_notify_action_snooze">スヌーズ</string>
     <string name="title_advanced_notify_remove">通知をタップすると新着メッセージ通知を削除</string>
     <string name="title_advanced_notify_clear">メッセージリスト表示時に新着メッセージ通知を削除</string>
@@ -345,7 +328,6 @@ Microsoft Exchange WebサービスやMicrosoft ActiveSyncなどの非標準プ�
     <string name="title_advanced_browse_links">Androidへのリンクを開いて下さい</string>
     <string name="title_advanced_confirm_images">画像表示を確認</string>
     <string name="title_advanced_confirm_html">デフォルトで再フォーマットされたメッセージを表示</string>
-    <string name="title_advanced_tracking">追跡イメージを自動認識して無効</string>
     <string name="title_advanced_hide_timezone">タイムゾーンデータ無しでメッセージを送信</string>
     <string name="title_advanced_display_hidden">非表示のメッセージテキストを表示</string>
     <string name="title_advanced_secure">最近使ったアプリから非表示にしスクリーンショット撮影から守る</string>
@@ -360,6 +342,7 @@ Microsoft Exchange WebサービスやMicrosoft ActiveSyncなどの非標準プ�
     <string name="title_advanced_manage_certificates">公開鍵の管理</string>
     <string name="title_advanced_import_key">秘密鍵をインポート</string>
     <string name="title_advanced_manage_keys">秘密鍵を管理する</string>
+    <string name="title_advanced_ca">インストール済みのCA証明書</string>
     <string name="title_advanced_external_search">他のアプリにメッセージの検索を許可</string>
     <string name="title_advanced_shortcuts">頻繁に使用される連絡先をAndroid共有メニューに表示</string>
     <string name="title_advanced_conversation_actions">アクションを提案</string>
@@ -367,9 +350,7 @@ Microsoft Exchange WebサービスやMicrosoft ActiveSyncなどの非標準プ�
     <string name="title_advanced_language_detection">メッセージのテキスト言語を検出</string>
     <string name="title_advanced_fts">検索インデックスを作成</string>
     <string name="title_advanced_fts_indexed">%1$d/%2$d個のメッセージがインデックス付けされました(%3$s)</string>
-    <string name="title_advanced_english">強制的に英語表示</string>
     <string name="title_advanced_watchdog">FairEmailがアクティブか定期的に確認</string>
-    <string name="title_advanced_optimize">設定を自動的に最適化する</string>
     <string name="title_advanced_updates">更新を確認</string>
     <string name="title_advanced_experiments">実験的な機能を試す</string>
     <string name="title_advanced_crash_reports">エラーレポートを送信</string>
@@ -377,29 +358,23 @@ Microsoft Exchange WebサービスやMicrosoft ActiveSyncなどの非標準プ�
     <string name="title_advanced_cleanup_attachments">古いメッセージの添付ファイルを削除</string>
     <string name="title_advanced_cleanup">クリーンアップ</string>
     <string name="title_advanced_more">その他のオプション</string>
-    <string name="title_advanced_enabled_hint">メッセージのグローバルな無効又は有効にします</string>
-    <string name="title_advanced_manual_hint">同期が無効になっている場合でも、メッセージリストをプルダウンして手動で同期する事は可能です</string>
-    <string name="title_advanced_poll_hint">定期的に同期はローカルメッセージとリモートメッセージが毎回比較されます。特に同期するメッセージが多く有る場合、電池消費が増える可能性が有り負荷のかかる操作です。常に同期は変更のみを継続的に監視するのでこれを回避できます</string>
     <string name="title_advanced_schedule_hint">時間をタップして時間を設定</string>
-    <string name="title_advanced_check_mx">メッセージの同期時に送信者のメールアドレスを確認</string>
-    <string name="title_advanced_check_reply">メッセージ同期に関する返信メールアドレスを確認</string>
     <string name="title_advanced_no_date_hint">一部のプロバイダは日付無しのメッセージとして不明、無効、又は将来の日付を格納しています</string>
     <string name="title_advanced_unseen_hint">一部のプロバイダーはこれを適切にサポートしていないため、メッセージが全く同期されないか全て同期されてしまう場合があります</string>
     <string name="title_advanced_deleted_unseen">無効にすると未読メッセージはデバイスに永久に保持されます</string>
     <string name="title_advanced_sync_kept_hint">特に大量のメッセージがデバイスに保存されている場合、多くのデータが転送され電池消費が増えます</string>
     <string name="title_advanced_sync_folders_hint">これを無効にするとデータと電池の使用量が多少減りますが、フォルダーのリストの更新も無効になります</string>
+    <string name="title_advanced_lookup_mx_hint">DNS MXレコードが存在するかどうか確認</string>
     <string name="title_advanced_sync_delay_hint">メッセージの同期が遅くなります</string>
+    <string name="title_advanced_check_reply_hint">送信者のドメイン名と返信アドレスが同じかどうかを確認</string>
     <string name="title_advanced_suggest_local_hint">Android内の連絡先に加えます。連絡先データは有効にした場合のみ新しく送信又は受信メッセージへ保存されます</string>
     <string name="title_advanced_usenet_hint">テキストと署名の間に「-」を挿入</string>
     <string name="title_advanced_send_reminders_hint">メッセージテキスト又は件名が空の場合や添付ファイルが無い場合に警告を表示</string>
-    <string name="title_advanced_lookup_mx_hint">DNS MXレコードが存在するかどうか確認</string>
-    <string name="title_advanced_check_reply_hint">送信者のドメイン名と返信アドレスが同じかどうかを確認</string>
     <string name="title_advanced_metered_hint">従量制課金接続とは一般的にモバイル接続または有料Wi-Fiホットスポットの事です</string>
     <string name="title_advanced_metered_warning">このオプションを無効にするとモバイルネットワークでのメッセージの送受信が無効になります</string>
     <string name="title_advanced_rlah_hint">EU内でのローミングのみ</string>
     <string name="title_advanced_timeout_hint">読み取り/書き込みタイムアウトは接続タイムアウトの2倍に設定されます。値を大きくするとバッテリーの使用量が増えます</string>
     <string name="title_advanced_ssl_harden_hint">有効にすると弱いSSLプロトコルと暗号が無効になり接続の問題が発生する可能性が有ります</string>
-    <string name="title_advanced_socks_hint">プロキシ接続は暗号化されていない為、リモートプロキシサーバ使用は安全ではありません</string>
     <string name="title_advanced_roaming_hint">ローミング時メッセージヘッダーが常に取得されます。 デバイスのローミング設定を使用して、ローミング中にインターネットを無効にする事が出来ます</string>
     <string name="title_advanced_browse_hint">下にスクロール時に、更にメッセージを取得</string>
     <string name="title_advanced_layout_hint">よりコンパクトなレイアウトへの切り替えとメッセージのテキストサイズの変更はメッセージビューの上部アクションバーメニューで行えます</string>
@@ -407,7 +382,6 @@ Microsoft Exchange WebサービスやMicrosoft ActiveSyncなどの非標準プ�
     <string name="title_advanced_date_hint">時間で並び替えをしている場合にのみ、メッセージは日付でグループ化されます</string>
     <string name="title_advanced_navbar_colorize_hint">これが機能するかはAndroidのバージョンとバリアントによって異なります</string>
     <string name="title_advanced_threading_hint">互いに関連するグループメッセージ</string>
-    <string name="title_advanced_highlight_hint">テーマのアクセントカラーを強調表示に使用</string>
     <string name="title_advanced_gravatars_hint">プライバシーリスクが有るかもしれません</string>
     <string name="title_advanced_name_email_hint">無効にすると利用可能な場合にのみ名前が表示されます</string>
     <string name="title_advanced_preview_hint">メッセージテキストがダウンロードされた場合にのみ使用可能</string>
@@ -435,9 +409,7 @@ Microsoft Exchange WebサービスやMicrosoft ActiveSyncなどの非標準プ�
     <string name="title_advanced_notify_no_channels">このAndroidバージョンは通知チャネルをサポートしていません</string>
     <string name="title_advanced_fts_hint">有効にすると検索パフォーマンスが向上しますが、バッテリーとストレージ使用量も増加します</string>
     <string name="title_advanced_english_hint">アプリが再起動されます</string>
-    <string name="title_advanced_optimize_hint">これを有効にすると自動的に受信設定を変更してバッテリー使用量を削減出来ます</string>
     <string name="title_advanced_experiments_hint">現在の実験的な機能のリスト</string>
-    <string name="title_advanced_debug_hint">追加のログを有効にし様々な場所でデバッグ情報を表示</string>
     <string name="title_advanced_cleanup_attachments_hint">手動でクリーニングすると同期されていないメッセージから添付ファイルが削除されます</string>
     <string name="title_advanced_cleanup_hint">全ての一時ファイルが削除されます</string>
     <string name="title_advanced_never_favorite">お気に入りにしないようにします</string>
@@ -450,7 +422,6 @@ Microsoft Exchange WebサービスやMicrosoft ActiveSyncなどの非標準プ�
     <string name="title_advanced_sender">送信者アドレスの編集を許可</string>
     <string name="title_advanced_sender_regex">受信メールアドレスのユーザー名に一致する正規表現</string>
     <string name="title_identity_reply_to">返信先アドレス</string>
-    <string name="title_identity_unicode">メールアドレスでUnicodeを許可</string>
     <string name="title_identity_receipt">既定で送信/開封確認メッセージを要求</string>
     <string name="title_identity_use_ip_hint">\"無効な挨拶\" \"有効なアドレスが必要\"などのエラーが発生した場合は、この設定を変更してみてください</string>
     <string name="title_optional">オプション</string>
@@ -490,7 +461,6 @@ Microsoft Exchange WebサービスやMicrosoft ActiveSyncなどの非標準プ�
     <string name="title_leave_on_device">デバイスにメッセージを残す</string>
     <string name="title_max_messages">ダウンロードするメッセージの最大数(空白を含め全て)</string>
     <string name="title_keep_alive_interval">Keep-alive/poll 間隔(分)</string>
-    <string name="title_use_date">サーバ受信時刻の代わりに日付ヘッダー送信時刻を使用</string>
     <string name="title_related_identity">関連するIDを追加</string>
     <string name="title_check">確認</string>
     <string name="title_trust">指紋認証 %1$sでサーバ証明書を信頼する</string>
@@ -503,15 +473,11 @@ Microsoft Exchange WebサービスやMicrosoft ActiveSyncなどの非標準プ�
     <string name="title_no_user">ユーザー名を入力して下さい</string>
     <string name="title_no_password">パスワードを入力して下さい</string>
     <string name="title_no_inbox">受信トレイが見つかりません</string>
-    <string name="title_no_primary_drafts">プライマリアカウントもドラフトフォルダも有りません</string>
-    <string name="title_no_identities">メールを送信するには少なくとも1つのIDと下書きフォルダーが必要です</string>
     <string name="title_no_standard">このプロバイダーは独自の電子メールプロトコルを使用している為、サードパーティの電子メールクライアントを使用することは出来ません</string>
     <string name="title_no_idle">このプロバイダーはプッシュメッセージをサポートしていません。 これにより新しいメッセージの受信が遅れバッテリーの使用量が増加します</string>
     <string name="title_no_utf8">このプロバイダーはUTF-8をサポートしていません</string>
     <string name="title_no_sync">%1$s 以降の同期エラー</string>
     <string name="title_reply_domain">送信者(%1$s)と返信ドメイン(%2$s)が異なります</string>
-    <string name="title_identity_required">メッセージを送信するにはIDが必要です</string>
-    <string name="title_drafts_required">メッセージを送信するには下書きフォルダが必要です</string>
     <string name="title_account_delete">このアカウントを完全に削除しますか？</string>
     <string name="title_identity_delete">このIDを完全に削除しますか？</string>
     <string name="title_edit_html">HTMLとして編集</string>
@@ -552,6 +518,7 @@ Microsoft Exchange WebサービスやMicrosoft ActiveSyncなどの非標準プ�
     <string name="title_folder_name">フォルダー名</string>
     <string name="title_display_name">表示名</string>
     <string name="title_show_folders">隠しフォルダーを表示</string>
+    <string name="title_show_flagged">スター付きメッセージの数を表示</string>
     <string name="title_subscribed_only">購読済みのみ</string>
     <string name="title_apply_to_all">全ての &#8230; に適用</string>
     <string name="title_hide_folder">フォルダーを非表示</string>
@@ -569,6 +536,9 @@ Microsoft Exchange WebサービスやMicrosoft ActiveSyncなどの非標準プ�
     <string name="title_auto_trash">古いメッセージをゴミ箱に自動的に移動する</string>
     <string name="title_auto_delete">古いメッセージを自動的に完全に削除します</string>
     <string name="title_auto_delete_hint">古いメッセージはデバイスに保持されなくなったメッセージです</string>
+    <string name="title_inbox_root_hint">一部のプロバイダーでは受信トレイの中に新しいフォルダーを作る必要があります。
+        その場合は、フォルダーリストの中の受信トレイを長押しして「サブフォルダーを作成」を選択してください。
+    </string>
     <string name="title_folder_name_missing">フォルダー名が有りません</string>
     <string name="title_folder_exists">フォルダ %1$s が存在します</string>
     <string name="title_folder_delete">このフォルダとそれに含まれるメッセージを完全に削除しますか？</string>
@@ -610,6 +580,7 @@ Microsoft Exchange WebサービスやMicrosoft ActiveSyncなどの非標準プ�
     <string name="title_editasnew">新規として編集</string>
     <string name="title_create_rule">ルール &#8230; を作成します</string>
     <string name="title_share">共有</string>
+    <string name="title_event">カレンダーに追加</string>
     <string name="title_pin">ショートカットを追加</string>
     <string name="title_print">印刷</string>
     <string name="title_show_headers">ヘッダーを表示</string>
@@ -643,7 +614,6 @@ Microsoft Exchange WebサービスやMicrosoft ActiveSyncなどの非標準プ�
     <string name="title_reply_list">リストに返信</string>
     <string name="title_reply_receipt">開封確認メッセージを送信</string>
     <string name="title_reply_template">テンプレートで返信</string>
-    <string name="title_moving">%1$s に移動</string>
     <string name="title_open_with">開く</string>
     <string name="title_authentication_failed">%1$sの認証に失敗しました</string>
     <string name="title_receipt_subject">受取を読む:%1$s</string>
@@ -654,7 +624,6 @@ Microsoft Exchange WebサービスやMicrosoft ActiveSyncなどの非標準プ�
     <string name="title_no_camera">適切なカメラアプリが有りません</string>
     <string name="title_no_saf">ストレージアクセスフレームワークは利用出来ません</string>
     <string name="title_no_stream">古いアプリがファイルストリームでは無くファイルパスを送信しました</string>
-    <string name="title_no_contacts">連絡先ピッカーは利用出来ません</string>
     <string name="title_no_internet">適切なネット接続が有りません</string>
     <string name="title_no_connection">1つ以上のアカウント &#8230; への接続</string>
     <string name="title_no_folder">フォルダーが存在しません</string>
@@ -686,9 +655,6 @@ Microsoft Exchange WebサービスやMicrosoft ActiveSyncなどの非標準プ�
     <string name="title_ask_reporting">エラーレポートを送信しますか？</string>
     <string name="title_reporting_why">エラー報告はFairEmailの改善に役立ちます</string>
     <string name="title_ask_review">FairEmailを確認して下さい</string>
-    <string name="title_ask_review_rationale">FairEmailをしばらく使用しています。
-PlayストアでFairEmailを評価できれば幸いです。
-これは、好ましくないレビューと好ましいレビューのバランスを保つのに役立ちます。</string>
     <string name="title_third_party">サードパーティバージョンを使用しています</string>
     <string name="title_expand_warning">このメッセージを展開すると、%1$sがダウンロードされます</string>
     <string name="title_download_message">&#8230; をダウンロード中</string>
@@ -700,6 +666,7 @@ PlayストアでFairEmailを評価できれば幸いです。
     <string name="title_reply_to">返信先:</string>
     <string name="title_cc">CC:</string>
     <string name="title_bcc">BCC:</string>
+    <string name="title_recipients">%1$d人の相手</string>
     <string name="title_via_identity">経由:</string>
     <string name="title_sent">送信済み:</string>
     <string name="title_received">受信:</string>
@@ -721,14 +688,12 @@ PlayストアでFairEmailを評価できれば幸いです。
     <string name="title_style_italic">斜体</string>
     <string name="title_style_underline">下線</string>
     <string name="title_style_size">サイズ</string>
-    <string name="title_style_color">カラー</string>
     <string name="title_style_clear">書式をクリア</string>
     <string name="title_style_link">リンクを挿入</string>
     <string name="title_add_image">画像を追加</string>
     <string name="title_add_image_inline">挿入</string>
     <string name="title_add_image_attach">添付</string>
     <string name="title_add_image_resize">リサイズ</string>
-    <string name="title_add_image_privacy">位置情報を削除</string>
     <string name="title_add_resize_pixels">&lt; %1$d ピクセル</string>
     <string name="title_add_image_select">ファイル選択</string>
     <string name="title_add_attachment">添付ファイルを追加</string>
@@ -799,7 +764,6 @@ PlayストアでFairEmailを評価できれば幸いです。
         サーバーも検索するには「もう一度検索」ボタンをタップします
     </string>
     <string name="title_search_index_hint">検索インデックスを介した検索は高速ですが単語全体しか検索されません</string>
-    <string name="title_search_text_hint">一部のメールサーバーで多くのメッセージ内テキストを検索出来ません</string>
     <string name="title_search_more">その他のオプション</string>
     <string name="title_search_use_index">検索インデックスを使用</string>
     <string name="title_search_in_senders">送信者(差出人)</string>
@@ -872,7 +836,6 @@ PlayストアでFairEmailを評価できれば幸いです。
     <string name="title_rule_keyword">キーワードの追加</string>
     <string name="title_rule_move">移動</string>
     <string name="title_rule_copy">コピー(ラベル)</string>
-    <string name="title_rule_answer">返信</string>
     <string name="title_rule_automation">自動化</string>
     <string name="title_rule_caption">ルールを編集</string>
     <string name="title_rule_title">ルールが適用されます</string>
@@ -898,6 +861,7 @@ PlayストアでFairEmailを評価できれば幸いです。
     <string name="title_rule_identity">ID</string>
     <string name="title_rule_template">テンプレートで返信</string>
     <string name="title_rule_cc">CCアドレスへ返信</string>
+    <string name="title_rule_answer_remark">返信のループを回避するために、それぞれの会話に対して1度だけ返信が送信されます</string>
     <string name="title_rule_name_missing">ルール名が有りません</string>
     <string name="title_rule_condition_missing">条件が有りません</string>
     <string name="title_rule_automation_hint">これにより、インテント \'%1$s\' とエクストラ \'%2$s\' が送信されます</string>
@@ -913,8 +877,6 @@ PlayストアでFairEmailを評価できれば幸いです。
     <string name="title_legend_section_compose">作成する</string>
     <string name="title_legend_section_keyboard">キーワード</string>
     <string name="title_legend_oauth">OAuth認証</string>
-    <string name="title_legend_primary_connected">接続されたアカウント</string>
-    <string name="title_legend_primary_disconnected">アカウントが切断されました</string>
     <string name="title_legend_download_on">メッセージコンテンツを自動的にダウンロードする</string>
     <string name="title_legend_download_off">オンデマンドでメッセージコンテンツをダウンロードする</string>
     <string name="title_legend_synchronize_on">同期する</string>
@@ -980,8 +942,6 @@ PlayストアでFairEmailを評価できれば幸いです。
     <string name="title_legend_bold">テキストを太字にする</string>
     <string name="title_legend_italic">テキストを斜体にする</string>
     <string name="title_legend_underline">テキストに下線を引く</string>
-    <string name="title_legend_text_size">文字サイズを設定する</string>
-    <string name="title_legend_text_color">テキストの色を設定する</string>
     <string name="title_legend_metered">接続が計測されます</string>
     <string name="title_legend_unmetered">接続は未測定です</string>
     <string name="title_legend_roaming">ローミング</string>
@@ -991,7 +951,7 @@ PlayストアでFairEmailを評価できれば幸いです。
     <string name="title_legend_show_junk">迷惑メールとして扱う</string>
     <string name="title_legend_show_unsubscribe">リストから退会する</string>
     <string name="title_legend_show_images">画像を表示</string>
-    <string name="title_legend_show_full">全画面表示</string>
+    <string name="title_legend_show_full">オリジナルのメッセージを表示する</string>
     <string name="title_legend_edit">編集</string>
     <string name="title_legend_default_color">デフォルトの色</string>
     <string name="title_legend_close_hint">ヒントを閉じる</string>
@@ -1068,7 +1028,6 @@ PlayストアでFairEmailを評価できれば幸いです。
     <string name="title_dismiss">却下する</string>
     <string name="title_snooze_now">スヌーズ</string>
     <string name="title_loading">&#8230; を読み込んでいます</string>
-    <string name="title_set">設定</string>
     <string name="title_fetching_again">サーバーからメッセージの再取得</string>
     <string name="title_conversation_actions">アクション</string>
     <string name="title_conversation_action_reply">返信: \'%1$s\'</string>
@@ -1077,16 +1036,11 @@ PlayストアでFairEmailを評価できれば幸いです。
     <string name="title_icalendar_decline">辞退する</string>
     <string name="title_icalendar_maybe">多分</string>
     <string name="title_icalendar_calendar">カレンダー</string>
-    <string name="title_try">オープンソースのプライバシーに優しいAndroid用メールアプリFairEmailをお試し下さい</string>
     <string name="title_pro_feature">これはプロ機能です</string>
     <string name="title_pro_list">プロ機能のリスト</string>
     <string name="title_pro_purchase">購入</string>
     <string name="title_pro_once">一度だけです</string>
-    <string name="title_pro_info">FairEmailの開発には文字通り数千時間かかりましたが、殆どの機能は無料で使用出来ます。
-FairEmailを長期的持続可能にする為、プロ機能課金が有ります。一部の便利な機能と高度な機能は無料では使用出来ません。
-FairEmailは、Pro機能購入の為に上部に小さなメッセージを表示します。プロ機能を購入すると削除されます。</string>
     <string name="title_pro_hint">プロ機能を購入すると、現在及び将来全てのプロ機能を使用出来る様になりアプリとサポートが維持されます</string>
-    <string name="title_pro_price"><a href="https://github.com/M66B/FairEmail/blob/master/FAQ.md#user-content-faq19">このFAQ</a>をご覧ください。プロ機能の価格や購入法も有ります</string>
     <string name="title_pro_pending">購入保留中</string>
     <string name="title_pro_activated">全てのプロ機能がアクティブになりました</string>
     <string name="title_pro_valid">全てのプロ機能が有効化されました</string>
@@ -1109,6 +1063,7 @@ FairEmailは、Pro機能購入の為に上部に小さなメッセージを表�
     <string name="title_widget_folder_unified">統合受信トレイフォルダー</string>
     <string name="title_widget_unseen">未読メッセージのみ</string>
     <string name="title_widget_flagged">スター付きメッセージのみ</string>
+    <string name="title_widget_padding">余白のサイズ</string>
     <string name="title_widget_semi_transparent">半透明の背景</string>
     <string name="title_accessibility_collapsed">折りたたんだ</string>
     <string name="title_accessibility_expanded">拡大</string>
@@ -1209,6 +1164,7 @@ FairEmailは、Pro機能購入の為に上部に小さなメッセージを表�
         <item>開始時</item>
         <item>途中</item>
         <item>最後</item>
+        <item>Show untruncated</item>
     </string-array>
     <string-array name="priorityNames">
         <item>低</item>

@@ -21,9 +21,10 @@ package eu.faircode.email;
 
 import android.content.Context;
 import android.content.Intent;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Handler;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
@@ -274,6 +275,11 @@ public class FragmentQuickSetup extends FragmentBase {
                 if (TextUtils.isEmpty(smtp_fingerprint))
                     smtp_fingerprint = null;
 
+                ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+                NetworkInfo ani = (cm == null ? null : cm.getActiveNetworkInfo());
+                if (ani == null || !ani.isConnected())
+                    throw new IllegalArgumentException(context.getString(R.string.title_no_internet));
+
                 EmailProvider provider = EmailProvider.fromEmail(context, email, EmailProvider.Discover.ALL);
                 args.putBoolean("appPassword", provider.appPassword);
 
@@ -290,9 +296,10 @@ public class FragmentQuickSetup extends FragmentBase {
 
                 List<EntityFolder> folders;
 
-                String aprotocol = provider.imap.starttls ? "imap" : "imaps";
+                String aprotocol = (provider.imap.starttls ? "imap" : "imaps");
+                int aencryption = (provider.imap.starttls ? EmailService.ENCRYPTION_STARTTLS : EmailService.ENCRYPTION_SSL);
                 try (EmailService iservice = new EmailService(
-                        context, aprotocol, null, false, EmailService.PURPOSE_CHECK, true)) {
+                        context, aprotocol, null, aencryption, false, EmailService.PURPOSE_CHECK, true)) {
                     try {
                         iservice.connect(
                                 provider.imap.host, provider.imap.port,
@@ -310,36 +317,46 @@ public class FragmentQuickSetup extends FragmentBase {
                         } else
                             throw ex;
                     } catch (Throwable ex) {
+                        Log.w(ex);
                         // Why not AuthenticationFailedException?
-                        // Some providers refuse connection with an invalid username
-                        if (!user.equals(username)) {
-                            Log.w(ex);
-                            user = username;
-                            Log.i("Retry with user=" + user);
-                            iservice.connect(
-                                    provider.imap.host, provider.imap.port,
-                                    EmailService.AUTH_TYPE_PASSWORD, null,
-                                    user, password,
-                                    null, null);
-                        } else
+                        // Some providers terminate the connection with an invalid username
+                        if (user.equals(username))
                             throw ex;
+                        else
+                            try {
+                                user = username;
+                                Log.i("Retry with user=" + user);
+                                iservice.connect(
+                                        provider.imap.host, provider.imap.port,
+                                        EmailService.AUTH_TYPE_PASSWORD, null,
+                                        user, password,
+                                        null, null);
+                            } catch (Throwable ex1) {
+                                Log.w(ex1);
+                                if (!(ex instanceof AuthenticationFailedException) &&
+                                        ex1 instanceof AuthenticationFailedException)
+                                    throw ex1;
+                                else
+                                    throw ex;
+                            }
                     }
 
                     folders = iservice.getFolders();
-
-                    if (folders == null)
-                        throw new IllegalArgumentException(context.getString(R.string.title_setup_no_system_folders));
                 }
 
-                String iprotocol = provider.smtp.starttls ? "smtp" : "smtps";
+                Long max_size = null;
+                String iprotocol = (provider.smtp.starttls ? "smtp" : "smtps");
+                int iencryption = (provider.smtp.starttls ? EmailService.ENCRYPTION_STARTTLS : EmailService.ENCRYPTION_SSL);
                 try (EmailService iservice = new EmailService(
-                        context, iprotocol, null, false, EmailService.PURPOSE_CHECK, true)) {
+                        context, iprotocol, null, iencryption, false,
+                        EmailService.PURPOSE_CHECK, true)) {
                     iservice.setUseIp(provider.useip, null);
                     iservice.connect(
                             provider.smtp.host, provider.smtp.port,
                             EmailService.AUTH_TYPE_PASSWORD, null,
                             user, password,
                             null, smtp_fingerprint);
+                    max_size = iservice.getMaxSize();
                 } catch (EmailService.UntrustedException ex) {
                     if (check)
                         smtp_fingerprint = ex.getFingerprint();
@@ -363,14 +380,14 @@ public class FragmentQuickSetup extends FragmentBase {
                     EntityAccount account = new EntityAccount();
 
                     account.host = provider.imap.host;
-                    account.starttls = provider.imap.starttls;
+                    account.encryption = aencryption;
                     account.port = provider.imap.port;
                     account.auth_type = EmailService.AUTH_TYPE_PASSWORD;
                     account.user = user;
                     account.password = password;
                     account.fingerprint = imap_fingerprint;
 
-                    account.name = provider.name;
+                    account.name = provider.name + "/" + username;
 
                     account.synchronize = true;
                     account.primary = (primary == null);
@@ -413,7 +430,7 @@ public class FragmentQuickSetup extends FragmentBase {
                     identity.account = account.id;
 
                     identity.host = provider.smtp.host;
-                    identity.starttls = provider.smtp.starttls;
+                    identity.encryption = iencryption;
                     identity.port = provider.smtp.port;
                     identity.auth_type = EmailService.AUTH_TYPE_PASSWORD;
                     identity.user = user;
@@ -422,6 +439,7 @@ public class FragmentQuickSetup extends FragmentBase {
                     identity.use_ip = provider.useip;
                     identity.synchronize = true;
                     identity.primary = true;
+                    identity.max_size = max_size;
 
                     identity.id = db.identity().insertIdentity(identity);
                     EntityLog.log(context, "Quick added identity=" + identity.name + " email=" + identity.email);
@@ -472,7 +490,7 @@ public class FragmentQuickSetup extends FragmentBase {
                     tvError.setText(ex.getMessage());
                     grpError.setVisibility(View.VISIBLE);
 
-                    new Handler().post(new Runnable() {
+                    getMainHandler().post(new Runnable() {
                         @Override
                         public void run() {
                             scroll.smoothScrollTo(0, tvErrorHint.getBottom());
@@ -491,11 +509,11 @@ public class FragmentQuickSetup extends FragmentBase {
                     btnSupport.setVisibility(View.VISIBLE);
 
                     if (args.containsKey("documentation")) {
-                        tvInstructions.setText(HtmlHelper.fromHtml(args.getString("documentation")));
+                        tvInstructions.setText(HtmlHelper.fromHtml(args.getString("documentation"), true, getContext()));
                         tvInstructions.setVisibility(View.VISIBLE);
                     }
 
-                    new Handler().post(new Runnable() {
+                    getMainHandler().post(new Runnable() {
                         @Override
                         public void run() {
                             if (args.containsKey("documentation"))
